@@ -8,6 +8,7 @@ plugins {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
@@ -35,6 +36,8 @@ dependencies {
     implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
+    implementation("com.strumenta.kolasu:kolasu-core:1.5.36-SNAPSHOT")
+    implementation("com.strumenta.kolasu:kolasu-lionweb:1.5.36-SNAPSHOT")
 }
 
 
