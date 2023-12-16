@@ -28,6 +28,15 @@ tasks.withType<Test>().all {
     }
 }
 
+val ktor_version = "2.3.7"
+val lionwebVersion = "0.2.2"
+
+dependencies {
+    implementation("io.ktor:ktor-client-core:$ktor_version")
+    implementation("io.ktor:ktor-client-cio:$ktor_version")
+    implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
+}
+
 
 //kotlin {
 //
