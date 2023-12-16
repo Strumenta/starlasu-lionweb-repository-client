@@ -10,6 +10,8 @@ import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.impl.DynamicNode
 import io.lionweb.lioncore.java.serialization.JsonSerialization
+import io.lionweb.lioncore.java.serialization.LowLevelJsonSerialization
+import io.lionweb.lioncore.java.serialization.data.SerializedChunk
 
 class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
 
@@ -22,13 +24,33 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
         jsonSerialization.registerLanguage(language)
     }
 
-    suspend fun getPartitions() : List<Node> {
+    suspend fun getPartitions() : List<String> {
         val response: HttpResponse = client.get("http://$hostname:$port/bulk/partitions")
         val data = response.bodyAsText()
-        println("GOT $data")
-        val nodes = jsonSerialization.deserializeToNodes(data)
-        return nodes
+        val chunk = LowLevelJsonSerialization().deserializeSerializationBlock(data)
+        return chunk.classifierInstances.mapNotNull { it.id }
     }
+
+    suspend fun getTree(rootId: String) : Node {
+        val response: HttpResponse = client.post("http://$hostname:$port/getNodeTree") {
+            setBody(TextContent(
+                text = "{\"ids\":[\"$rootId\"]}",
+                contentType = ContentType.Application.Json
+            ))
+        }
+        val data = response.bodyAsText()
+        val nodes = jsonSerialization.deserializeToNodes(data)
+        return nodes.first()
+    }
+
+
+//    suspend fun getPartitions() : List<Node> {
+//        val response: HttpResponse = client.get("http://$hostname:$port/bulk/partitions")
+//        val data = response.bodyAsText()
+//        println("GOT $data")
+//        val nodes = jsonSerialization.deserializeToNodes(data)
+//        return nodes
+//    }
 
     suspend fun storeTree(node: Node) {
         val json = jsonSerialization.serializeTreesToJsonString(node)
@@ -39,7 +61,6 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
                 contentType = ContentType.Application.Json
             ))
         }
-
     }
 }
 
@@ -48,6 +69,8 @@ suspend fun main(args: Array<String>) {
     client.registerLanguage(propertiesLanguage)
     val nodes = client.getPartitions()
     println("Nodes: $nodes")
+
+    val tree = client.getTree(nodes.first())
 
     val pf = propertiesFile.dynamicNode("pf1")
     val prop1 = property.dynamicNode("prop1").apply {
