@@ -31,10 +31,23 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
         return chunk.classifierInstances.mapNotNull { it.id }
     }
 
+//    suspend fun getTree(rootId: String) : Node {
+//        val response: HttpResponse = client.post("http://$hostname:$port/getNodeTree") {
+//            setBody(TextContent(
+//                text = "{\"ids\":[\"$rootId\"]}",
+//                contentType = ContentType.Application.Json
+//            ))
+//        }
+//        val data = response.bodyAsText()
+//        val nodes = jsonSerialization.deserializeToNodes(data)
+//        return nodes.first()
+//    }
+
     suspend fun getTree(rootId: String) : Node {
-        val response: HttpResponse = client.post("http://$hostname:$port/getNodeTree") {
+        val response: HttpResponse = client.post("http://$hostname:$port/bulk/retrieve") {
+            parameter("depthLimit", "99")
             setBody(TextContent(
-                text = "{\"ids\":[\"$rootId\"]}",
+                text = "{\"ids\":[\"$rootId\"] }",
                 contentType = ContentType.Application.Json
             ))
         }
@@ -71,6 +84,15 @@ suspend fun main(args: Array<String>) {
     println("Nodes: $nodes")
 
     val tree = client.getTree(nodes.first())
+    require(tree.id =="pf1")
+    require(tree.concept.name == "PropertiesFile")
+    require(tree.children.size == 1)
+    val child = tree.children.first()
+    //require(child.containmentFeature.name == "properties")
+    require(child.id =="prop1")
+    require(child.concept.name == "Property")
+    require(child.children.size == 0)
+    require(child.getPropertyValueByName("name") == "Prop1")
 
     val pf = propertiesFile.dynamicNode("pf1")
     val prop1 = property.dynamicNode("prop1").apply {

@@ -14,7 +14,7 @@ fun lwLanguage(name: String) : Language {
 }
 
 fun Language.addConcept(name: String) : Concept {
-    val concept = Concept(propertiesLanguage, "PropertiesFile",
+    val concept = Concept(propertiesLanguage, name,
         "${this.id!!.removePrefix("language-").removeSuffix("-id")}-${name}-id",
         "${this.key!!.removePrefix("language-").removeSuffix("-key")}-${name}-key")
     this.addElement(concept)
