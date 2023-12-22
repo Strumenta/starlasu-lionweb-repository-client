@@ -1,5 +1,5 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.9.20"
+    id("org.jetbrains.kotlin.jvm") version "1.9.22"
     id("org.jetbrains.dokka") version "1.9.10"
     id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
 
@@ -29,30 +29,14 @@ tasks.withType<Test>().all {
     }
 }
 
-val ktor_version = "2.3.7"
-val lionwebVersion = "0.2.2"
+val ktorVersion = extra["ktorVersion"]
+val lionwebVersion = extra["lionwebVersion"]
+val kolasuVersion = extra["kolasuVersion"]
 
 dependencies {
-    implementation("io.ktor:ktor-client-core:$ktor_version")
-    implementation("io.ktor:ktor-client-cio:$ktor_version")
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
-    implementation("com.strumenta.kolasu:kolasu-core:1.5.36-SNAPSHOT")
-    implementation("com.strumenta.kolasu:kolasu-lionweb:1.5.36-SNAPSHOT")
+    implementation("com.strumenta.kolasu:kolasu-core:$kolasuVersion")
+    implementation("com.strumenta.kolasu:kolasu-lionweb:$kolasuVersion")
 }
-
-
-//kotlin {
-//
-//explicitApiWarning()
-//compilerOptions {
-//    apiVersion.set(KotlinVersion.KOTLIN_1_9)
-//    languageVersion.set(KotlinVersion.KOTLIN_1_9)
-//
-//    jvmTarget.set(JvmTarget.JVM_1_8)
-//    freeCompilerArgs.add("-Xjvm-default=all")
-//}
-//    }
-//
-//val java = project.javaExtension
-//java.sourceCompatibility = JavaVersion.VERSION_1_8
-//java.targetCompatibility = JavaVersion.VERSION_1_8
