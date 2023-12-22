@@ -10,4 +10,3 @@ data class Todo(var description: String) : Node()
 val todoLanguage = KolasuLanguage("TodoLanguage").apply {
     addClass(TodoProject::class)
 }
-

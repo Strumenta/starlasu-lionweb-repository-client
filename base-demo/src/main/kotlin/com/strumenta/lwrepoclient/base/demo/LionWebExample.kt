@@ -8,11 +8,11 @@ private suspend fun retrieveNodes(client: LionWebClient) {
     println("Nodes: $partitionIDs")
 
     val tree = client.getPartition(partitionIDs.first())
-    require(tree.id =="pf1")
+    require(tree.id == "pf1")
     require(tree.concept.name == "PropertiesFile")
     require(tree.children.size == 1)
     val child = tree.children.first()
-    require(child.id =="prop1")
+    require(child.id == "prop1")
     require(child.concept.name == "Property")
     require(child.children.size == 0)
     require(child.getPropertyValueByName("name") == "Prop1")

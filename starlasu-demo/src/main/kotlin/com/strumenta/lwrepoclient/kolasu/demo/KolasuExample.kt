@@ -19,7 +19,6 @@ private suspend fun retrieveNodes(client: KolasuClient) {
     tp.assignParents()
 
     assertASTsAreEqual(tp, root)
-
 }
 
 private suspend fun storeNodes(client: KolasuClient) {
@@ -39,5 +38,5 @@ suspend fun main(args: Array<String>) {
 
     retrieveNodes(client)
 
-    //storeNodes(client)
+    // storeNodes(client)
 }

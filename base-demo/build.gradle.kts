@@ -6,7 +6,6 @@ plugins {
     id("java-library")
 }
 
-
 val ktorVersion = extra["ktorVersion"]
 val lionwebVersion = extra["lionwebVersion"]
 val kolasuVersion = extra["kolasuVersion"]
