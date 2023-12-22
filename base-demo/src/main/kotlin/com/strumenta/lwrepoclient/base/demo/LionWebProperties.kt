@@ -1,9 +1,9 @@
-package com.strumenta.starlasu.lwrepoclient.lionwebexample
+package com.strumenta.lwrepoclient.base.demo
 
-import com.strumenta.starlasu.lwrepoclient.Multiplicity
-import com.strumenta.starlasu.lwrepoclient.addConcept
-import com.strumenta.starlasu.lwrepoclient.addContainment
-import com.strumenta.starlasu.lwrepoclient.lwLanguage
+import com.strumenta.lwrepoclient.base.Multiplicity
+import com.strumenta.lwrepoclient.base.addConcept
+import com.strumenta.lwrepoclient.base.addContainment
+import com.strumenta.lwrepoclient.base.lwLanguage
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.language.LionCoreBuiltins
 

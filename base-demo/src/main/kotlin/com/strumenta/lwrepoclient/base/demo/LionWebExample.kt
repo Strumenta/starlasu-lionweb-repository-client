@@ -1,7 +1,7 @@
-package com.strumenta.starlasu.lwrepoclient.lionwebexample
+package com.strumenta.lwrepoclient.base.demo
 
-import com.strumenta.starlasu.lwrepoclient.LionWebClient
-import com.strumenta.starlasu.lwrepoclient.dynamicNode
+import com.strumenta.lwrepoclient.base.LionWebClient
+import com.strumenta.lwrepoclient.base.dynamicNode
 
 private suspend fun retrieveNodes(client: LionWebClient) {
     val partitionIDs = client.getPartitionIDs()

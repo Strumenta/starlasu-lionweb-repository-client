@@ -1,13 +1,8 @@
-package com.strumenta.starlasu.lwrepoclient.kolasuexample
+package com.strumenta.lwrepoclient.kolasu.demo
 
-import com.strumenta.kolasu.model.Origin
-import com.strumenta.kolasu.model.Position
-import com.strumenta.kolasu.model.SyntheticSource
 import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.testing.assertASTsAreEqual
-import com.strumenta.starlasu.lwrepoclient.KolasuClient
-import com.strumenta.starlasu.lwrepoclient.LionWebClient
-import com.strumenta.starlasu.lwrepoclient.dynamicNode
+import com.strumenta.lwrepoclient.kolasu.KolasuClient
 
 private suspend fun retrieveNodes(client: KolasuClient) {
     val partitionIDs = client.getPartitionIDs()

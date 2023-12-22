@@ -1,9 +1,9 @@
-package com.strumenta.starlasu.lwrepoclient
+package com.strumenta.lwrepoclient.kolasu
 
 import com.strumenta.kolasu.language.KolasuLanguage
-import com.strumenta.kolasu.lionweb.LionWebLanguageConverter
 import com.strumenta.kolasu.lionweb.LionWebModelConverter
 import com.strumenta.kolasu.model.Node
+import com.strumenta.lwrepoclient.base.LionWebClient
 
 class KolasuClient(val hostname: String = "localhost", val port: Int = 3005) {
 

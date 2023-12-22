@@ -1,6 +1,5 @@
-package com.strumenta.starlasu.lwrepoclient
+package com.strumenta.lwrepoclient.base
 
-import com.strumenta.starlasu.lwrepoclient.lionwebexample.propertiesLanguage
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.language.Containment
 import io.lionweb.lioncore.java.language.Language
@@ -13,7 +12,7 @@ fun lwLanguage(name: String) : Language {
 
 fun Language.addConcept(name: String) : Concept {
     val concept = Concept(
-        propertiesLanguage, name,
+        this, name,
         "${this.id!!.removePrefix("language-").removeSuffix("-id")}-${name}-id",
         "${this.key!!.removePrefix("language-").removeSuffix("-key")}-${name}-key")
     this.addElement(concept)

@@ -1,4 +1,4 @@
-package com.strumenta.starlasu.lwrepoclient
+package com.strumenta.lwrepoclient.base
 
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
