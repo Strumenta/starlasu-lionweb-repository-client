@@ -3,6 +3,8 @@ package com.strumenta.lwrepoclient.base
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.language.Containment
 import io.lionweb.lioncore.java.language.Language
+import io.lionweb.lioncore.java.language.PrimitiveType
+import io.lionweb.lioncore.java.language.Property
 import io.lionweb.lioncore.java.model.impl.DynamicNode
 import kotlin.random.Random
 
@@ -47,6 +49,23 @@ fun Concept.addContainment(name: String, containedConcept: Concept, multiplicity
     }
     this.addFeature(containment)
     return containment
+}
+
+fun Concept.addProperty(name: String, type: PrimitiveType, multiplicity: Multiplicity = Multiplicity.SINGLE): Property {
+    val property = Property().apply {
+        this.name = name
+        this.id = "${this@addProperty.id!!.removeSuffix("-id")}-$name-id"
+        this.key = "${this@addProperty.key!!.removeSuffix("-key")}-$name-key"
+        this.type = type
+        this.setOptional(
+            when (multiplicity) {
+                Multiplicity.SINGLE -> false
+                Multiplicity.ZERO_TO_MANY -> true
+            }
+        )
+    }
+    this.addFeature(property)
+    return property
 }
 
 fun Concept.dynamicNode(nodeId: String = "node-id-rand-${Random.nextInt()}"): DynamicNode {
