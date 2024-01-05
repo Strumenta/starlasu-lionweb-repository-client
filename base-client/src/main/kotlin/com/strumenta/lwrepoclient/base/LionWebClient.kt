@@ -23,6 +23,7 @@ import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.LowLevelJsonSerialization
 import io.lionweb.lioncore.java.serialization.data.SerializedChunk
+import kotlinx.coroutines.runBlocking
 
 private class MyBulkLowlevel(val hostname: String = "localhost", val port: Int = 3005) : IBulkLowlevel {
 
@@ -31,7 +32,23 @@ private class MyBulkLowlevel(val hostname: String = "localhost", val port: Int =
         enableDynamicNodes()
     }
     override fun partitions(): IPartitionsResponse {
-        TODO("Not yet implemented")
+        return runBlocking {
+            val response: HttpResponse = client.get("http://$hostname:$port/bulk/partitions")
+            val data = response.bodyAsText()
+            val chunk = LowLevelJsonSerialization().deserializeSerializationBlock(data)
+            object : IPartitionsResponse {
+                override fun isOk(): Boolean = true
+
+                override fun getErrorMessage(): String {
+                    TODO("Not yet implemented")
+                }
+
+                override fun getResult(): SerializedChunk {
+                    return chunk
+                }
+
+            }
+        }
     }
 
     override fun retrieve(p0: MutableList<String>?, p1: String?): IRetrieveResponse {
