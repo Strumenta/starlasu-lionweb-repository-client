@@ -28,24 +28,24 @@ mavenPublishing {
         description.set("The Kotlin client for working with StarLasu ASTSs and the lionweb-repository")
         inceptionYear.set("2023")
         url.set("https://github.com/Strumenta/starlasu-lionweb-repository-client")
-//        licenses {
-//            license {
-//                name.set("The Apache License, Version 2.0")
-//                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-//                distribution.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-//            }
-//        }
-//        developers {
-//            developer {
-//                id.set("username")
-//                name.set("User Name")
-//                url.set("https://github.com/username/")
-//            }
-//        }
-//        scm {
-//            url.set("https://github.com/username/mylibrary/")
-//            connection.set("scm:git:git://github.com/username/mylibrary.git")
-//            developerConnection.set("scm:git:ssh://git@github.com/username/mylibrary.git")
-//        }
+        licenses {
+            license {
+                name.set("The Apache License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("ftomassetti")
+                name.set("Federico Tomassetti")
+                url.set("https://github.com/ftomassetti/")
+            }
+        }
+        scm {
+            url.set("https://github.com/Strumenta/starlasu-lionweb-repository-client/")
+            connection.set("scm:git:git://github.com/Strumenta/starlasu-lionweb-repository-client.git")
+            developerConnection.set("scm:git:ssh://git@github.com/Strumenta/starlasu-lionweb-repository-client.git")
+        }
     }
 }
