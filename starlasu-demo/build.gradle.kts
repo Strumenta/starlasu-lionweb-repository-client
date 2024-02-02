@@ -17,4 +17,5 @@ dependencies {
     implementation("com.strumenta.kolasu:kolasu-core:$kolasuVersion")
     implementation("com.strumenta.kolasu:kolasu-lionweb:$kolasuVersion")
     implementation(project(":starlasu-client"))
+    implementation("com.strumenta.langmodules.kolasu-java-langmodule:ast:0.9.15-SNAPSHOT")
 }

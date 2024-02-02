@@ -2,6 +2,7 @@ package com.strumenta.lwrepoclient.base
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -18,7 +19,12 @@ import io.lionweb.lioncore.java.serialization.PrimitiveValuesSerialization.Primi
 
 class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
 
-    private val client = HttpClient(CIO)
+    private val client = HttpClient(CIO){
+        install(ContentEncoding) {
+            deflate(1.0F)
+            gzip(0.9F)
+        }
+    }
     private val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
         enableDynamicNodes()
     }
@@ -55,7 +61,7 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
 
     suspend fun storeTree(node: Node) {
         val json = jsonSerialization.serializeTreesToJsonString(node)
-        println("SENDING $json")
+        println("  Sending ${json!!.encodeToByteArray().size} bytes")
         val response: HttpResponse = client.post("http://$hostname:$port/bulk/store") {
             setBody(
                 TextContent(
@@ -64,5 +70,7 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
                 )
             )
         }
+        println("  Response: ${response.status}")
+        println("  Response: ${response.bodyAsText()}")
     }
 }

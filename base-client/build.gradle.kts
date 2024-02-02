@@ -14,6 +14,7 @@ val kolasuVersion = extra["kolasuVersion"]
 dependencies {
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
+    implementation("io.ktor:ktor-client-encoding:$ktorVersion")
     implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
 }
 
