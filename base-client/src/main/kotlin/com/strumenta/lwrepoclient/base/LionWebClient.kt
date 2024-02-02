@@ -14,6 +14,7 @@ import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.LowLevelJsonSerialization
+import io.lionweb.lioncore.java.serialization.PrimitiveValuesSerialization.PrimitiveSerializer
 
 class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
 
@@ -24,6 +25,10 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
 
     fun registerLanguage(language: Language) {
         jsonSerialization.registerLanguage(language)
+    }
+
+    fun registerPrimitiveSerializer(dataTypeID: String, serializer: PrimitiveSerializer<Any> ) {
+        jsonSerialization.primitiveValuesSerialization.registerSerializer(dataTypeID, serializer)
     }
 
     suspend fun getPartitionIDs(): List<String> {
