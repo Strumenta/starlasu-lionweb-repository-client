@@ -15,7 +15,8 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005) {
         lionWebClient.registerLanguage(lionwebLanguage)
         kolasuLanguage.enumClasses.forEach { enumClass ->
             val enumeration = lionwebLanguage.elements.filterIsInstance<Enumeration>().find { it.name == enumClass.simpleName }!!
-            lionWebClient.registerPrimitiveSerializer(enumeration.id!!
+            lionWebClient.registerPrimitiveSerializer(
+                enumeration.id!!
             ) { value -> (value as Enum<*>).name }
         }
     }

@@ -27,7 +27,7 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
         jsonSerialization.registerLanguage(language)
     }
 
-    fun registerPrimitiveSerializer(dataTypeID: String, serializer: PrimitiveSerializer<Any> ) {
+    fun registerPrimitiveSerializer(dataTypeID: String, serializer: PrimitiveSerializer<Any>) {
         jsonSerialization.primitiveValuesSerialization.registerSerializer(dataTypeID, serializer)
     }
 
