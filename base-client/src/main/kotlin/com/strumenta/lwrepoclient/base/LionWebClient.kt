@@ -62,6 +62,7 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
     suspend fun storeTree(node: Node) {
         val json = jsonSerialization.serializeTreesToJsonString(node)
         println("  Sending ${json!!.encodeToByteArray().size} bytes")
+        //https://docs.oracle.com/javase/8/docs/api/java/util/zip/GZIPOutputStream.html#GZIPOutputStream-java.io.OutputStream-
         val response: HttpResponse = client.post("http://$hostname:$port/bulk/store") {
             setBody(
                 TextContent(
