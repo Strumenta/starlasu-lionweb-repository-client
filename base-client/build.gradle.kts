@@ -10,11 +10,12 @@ plugins {
 val ktorVersion = extra["ktorVersion"]
 val lionwebVersion = extra["lionwebVersion"]
 val kolasuVersion = extra["kolasuVersion"]
+val okhttpVersion = extra["okhttpVersion"]
 
 dependencies {
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation("io.ktor:ktor-client-encoding:$ktorVersion")
+    implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
     implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
 }
 

@@ -2,7 +2,6 @@ package com.strumenta.lwrepoclient.base
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.compression.ContentEncoding
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -11,27 +10,32 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.content.TextContent
-import io.ktor.http.contentType
-import io.ktor.http.headers
 import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.LowLevelJsonSerialization
 import io.lionweb.lioncore.java.serialization.PrimitiveValuesSerialization.PrimitiveSerializer
-import java.io.ByteArrayOutputStream
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import okio.Buffer
+import okio.BufferedSink
+import okio.GzipSink
+import okio.buffer
 import java.io.File
-import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
-import kotlin.text.Charsets.UTF_8
+import java.io.IOException
+
 
 class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
 
-    private val client = HttpClient(CIO){
-        install(ContentEncoding) {
-            deflate(1.0F)
-            gzip(0.9F)
-        }
+    @Deprecated("Use okHTTP")
+    private val ktorClient = HttpClient(CIO){
     }
+
+    private var client: OkHttpClient = OkHttpClient()
     private val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
         enableDynamicNodes()
     }
@@ -45,14 +49,14 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
     }
 
     suspend fun getPartitionIDs(): List<String> {
-        val response: HttpResponse = client.get("http://$hostname:$port/bulk/partitions")
+        val response: HttpResponse = ktorClient.get("http://$hostname:$port/bulk/partitions")
         val data = response.bodyAsText()
         val chunk = LowLevelJsonSerialization().deserializeSerializationBlock(data)
         return chunk.classifierInstances.mapNotNull { it.id }
     }
 
     suspend fun getPartition(rootId: String): Node {
-        val response: HttpResponse = client.post("http://$hostname:$port/bulk/retrieve") {
+        val response: HttpResponse = ktorClient.post("http://$hostname:$port/bulk/retrieve") {
             parameter("depthLimit", "99")
             setBody(
                 TextContent(
@@ -66,25 +70,43 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
         return nodes.find { it.id == rootId } ?: throw IllegalArgumentException()
     }
 
+    private val JSON: MediaType = "application/json".toMediaType()
+
     suspend fun storeTree(node: Node) {
         checkTree(node, jsonSerialization = jsonSerialization)
         val json = jsonSerialization.serializeTreesToJsonString(node)
-        println("  Sending ${json!!.encodeToByteArray().size} bytes")
-        File("sent.json").writeText(json)
-        //https://docs.oracle.com/javase/8/docs/api/java/util/zip/GZIPOutputStream.html#GZIPOutputStream-java.io.OutputStream-
-        val response: HttpResponse = client.post("http://$hostname:$port/bulk/store") {
-            setBody(
-                TextContent(
-                    text = json,
-                    contentType = ContentType.Application.Json
-                )
-            )
+        println("  JSON of ${json!!.encodeToByteArray().size} bytes")
+        // File("sent.json").writeText(json)
+        val body: RequestBody = forceContentLength(gzip(json.toRequestBody(JSON)))
+        println("  ${body.contentLength()} bytes sent")
 
+        val request: Request = Request.Builder()
+            .url("http://$hostname:$port/bulk/store")
+            .addHeader("Content-Encoding", "gzip")
+            .post(body)
+            .build()
+        client.newCall(request).execute().use { response ->
+            println("  Response: ${response.code}")
+            if (response.code != 200) {
+                println("  Response: ${response.body?.string()}")
+            }
         }
-        println("  Response: ${response.status}")
-        if (response.status.value != 200) {
-            println("  Response: ${response.bodyAsText()}")
-        }
+
+//        //https://docs.oracle.com/javase/8/docs/api/java/util/zip/GZIPOutputStream.html#GZIPOutputStream-java.io.OutputStream-
+//        val response: HttpResponse = ktorClient.post("http://$hostname:$port/bulk/store") {
+//            this.compress()
+//            setBody(
+//                TextContent(
+//                    text = json,
+//                    contentType = ContentType.Application.Json
+//                )
+//            )
+//
+//        }
+//        println("  Response: ${response.status}")
+//        if (response.status.value != 200) {
+//            println("  Response: ${response.bodyAsText()}")
+//        }
     }
 }
 
@@ -109,17 +131,41 @@ private fun checkTree(node: Node, parents: MutableMap<String, String?> = mutable
     }
 }
 
+private fun gzip(body: RequestBody): RequestBody {
+    return object : RequestBody() {
+        override fun contentType(): MediaType? {
+            return body.contentType()
+        }
 
-private fun String.gzip() : ByteArray {
-//    val os = ByteArrayOutputStream()
-//    val gzipOs = GZIPOutputStream(os, true)
-//    gzipOs.writer(Charsets.UTF_8).write(this)
-//    gzipOs.flush()
-//    return os.toByteArray()
-    val bos = ByteArrayOutputStream()
-    GZIPOutputStream(bos).bufferedWriter(UTF_8).use { it.write(this) }
-    return bos.toByteArray()
+        override fun contentLength(): Long {
+            return -1 // We don't know the compressed length in advance!
+        }
+
+        @Throws(IOException::class)
+        override fun writeTo(sink: BufferedSink) {
+            val gzipSink: BufferedSink = GzipSink(sink).buffer()
+            body.writeTo(gzipSink)
+            gzipSink.close()
+        }
+    }
 }
 
-fun ungzipToString(content: ByteArray): String =
-    GZIPInputStream(content.inputStream()).bufferedReader(UTF_8).use { it.readText() }
+@Throws(IOException::class)
+private fun forceContentLength(requestBody: RequestBody): RequestBody {
+    val buffer: Buffer = Buffer()
+    requestBody.writeTo(buffer)
+    return object : RequestBody() {
+        override fun contentType(): MediaType? {
+            return requestBody.contentType()
+        }
+
+        override fun contentLength(): Long {
+            return buffer.size
+        }
+
+        @Throws(IOException::class)
+        override fun writeTo(sink: BufferedSink) {
+            sink.write(buffer.snapshot())
+        }
+    }
+}

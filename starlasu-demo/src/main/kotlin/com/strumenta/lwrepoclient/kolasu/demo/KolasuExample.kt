@@ -57,7 +57,7 @@ suspend fun main(args: Array<String>) {
     val file2 = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/core/src/main/java/com/taobao/arthas/core/Arthas.java")
     val file3 = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/core/src/main/java/com/taobao/arthas/core/view/ClassInfoView.java")
 
-   explore(dir, client)
+   explore(file2, client)
 //    client.registerLanguage(todoLanguage)
 //
     //retrieveNodes(client)
