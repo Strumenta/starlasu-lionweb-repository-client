@@ -1,6 +1,6 @@
 package com.strumenta.lwrepoclient.kolasu.demo
 
-import com.strumenta.javalangmodule.ast.kLanguage
+import com.strumenta.javalangmodule.ast.kLanguage as JavaKolasuLanguage
 import com.strumenta.javalangmodule.parser.JavaKolasuParser
 import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.testing.assertASTsAreEqual
@@ -51,13 +51,16 @@ private suspend fun explore(file: File, client: KolasuClient) {
 
 suspend fun main(args: Array<String>) {
     val client = KolasuClient()
-    client.registerLanguage(kLanguage)
+    client.registerLanguage(JavaKolasuLanguage)
     val dir = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas")
     val file = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/testcase/src/main/java/com/alibaba/arthas/Type.java")
-    explore(dir, client)
+    val file2 = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/core/src/main/java/com/taobao/arthas/core/Arthas.java")
+    val file3 = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/core/src/main/java/com/taobao/arthas/core/view/ClassInfoView.java")
+
+   explore(dir, client)
 //    client.registerLanguage(todoLanguage)
 //
-//    retrieveNodes(client)
+    //retrieveNodes(client)
 
     // storeNodes(client)
 }
