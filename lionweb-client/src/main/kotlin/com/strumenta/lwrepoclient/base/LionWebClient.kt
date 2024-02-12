@@ -19,11 +19,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 
-
 class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
 
     @Deprecated("Use okHTTP")
-    private val ktorClient = HttpClient(CIO){
+    private val ktorClient = HttpClient(CIO) {
     }
 
     private var client: OkHttpClient = OkHttpClient()
@@ -63,7 +62,7 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
 
     suspend fun storeTree(node: Node) {
         // TODO control with flag
-        checkTree(node, jsonSerialization = jsonSerialization)
+        treeSanityChecks(node, jsonSerialization = jsonSerialization)
         val json = jsonSerialization.serializeTreesToJsonString(node)
         println("  JSON of ${json!!.encodeToByteArray().size} bytes")
         // TODO control with flag
@@ -87,5 +86,3 @@ class LionWebClient(val hostname: String = "localhost", val port: Int = 3005) {
         }
     }
 }
-
-

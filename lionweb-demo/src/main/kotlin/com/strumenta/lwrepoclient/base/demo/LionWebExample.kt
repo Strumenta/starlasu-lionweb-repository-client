@@ -43,5 +43,5 @@ suspend fun main(args: Array<String>) {
     val nodes = retrieveNodes(client)
     println(nodes)
 
-    //storeNodes(client)
+    // storeNodes(client)
 }

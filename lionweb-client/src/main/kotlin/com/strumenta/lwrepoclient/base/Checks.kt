@@ -4,7 +4,15 @@ import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import java.io.File
 
-fun checkTree(node: Node, parents: MutableMap<String, String?> = mutableMapOf(), jsonSerialization: JsonSerialization) {
+/**
+ * Perform some sanity checks on the tree. This is mostly useful while debugging the export to LionWeb.
+ * Eventually this could be dropped or controlled by some flag.
+ */
+fun treeSanityChecks(
+    node: Node,
+    parents: MutableMap<String, String?> = mutableMapOf(),
+    jsonSerialization: JsonSerialization
+) {
     try {
         if (parents.containsKey(node.id!!)) {
             throw IllegalStateException("Node with ID ${node.id} has already a parent")
@@ -16,7 +24,7 @@ fun checkTree(node: Node, parents: MutableMap<String, String?> = mutableMapOf(),
             require(childrenInContainment.distinct() == childrenInContainment)
         }
         node.children.forEach {
-            checkTree(it, parents, jsonSerialization)
+            treeSanityChecks(it, parents, jsonSerialization)
         }
     } catch (t: Throwable) {
         File("error.json").writeText(jsonSerialization.serializeTreesToJsonString(node.root))

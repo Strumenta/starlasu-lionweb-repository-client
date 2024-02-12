@@ -12,9 +12,9 @@ import java.io.IOException
 
 val JSON: MediaType = "application/json".toMediaType()
 
-fun String.compress() : RequestBody = this.toRequestBody(JSON).compress()
+fun String.compress(): RequestBody = this.toRequestBody(JSON).compress()
 
-fun RequestBody.compress() : RequestBody = forceContentLength(gzip(this))
+fun RequestBody.compress(): RequestBody = forceContentLength(gzip(this))
 
 private fun gzip(body: RequestBody): RequestBody {
     return object : RequestBody() {
@@ -23,7 +23,9 @@ private fun gzip(body: RequestBody): RequestBody {
         }
 
         override fun contentLength(): Long {
-            return -1 // We don't know the compressed length in advance!
+            // We don't know the compressed length in advance. This is why we later may want
+            // to use forceContentLength
+            return -1
         }
 
         @Throws(IOException::class)
@@ -37,7 +39,7 @@ private fun gzip(body: RequestBody): RequestBody {
 
 @Throws(IOException::class)
 private fun forceContentLength(requestBody: RequestBody): RequestBody {
-    val buffer: Buffer = Buffer()
+    val buffer = Buffer()
     requestBody.writeTo(buffer)
     return object : RequestBody() {
         override fun contentType(): MediaType? {

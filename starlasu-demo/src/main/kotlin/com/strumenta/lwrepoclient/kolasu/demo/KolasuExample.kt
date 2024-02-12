@@ -1,11 +1,11 @@
 package com.strumenta.lwrepoclient.kolasu.demo
 
-import com.strumenta.javalangmodule.ast.kLanguage as JavaKolasuLanguage
 import com.strumenta.javalangmodule.parser.JavaKolasuParser
 import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.testing.assertASTsAreEqual
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
 import java.io.File
+import com.strumenta.javalangmodule.ast.kLanguage as JavaKolasuLanguage
 
 private suspend fun retrieveNodes(client: KolasuClient) {
     val partitionIDs = client.getPartitionIDs()
@@ -57,10 +57,10 @@ suspend fun main(args: Array<String>) {
     val file2 = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/core/src/main/java/com/taobao/arthas/core/Arthas.java")
     val file3 = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/core/src/main/java/com/taobao/arthas/core/view/ClassInfoView.java")
 
-   explore(file2, client)
+    explore(file2, client)
 //    client.registerLanguage(todoLanguage)
 //
-    //retrieveNodes(client)
+    // retrieveNodes(client)
 
     // storeNodes(client)
 }
