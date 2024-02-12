@@ -1,5 +1,5 @@
 rootProject.name = "lionweb-repository-kotlin-client"
-include("base-client")
+include("lionweb-client")
 include("starlasu-client")
-include("base-demo")
+include("lionweb-demo")
 include("starlasu-demo")

@@ -14,5 +14,5 @@ dependencies {
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
-    implementation(project(":base-client"))
+    implementation(project(":lionweb-client"))
 }
