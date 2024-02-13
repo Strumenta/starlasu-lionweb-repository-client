@@ -27,6 +27,7 @@ fun treeSanityChecks(
             treeSanityChecks(it, parents, jsonSerialization)
         }
     } catch (t: Throwable) {
+        // This method is called when in debug mode, so let's save this file to help debugging
         File("error.json").writeText(jsonSerialization.serializeTreesToJsonString(node.root))
         throw RuntimeException(t)
     }

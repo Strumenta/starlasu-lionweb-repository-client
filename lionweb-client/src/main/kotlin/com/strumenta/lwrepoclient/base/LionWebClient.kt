@@ -10,10 +10,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 
 
 class LionWebClient(val hostname: String = "localhost",
-                    val port: Int = 3005) {
+                    val port: Int = 3005, val debug: Boolean = true) {
 
     private var httpClient: OkHttpClient = OkHttpClient()
     private val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
@@ -60,12 +61,15 @@ class LionWebClient(val hostname: String = "localhost",
     }
 
     fun storeTree(node: Node) {
-        // TODO control with flag
-        treeSanityChecks(node, jsonSerialization = jsonSerialization)
+        if (debug) {
+            treeSanityChecks(node, jsonSerialization = jsonSerialization)
+        }
         val json = jsonSerialization.serializeTreesToJsonString(node)
         println("  JSON of ${json!!.encodeToByteArray().size} bytes")
-        // TODO control with flag
-        // File("sent.json").writeText(json)
+        if (debug) {
+            File("sent.json").writeText(json)
+        }
+
         val body: RequestBody = json.compress()
         println("  ${body.contentLength()} bytes sent")
 
@@ -76,11 +80,11 @@ class LionWebClient(val hostname: String = "localhost",
             .post(body)
             .build()
         httpClient.newCall(request).execute().use { response ->
-            // TODO control with flag
             println("  Response: ${response.code}")
             if (response.code != 200) {
-                // TODO control with flag
-                println("  Response: ${response.body?.string()}")
+                if (debug) {
+                    println("  Response: ${response.body?.string()}")
+                }
             }
         }
     }

@@ -6,10 +6,10 @@ import com.strumenta.kolasu.model.Node
 import com.strumenta.lwrepoclient.base.LionWebClient
 import io.lionweb.lioncore.java.language.Enumeration
 
-class KolasuClient(val hostname: String = "localhost", val port: Int = 3005) {
+class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val debug: Boolean = true) {
 
     private val nodeConverter = LionWebModelConverter()
-    private val lionWebClient = LionWebClient(hostname, port)
+    private val lionWebClient = LionWebClient(hostname, port, debug = debug)
     fun registerLanguage(kolasuLanguage: KolasuLanguage) {
         val lionwebLanguage = nodeConverter.exportLanguageToLionWeb(kolasuLanguage)
         lionWebClient.registerLanguage(lionwebLanguage)
