@@ -54,7 +54,6 @@ val jvmVersion = extra["jvmVersion"] as String
 java {
     sourceCompatibility = JavaVersion.toVersion(jvmVersion)
     targetCompatibility = JavaVersion.toVersion(jvmVersion)
-    withSourcesJar()
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
@@ -68,3 +67,12 @@ kotlin {
         languageVersion.set(JavaLanguageVersion.of(jvmVersion.removePrefix("1.")))
     }
 }
+
+afterEvaluate {
+    tasks {
+        named("generateMetadataFileForMavenPublication") {
+            dependsOn("kotlinSourcesJar")
+        }
+    }
+}
+
