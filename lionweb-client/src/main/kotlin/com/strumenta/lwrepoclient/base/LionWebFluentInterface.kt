@@ -8,6 +8,9 @@ import io.lionweb.lioncore.java.language.Property
 import io.lionweb.lioncore.java.model.impl.DynamicNode
 import kotlin.random.Random
 
+/**
+ * Create a LionWeb Language with the given name.
+ */
 fun lwLanguage(name: String): Language {
     return Language(name, "language-${name.lowercase()}-id", "language-${name.lowercase()}-key", "1")
 }
@@ -68,6 +71,9 @@ fun Concept.addProperty(name: String, type: PrimitiveType, multiplicity: Multipl
     return property
 }
 
+/**
+ * Create a Dynamic Node with the given Concept and a random node ID.
+ */
 fun Concept.dynamicNode(nodeId: String = "node-id-rand-${Random.nextInt()}"): DynamicNode {
     return DynamicNode(nodeId, this)
 }

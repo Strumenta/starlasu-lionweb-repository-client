@@ -50,12 +50,10 @@ private suspend fun explore(file: File, client: KolasuClient) {
 }
 
 private fun foo() {
-
 }
 
 suspend fun main(args: Array<String>) {
     val client = KolasuClient()
-
 
     client.registerLanguage(JavaKolasuLanguage)
     val dir = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas")

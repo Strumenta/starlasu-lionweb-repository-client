@@ -12,9 +12,11 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
-
-class LionWebClient(val hostname: String = "localhost",
-                    val port: Int = 3005, val debug: Boolean = true) {
+class LionWebClient(
+    val hostname: String = "localhost",
+    val port: Int = 3005,
+    val debug: Boolean = true
+) {
 
     private var httpClient: OkHttpClient = OkHttpClient()
     private val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
