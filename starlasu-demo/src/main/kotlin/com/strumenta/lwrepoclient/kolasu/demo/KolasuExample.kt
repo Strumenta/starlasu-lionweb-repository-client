@@ -28,7 +28,7 @@ private fun storeNodes(client: KolasuClient) {
     client.storeTree(tp, "myTodo")
 }
 
-private suspend fun explore(file: File, client: KolasuClient) {
+private fun explore(file: File, client: KolasuClient) {
     if (file.isDirectory) {
         file.listFiles()?.forEach {
             explore(it, client)
@@ -42,9 +42,6 @@ private suspend fun explore(file: File, client: KolasuClient) {
     }
 }
 
-private fun foo() {
-}
-
 fun main(args: Array<String>) {
     val client = KolasuClient()
 
@@ -54,7 +51,7 @@ fun main(args: Array<String>) {
     val file2 = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/core/src/main/java/com/taobao/arthas/core/Arthas.java")
     val file3 = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/core/src/main/java/com/taobao/arthas/core/view/ClassInfoView.java")
 
-    //explore(file2, client)
+    explore(file2, client)
     val partitionIDs = client.getPartitionIDs()
     println("Partitions: $partitionIDs")
 //    client.registerLanguage(todoLanguage)
