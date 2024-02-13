@@ -49,3 +49,23 @@ mavenPublishing {
         }
     }
 }
+
+val jvmVersion = extra["jvmVersion"] as String
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(jvmVersion)
+    targetCompatibility = JavaVersion.toVersion(jvmVersion)
+    withSourcesJar()
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
+    kotlinOptions {
+        jvmTarget = jvmVersion
+    }
+}
+
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of(jvmVersion.removePrefix("1.")))
+    }
+}

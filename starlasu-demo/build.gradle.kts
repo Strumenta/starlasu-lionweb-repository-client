@@ -18,4 +18,9 @@ dependencies {
     implementation("com.strumenta.kolasu:kolasu-lionweb:$kolasuVersion")
     implementation(project(":starlasu-client"))
     implementation("com.strumenta.langmodules.kolasu-java-langmodule:ast:0.9.15-SNAPSHOT")
+    testImplementation(kotlin("test-junit5"))
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

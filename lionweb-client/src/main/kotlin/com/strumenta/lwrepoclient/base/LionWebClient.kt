@@ -4,6 +4,7 @@ import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.LowLevelJsonSerialization
+import io.lionweb.lioncore.java.serialization.PrimitiveValuesSerialization.PrimitiveDeserializer
 import io.lionweb.lioncore.java.serialization.PrimitiveValuesSerialization.PrimitiveSerializer
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
@@ -19,7 +20,11 @@ class LionWebClient(
 ) {
 
     private var httpClient: OkHttpClient = OkHttpClient()
-    private val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
+
+    /**
+     * Exposed for testing purposes
+     */
+    val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
         enableDynamicNodes()
     }
 
@@ -29,6 +34,10 @@ class LionWebClient(
 
     fun registerPrimitiveSerializer(dataTypeID: String, serializer: PrimitiveSerializer<Any>) {
         jsonSerialization.primitiveValuesSerialization.registerSerializer(dataTypeID, serializer)
+    }
+
+    fun registerPrimitiveDeserializer(dataTypeID: String, serializer: PrimitiveDeserializer<Any>) {
+        jsonSerialization.primitiveValuesSerialization.registerDeserializer(dataTypeID, serializer)
     }
 
     fun getPartitionIDs(): List<String> {
@@ -52,13 +61,17 @@ class LionWebClient(
         urlBuilder.addQueryParameter("depthLimit", "99")
         val request: Request = Request.Builder()
             .url(urlBuilder.build())
-            .addHeader("Content-Encoding", "gzip")
             .post(body)
             .build()
         httpClient.newCall(request).execute().use { response ->
-            val data = (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
-            val nodes = jsonSerialization.deserializeToNodes(data)
-            return nodes.find { it.id == rootId } ?: throw IllegalArgumentException()
+            if (response.code == 200) {
+                val data =
+                    (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
+                val nodes = jsonSerialization.deserializeToNodes(data)
+                return nodes.find { it.id == rootId } ?: throw IllegalArgumentException()
+            } else {
+                throw RuntimeException("Something went wrong while querying $url: http code ${response.code}, body: ${response.body?.string()}")
+            }
         }
     }
 

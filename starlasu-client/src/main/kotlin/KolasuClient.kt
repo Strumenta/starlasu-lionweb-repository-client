@@ -5,20 +5,38 @@ import com.strumenta.kolasu.lionweb.LionWebModelConverter
 import com.strumenta.kolasu.model.Node
 import com.strumenta.lwrepoclient.base.LionWebClient
 import io.lionweb.lioncore.java.language.Enumeration
+import kotlin.enums.enumEntries
 
 class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val debug: Boolean = true) {
 
-    private val nodeConverter = LionWebModelConverter()
+    /**
+     * Exposed for testing purposes
+     */
+    val nodeConverter = LionWebModelConverter()
     private val lionWebClient = LionWebClient(hostname, port, debug = debug)
+
+    /**
+     * Exposed for testing purposes
+     */
+    val jsonSerialization = lionWebClient.jsonSerialization
+
 
     fun registerLanguage(kolasuLanguage: KolasuLanguage) {
         val lionwebLanguage = nodeConverter.exportLanguageToLionWeb(kolasuLanguage)
         lionWebClient.registerLanguage(lionwebLanguage)
         kolasuLanguage.enumClasses.forEach { enumClass ->
             val enumeration = lionwebLanguage.elements.filterIsInstance<Enumeration>().find { it.name == enumClass.simpleName }!!
+            val ec = enumClass
+            println("HANDLE ENUMERATION $enumeration")
             lionWebClient.registerPrimitiveSerializer(
                 enumeration.id!!
             ) { value -> (value as Enum<*>).name }
+            val values = ec.members.find { it.name == "values" }!!.call() as Array<Enum<*>>
+            lionWebClient.registerPrimitiveDeserializer(
+                enumeration.id!!
+            ) { serialized ->
+                values.find { it.name == serialized } ?: throw RuntimeException("Cannot find enumeration value for $serialized (enum ${enumClass.qualifiedName})")
+            }
         }
     }
 
