@@ -1,0 +1,3 @@
+     A                                      UNIQUE
+     A          R FCUST                     PFILE(CUSTOMER)
+     A          K CUID

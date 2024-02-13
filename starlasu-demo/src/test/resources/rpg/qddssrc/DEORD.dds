@@ -1,0 +1,20 @@
+     A                                      REF(SAMREF)
+     A          R FDETO
+     A            ODORID    R               REFFLD(ORID)
+     A            ODYEAR    R               REFFLD(YEAR)
+     A            ODLINE    R
+     A            ODARID    R               REFFLD(ARID)
+     A            ODQTY     R               TEXT('ORDERED QUANTITY')
+     A                                      COLHDG('ORDER' 'QUANTITY')
+     A                                      REFFLD(QUANTITY)
+     A            ODQTYLIV  R               TEXT('DELIVERED QUANTITY')
+     A                                      COLHDG('DELIV' 'QUANTITY')
+     A                                      REFFLD(QUANTITY)
+     A            ODPRICE   R               REFFLD(UNITPRICE)
+     A            ODTOT     R               REFFLD(TOTPRICE)
+     A            ODTOTVAT  R               REFFLD(TOTPRICE)
+     A                                      TEXT('TOTAL LINE WITH VAT')
+     A                                      COLHDG('TOTAL LINE' 'WITH VAT')
+     A          K ODLINE
+     A          K ODORID
+     A          K ODYEAR

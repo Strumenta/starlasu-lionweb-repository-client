@@ -5,7 +5,6 @@ import com.strumenta.kolasu.lionweb.LionWebModelConverter
 import com.strumenta.kolasu.model.Node
 import com.strumenta.lwrepoclient.base.LionWebClient
 import io.lionweb.lioncore.java.language.Enumeration
-import kotlin.enums.enumEntries
 
 class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val debug: Boolean = true) {
 
@@ -19,7 +18,6 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      * Exposed for testing purposes
      */
     val jsonSerialization = lionWebClient.jsonSerialization
-
 
     fun registerLanguage(kolasuLanguage: KolasuLanguage) {
         val lionwebLanguage = nodeConverter.exportLanguageToLionWeb(kolasuLanguage)
