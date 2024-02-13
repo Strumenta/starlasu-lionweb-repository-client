@@ -1,10 +1,12 @@
+import java.net.URI
+
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.9.22"
     id("org.jetbrains.dokka") version "1.9.10"
     id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
 
     id("java-library")
-    id("com.vanniktech.maven.publish") version "0.26.0"
+    id("com.vanniktech.maven.publish") version "0.27.0"
 }
 
 val ktorVersion = extra["ktorVersion"]
@@ -18,6 +20,18 @@ dependencies {
     implementation("com.strumenta.kolasu:kolasu-core:$kolasuVersion")
     implementation("com.strumenta.kolasu:kolasu-lionweb:$kolasuVersion")
     implementation(project(":lionweb-client"))
+}
+
+publishing {
+    repositories {
+        maven {
+            url = URI("https://maven.pkg.github.com/Strumenta/starlasu-lionweb-repository-client")
+            credentials {
+                username = (project.findProperty("starlasu.github.user") ?: System.getenv("starlasu_github_user")) as String?
+                password = (project.findProperty("starlasu.github.token") ?: System.getenv("starlasu_github_token")) as String?
+            }
+        }
+    }
 }
 
 mavenPublishing {
