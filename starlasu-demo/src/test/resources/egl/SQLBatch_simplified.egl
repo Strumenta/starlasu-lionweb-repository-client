@@ -1,0 +1,15 @@
+package com.CompanyB.CustomerPackage;
+program SQLBatch type basicProgram
+
+  dept Department;
+
+  function main()
+    try
+      clearTable();
+    onException (ex SQLException)
+      sqlFailure();
+    end
+  end
+
+
+end

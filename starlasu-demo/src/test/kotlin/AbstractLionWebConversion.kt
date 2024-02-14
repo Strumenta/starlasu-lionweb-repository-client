@@ -2,6 +2,8 @@
 import com.strumenta.kolasu.language.KolasuLanguage
 import com.strumenta.kolasu.parsing.ParsingResult
 import com.strumenta.kolasu.testing.assertASTsAreEqual
+import com.strumenta.kolasu.traversing.children
+import com.strumenta.kolasu.traversing.walk
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
 import java.io.InputStream
 import com.strumenta.kolasu.model.Node as KNode
@@ -19,6 +21,22 @@ abstract class AbstractLionWebConversion<R : KNode>(val kolasuLanguage: KolasuLa
     ) {
         val result = parse(inputStream)
         val ast = result.root ?: throw IllegalStateException()
+        val encounteredNodes = mutableListOf<KNode>()
+        ast.walk().forEach { descendant ->
+            val encounteredChildren = mutableListOf<KNode>()
+            descendant.children.forEach { child ->
+                if (encounteredChildren.any { encounteredChild -> encounteredChild === child }) {
+                    throw IllegalStateException("Duplicate child: $child in $descendant")
+                } else {
+                    encounteredChildren.add(child)
+                }
+            }
+            if (encounteredNodes.any { encounteredNode -> encounteredNode === descendant }) {
+                throw IllegalStateException("Duplicate node: $descendant")
+            } else {
+                encounteredNodes.add(descendant)
+            }
+        }
         astChecker.invoke(ast)
 
         val client = KolasuClient()

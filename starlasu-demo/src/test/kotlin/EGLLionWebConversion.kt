@@ -2,9 +2,7 @@ import com.strumenta.egl.ast.EglCompilationUnit
 import com.strumenta.egl.ast.kLanguage
 import com.strumenta.egl.parser.EGLKolasuParser
 import com.strumenta.kolasu.parsing.ParsingResult
-import org.apache.commons.io.input.BOMInputStream
 import java.io.InputStream
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 class EGLLionWebConversion : AbstractLionWebConversion<EglCompilationUnit>(kLanguage) {
@@ -12,6 +10,12 @@ class EGLLionWebConversion : AbstractLionWebConversion<EglCompilationUnit>(kLang
     override fun parse(inputStream: InputStream): ParsingResult<EglCompilationUnit> {
         val parser = EGLKolasuParser()
         return parser.parse(inputStream)
+    }
+
+    @Test
+    fun sqlBatchSimplified() {
+        val inputStream = this.javaClass.getResourceAsStream("/egl/SQLBatch_simplified.egl") ?: throw IllegalStateException()
+        checkSerializationAndDeserialization(inputStream)
     }
 
     @Test

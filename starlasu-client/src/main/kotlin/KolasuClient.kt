@@ -25,7 +25,6 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         kolasuLanguage.enumClasses.forEach { enumClass ->
             val enumeration = lionwebLanguage.elements.filterIsInstance<Enumeration>().find { it.name == enumClass.simpleName }!!
             val ec = enumClass
-            println("HANDLE ENUMERATION $enumeration")
             lionWebClient.registerPrimitiveSerializer(
                 enumeration.id!!
             ) { value -> (value as Enum<*>).name }
