@@ -11,6 +11,7 @@ val lionwebVersion = extra["lionwebVersion"]
 val kolasuVersion = extra["kolasuVersion"]
 val rpgParserVersion = extra["rpgParserVersion"]
 val javaModuleVersion = extra["javaModuleVersion"]
+val eglParserVersion = extra["eglParserVersion"]
 
 val githubUser = (
     project.findProperty("starlasu.github.user")
@@ -36,6 +37,14 @@ repositories {
             password = githubToken
         }
     }
+    maven {
+        name = project.name
+        url = uri("https://maven.pkg.github.com/Strumenta/kolasu-EGL-langmodule")
+        credentials {
+            username = githubUser
+            password = githubToken
+        }
+    }
 }
 
 dependencies {
@@ -46,6 +55,7 @@ dependencies {
     implementation("com.strumenta.langmodules.kolasu-java-langmodule:ast:$javaModuleVersion")
     testImplementation(kotlin("test-junit5"))
     testImplementation("com.strumenta:rpg-parser:$rpgParserVersion")
+    testImplementation("com.strumenta.langmodules.kolasu-EGL-langmodule:ast:$eglParserVersion")
     testImplementation("com.strumenta:rpg-parser-symbol-resolution:$rpgParserVersion")
     testImplementation("commons-io:commons-io:2.7")
     testImplementation("org.slf4j:slf4j-simple:1.7.30")

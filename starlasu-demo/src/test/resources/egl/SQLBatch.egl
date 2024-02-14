@@ -1,0 +1,123 @@
+package com.CompanyB.CustomerPackage;
+program SQLBatch type basicProgram
+
+  dept Department;
+
+  function main()
+    try
+      clearTable();
+      loadTable();
+      getRow();
+      updateRow();
+      getAllRows();
+      forceRecordNotFound();
+      forceSQLException();
+    onException (ex SQLException)
+      sqlFailure();
+    onException (ex AnyException)
+      anyFailure( ex );
+    end
+  end
+
+  function getRow( )
+      setVariation ( "Get row from department table" );
+    getDept("D100");
+  end
+
+  function updateRow()
+    set dept empty;
+      setVariation ( "Update department table" );
+    dept.id = "T100";
+    get dept forUpdate;
+    if ( dept is noRecordFound )
+      sqlFailure();
+    else
+      dept.description = "Test Engineers";
+      replace dept;
+      commit();
+    end
+    getDept( "T100" );
+  end
+
+  function getAllRows()
+    setVariation ( "Get all departments" );
+    dept.id = " ";
+    open deptSet for dept;
+    foreach ( dept )
+      showDept();
+    end
+    end
+
+  function clearTable()
+      setVariation ( "Clear all rows from department table" );
+      dept.id = " ";
+      execute delete
+        #sql{
+          delete from DEPARTMENT_TABLE
+          where
+            id >= :dept.id
+        }  for dept;
+    commit();
+  end
+
+  function forceRecordNotFound()
+    setVariation( "Try to get a department that is not in the table");
+    getDept("B100");
+  end
+
+  function forceSQLException()
+    setVariation("Force an sql exception by dropping a non-existent table");
+    prepare dropStmt from "DROP TABLE NOT_A_TABLE";
+    execute dropStmt;
+  end
+
+  function loadTable()
+    setVariation ( "Load department table" );
+    addDept("A100","Architects","AM0001");
+    addDept("D100","Developers","DM0001");
+    addDept("T100","Testers","TM0001");
+    addDept("M100","Managers","MM0001");
+    commit();
+  end
+
+  function addDept( deptNo string, desc String, manager string )
+    dept.id = deptNo;
+    dept.description = desc;
+    dept.manager = manager;
+    add dept;
+  end
+
+  function getDept( id string )
+    set dept empty;
+    dept.id = id;
+    get dept;
+    showDept();
+  end
+
+  function showDept()
+    if ( dept is noRecordFound )
+      writeStdOut ( "Department " + dept.id + " not found." );
+    else
+        writeStdOut( "Department " + dept.id +
+           " description:  " + dept.description );
+    end
+  end
+
+  function setVariation ( desc string )
+    writeStdOut ( "Variation = " + desc );
+  end
+
+  function sqlFailure()
+     writeStdOut ( "SQL Exception, SQL code =
+        " + sysVar.sqlData.sqlCode
+       + ", SQL  state:  " + sysVar.sqlData.sqlstate );
+     rollback();
+  end
+
+  function anyFailure( ex AnyException )
+     writeStdOut ( "Unexpected Exception, Error code =  " + ex.messageID );
+     writeStdOut ( ex.message );
+     rollback();
+  end
+
+end
