@@ -1,5 +1,7 @@
 # StarLasu LionWeb Repository Client
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Strumenta/starlasu-lionweb-repository-client/check.yml)
+
 This is a Kotlin library to store and retrieve LionWeb trees and StarLasu ASTs into and from the [LionWeb Repository](https://github.com/LionWeb-io/lionweb-repository).
 
 It consists of two clients:
