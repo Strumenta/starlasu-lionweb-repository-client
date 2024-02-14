@@ -1,0 +1,25 @@
+name: Check
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '21' ]
+    name: Java ${{ matrix.Java }} Check
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup java
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: ${{ matrix.java }}
+      - name: Test
+        env:
+          STRUMENTA_PACKAGES_USER: ${{ secrets.STRUMENTA_PACKAGES_USER }}
+          STRUMENTA_PACKAGES_TOKEN: ${{ secrets.STRUMENTA_PACKAGES_TOKEN }}
+        run: ./gradlew check --stacktrace
