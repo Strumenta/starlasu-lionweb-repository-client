@@ -1,5 +1,4 @@
 import net.researchgate.release.ReleaseExtension
-import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
     id("net.researchgate.release") version "3.0.2"
