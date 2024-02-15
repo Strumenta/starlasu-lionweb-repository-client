@@ -13,6 +13,10 @@ abstract class AbstractLionWebConversion<R : KNode>(val kolasuLanguage: KolasuLa
 
     protected abstract fun parse(inputStream: InputStream): ParsingResult<R>
 
+    protected open fun initializeClient(kolasuClient: KolasuClient) {
+
+    }
+
     protected fun checkSerializationAndDeserialization(
         inputStream: InputStream,
         astChecker: (ast: R) -> Unit = {},
@@ -41,6 +45,7 @@ abstract class AbstractLionWebConversion<R : KNode>(val kolasuLanguage: KolasuLa
 
         val client = KolasuClient()
         client.registerLanguage(kolasuLanguage)
+        initializeClient(client)
         val baseId = "foo"
         val lwAST = client.nodeConverter.exportModelToLionWeb(ast, baseId)
         lwASTChecker.invoke(lwAST)
