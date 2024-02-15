@@ -32,14 +32,6 @@ class LionWebClient(
         jsonSerialization.registerLanguage(language)
     }
 
-    fun registerPrimitiveSerializer(dataTypeID: String, serializer: PrimitiveSerializer<Any>) {
-        jsonSerialization.primitiveValuesSerialization.registerSerializer(dataTypeID, serializer)
-    }
-
-    fun registerPrimitiveDeserializer(dataTypeID: String, serializer: PrimitiveDeserializer<Any>) {
-        jsonSerialization.primitiveValuesSerialization.registerDeserializer(dataTypeID, serializer)
-    }
-
     fun getPartitionIDs(): List<String> {
         val url = "http://$hostname:$port/bulk/partitions"
         val request: Request = Request.Builder()
