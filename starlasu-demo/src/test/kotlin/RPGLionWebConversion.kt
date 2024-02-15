@@ -16,7 +16,6 @@ class RPGLionWebConversion : AbstractLionWebConversion<CompilationUnit>(kLanguag
     }
 
     @Test
-    @Ignore
     fun cus300() {
         val inputStream = this.javaClass.getResourceAsStream("/rpg/qrpglesrc/CUS300.rpgle") ?: throw IllegalStateException()
         checkSerializationAndDeserialization(inputStream)
