@@ -50,4 +50,12 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         val lwNode = lionWebClient.getPartition(nodeId)
         return nodeConverter.importModelFromLionWeb(lwNode)
     }
+
+    /**
+     * To be called exactly once, to ensure the Model Repository is initialized.
+     * Note that it causes all content of the Model Repository to be lost!
+     */
+    fun modelRepositoryInit() {
+        lionWebClient.modelRepositoryInit()
+    }
 }

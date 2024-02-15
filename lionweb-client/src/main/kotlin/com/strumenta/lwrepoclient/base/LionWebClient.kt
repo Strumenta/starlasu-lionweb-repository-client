@@ -103,4 +103,21 @@ class LionWebClient(
             }
         }
     }
+
+    /**
+     * To be called exactly once, to ensure the Model Repository is initialized.
+     * Note that it causes all content of the Model Repository to be lost!
+     */
+    fun modelRepositoryInit() {
+        val url = "http://$hostname:$port/init"
+        val request: Request = Request.Builder()
+            .url(url)
+            .post("".toRequestBody())
+            .build()
+        OkHttpClient().newCall(request).execute().use { response ->
+            if (response.code != 200) {
+                throw RuntimeException("DB initialization failed, HTTP ${response.code}: ${response.body?.string()}")
+            }
+        }
+    }
 }
