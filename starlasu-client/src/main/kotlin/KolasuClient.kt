@@ -32,7 +32,12 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             lionWebClient.registerPrimitiveDeserializer(
                 enumeration.id!!
             ) { serialized ->
-                values.find { it.name == serialized } ?: throw RuntimeException("Cannot find enumeration value for $serialized (enum ${enumClass.qualifiedName})")
+                if (serialized == null) {
+                    null
+                } else {
+                    values.find { it.name == serialized }
+                        ?: throw RuntimeException("Cannot find enumeration value for $serialized (enum ${enumClass.qualifiedName})")
+                }
             }
         }
     }
