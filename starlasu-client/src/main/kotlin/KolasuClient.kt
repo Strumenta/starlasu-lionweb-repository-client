@@ -19,11 +19,13 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     /**
      * Exposed for testing purposes
      */
-    val jsonSerialization : JsonSerialization
+    val jsonSerialization: JsonSerialization
         get() {
-            return nodeConverter.prepareJsonSerialization(JsonSerialization.getStandardSerialization().apply {
-                enableDynamicNodes()
-            })
+            return nodeConverter.prepareJsonSerialization(
+                JsonSerialization.getStandardSerialization().apply {
+                    enableDynamicNodes()
+                }
+            )
         }
 
     fun registerLanguage(kolasuLanguage: KolasuLanguage) {
@@ -31,7 +33,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         lionWebClient.registerLanguage(lionwebLanguage)
     }
 
-    fun <E:Any>registerPrimitiveValueSerialization(kClass: KClass<E>, primitiveValueSerialization: PrimitiveValueSerialization<E>) {
+    fun <E : Any>registerPrimitiveValueSerialization(kClass: KClass<E>, primitiveValueSerialization: PrimitiveValueSerialization<E>) {
         nodeConverter.registerPrimitiveValueSerialization(kClass, primitiveValueSerialization)
     }
 
