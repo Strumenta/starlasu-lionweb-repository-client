@@ -53,24 +53,24 @@ fun main(args: Array<String>) {
     val client = KolasuClient()
 
     client.registerLanguage(JavaKolasuLanguage)
-    val dir = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas")
-    val file =
-        File(
-            "/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/" +
-                "testcase/src/main/java/com/alibaba/arthas/Type.java",
-        )
-    val file2 =
-        File(
-            "/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/" +
-                "core/src/main/java/com/taobao/arthas/core/Arthas.java",
-        )
-    val file3 =
-        File(
-            "/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/" +
-                "core/src/main/java/com/taobao/arthas/core/view/ClassInfoView.java",
-        )
-
-    explore(file2, client)
+//    val dir = File("/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas")
+//    val file =
+//        File(
+//            "/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/" +
+//                "testcase/src/main/java/com/alibaba/arthas/Type.java",
+//        )
+//    val file2 =
+//        File(
+//            "/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/" +
+//                "core/src/main/java/com/taobao/arthas/core/Arthas.java",
+//        )
+//    val file3 =
+//        File(
+//            "/Users/ftomassetti/repos/kolasu-java-langmodule/build/downloaded-examples/arthas/" +
+//                "core/src/main/java/com/taobao/arthas/core/view/ClassInfoView.java",
+//        )
+//
+//    explore(file2, client)
     val partitionIDs = client.getPartitionIDs()
     println("Partitions: $partitionIDs")
 //    client.registerLanguage(todoLanguage)

@@ -38,9 +38,14 @@ class LionWebClient(
             .get()
             .build()
         httpClient.newCall(request).execute().use { response ->
-            val data = (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
-            val chunk = LowLevelJsonSerialization().deserializeSerializationBlock(data)
-            return chunk.classifierInstances.mapNotNull { it.id }
+            if (response.code == 200) {
+                val data =
+                    (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
+                val chunk = LowLevelJsonSerialization().deserializeSerializationBlock(data)
+                return chunk.classifierInstances.mapNotNull { it.id }
+            } else {
+                throw RuntimeException("Got back ${response.code}: ${response.body?.string()}")
+            }
         }
     }
 

@@ -1,6 +1,8 @@
 import java.net.URI
 
 plugins {
+    java
+    `jvm-test-suite`
     id("org.jetbrains.kotlin.jvm") version "1.9.22"
     id("org.jetbrains.dokka") version "1.9.10"
     id("org.jlleitschuh.gradle.ktlint") version "12.0.3"
@@ -15,6 +17,8 @@ val kolasuVersion = extra["kolasuVersion"]
 val rpgParserVersion = extra["rpgParserVersion"]
 val javaModuleVersion = extra["javaModuleVersion"]
 val eglParserVersion = extra["eglParserVersion"]
+val kotestVersion = extra["kotestVersion"]
+val kotlinVersion = extra["kotlinVersion"]
 
 val githubUser =
     (
@@ -51,6 +55,38 @@ repositories {
         }
     }
 }
+
+testing {
+    suites {
+        val test by getting(JvmTestSuite::class) {
+            useJUnitJupiter()
+        }
+
+        register<JvmTestSuite>("functionalTest") {
+            dependencies {
+                implementation(project())
+                implementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
+                implementation("io.kotest:kotest-runner-junit5-jvm:5.8.0")
+                implementation("com.strumenta.langmodules.kolasu-java-langmodule:ast:$javaModuleVersion")
+                implementation("io.kotest.extensions:kotest-extensions-testcontainers:$kotestVersion")
+                implementation("io.kotest:kotest-assertions-core:5.8.0")
+                implementation("io.kotest:kotest-property:5.8.0")
+                implementation("org.testcontainers:testcontainers:1.19.5")
+                implementation("org.testcontainers:junit-jupiter:1.19.5")
+                implementation("org.testcontainers:postgresql:1.19.5")
+            }
+
+            targets {
+                all {
+                    testTask.configure {
+                        shouldRunAfter(test)
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 dependencies {
     implementation("io.ktor:ktor-client-core:$ktorVersion")
@@ -138,6 +174,6 @@ afterEvaluate {
     }
 }
 
-tasks.test {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
