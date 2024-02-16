@@ -4,7 +4,6 @@ import com.strumenta.rpgparser.model.CompilationUnit
 import com.strumenta.rpgparser.model.kLanguage
 import org.apache.commons.io.input.BOMInputStream
 import java.io.InputStream
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 class RPGLionWebConversion : AbstractLionWebConversion<CompilationUnit>(kLanguage) {

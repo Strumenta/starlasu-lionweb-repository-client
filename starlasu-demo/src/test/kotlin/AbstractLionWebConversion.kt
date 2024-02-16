@@ -14,7 +14,6 @@ abstract class AbstractLionWebConversion<R : KNode>(val kolasuLanguage: KolasuLa
     protected abstract fun parse(inputStream: InputStream): ParsingResult<R>
 
     protected open fun initializeClient(kolasuClient: KolasuClient) {
-
     }
 
     protected fun checkSerializationAndDeserialization(
@@ -36,7 +35,7 @@ abstract class AbstractLionWebConversion<R : KNode>(val kolasuLanguage: KolasuLa
                 }
             }
             if (encounteredNodes.any { encounteredNode -> encounteredNode === descendant }) {
-                throw IllegalStateException("Duplicate node: $descendant")
+                throw IllegalStateException("Duplicate node: $descendant (parent ${descendant.parent?.nodeType})")
             } else {
                 encounteredNodes.add(descendant)
             }

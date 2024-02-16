@@ -3,8 +3,10 @@ import com.strumenta.kolasu.parsing.ParsingResult
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
 import com.strumenta.rpgparser.RPGFileType
 import com.strumenta.rpgparser.RPGKolasuParser
+import com.strumenta.rpgparser.model.AlphabeticEditCode
 import com.strumenta.rpgparser.model.CompilationUnit
 import com.strumenta.rpgparser.model.EditCode
+import com.strumenta.rpgparser.model.NumericEditCode
 import com.strumenta.rpgparser.model.kLanguage
 import org.apache.commons.io.input.BOMInputStream
 import java.io.InputStream
@@ -73,14 +75,24 @@ class DDSLionWebConversion : AbstractLionWebConversion<CompilationUnit>(kLanguag
     }
 
     override fun initializeClient(kolasuClient: KolasuClient) {
-        kolasuClient.registerPrimitiveValueSerialization(EditCode::class, object : PrimitiveValueSerialization<EditCode> {
-            override fun deserialize(serialized: String): EditCode {
-                TODO("Not yet implemented")
-            }
+        kolasuClient.registerPrimitiveValueSerialization(
+            EditCode::class,
+            object : PrimitiveValueSerialization<EditCode> {
+                override fun deserialize(serialized: String): EditCode {
+                    return when {
+                        serialized.startsWith("alphabetic:") -> AlphabeticEditCode(serialized.removePrefix("alphabetic:")[0])
+                        serialized.startsWith("numeric:") -> NumericEditCode(serialized.removePrefix("numeric:").toInt())
+                        else -> throw IllegalStateException("Invalid serialized value")
+                    }
+                }
 
-            override fun serialize(value: EditCode): String {
-                TODO("Not yet implemented")
+                override fun serialize(value: EditCode): String {
+                    return when (value) {
+                        is AlphabeticEditCode -> "alphabetic:${value.code}"
+                        is NumericEditCode -> "numeric:${value.code}"
+                    }
+                }
             }
-        })
+        )
     }
 }
