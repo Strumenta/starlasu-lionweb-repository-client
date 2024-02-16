@@ -9,7 +9,6 @@ import io.lionweb.lioncore.java.serialization.JsonSerialization
 import kotlin.reflect.KClass
 
 class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val debug: Boolean = true) {
-
     /**
      * Exposed for testing purposes
      */
@@ -41,7 +40,10 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return lionWebClient.getPartitionIDs()
     }
 
-    fun storeTree(kNode: Node, baseId: String) {
+    fun storeTree(
+        kNode: Node,
+        baseId: String,
+    ) {
         val lwNode = nodeConverter.exportModelToLionWeb(kNode, baseId)
         lionWebClient.storeTree(lwNode)
     }

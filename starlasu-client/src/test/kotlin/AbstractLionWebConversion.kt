@@ -10,7 +10,6 @@ import com.strumenta.kolasu.model.Node as KNode
 import io.lionweb.lioncore.java.model.Node as LWNode
 
 abstract class AbstractLionWebConversion<R : KNode>(val kolasuLanguage: KolasuLanguage) {
-
     protected abstract fun parse(inputStream: InputStream): ParsingResult<R>
 
     protected open fun initializeClient(kolasuClient: KolasuClient) {
@@ -20,7 +19,7 @@ abstract class AbstractLionWebConversion<R : KNode>(val kolasuLanguage: KolasuLa
         inputStream: InputStream,
         astChecker: (ast: R) -> Unit = {},
         lwASTChecker: (lwAST: LWNode) -> Unit = {},
-        jsonChecker: (json: String) -> Unit = {}
+        jsonChecker: (json: String) -> Unit = {},
     ) {
         val result = parse(inputStream)
         val ast = result.root ?: throw IllegalStateException()
@@ -50,7 +49,9 @@ abstract class AbstractLionWebConversion<R : KNode>(val kolasuLanguage: KolasuLa
         lwASTChecker.invoke(lwAST)
         val json = client.jsonSerialization.serializeTreeToJsonString(lwAST)
         jsonChecker.invoke(json)
-        val lwASTDeserialized = client.jsonSerialization.deserializeToNodes(json).find { it.id == lwAST.id } ?: throw IllegalStateException()
+        val lwASTDeserialized =
+            client.jsonSerialization.deserializeToNodes(json)
+                .find { it.id == lwAST.id } ?: throw IllegalStateException()
         val astDeserialized = client.nodeConverter.importModelFromLionWeb(lwASTDeserialized)
 
         assertASTsAreEqual(ast, astDeserialized)

@@ -13,7 +13,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class JavaLionWebConversion : AbstractLionWebConversion<JCompilationUnit>(kLanguage) {
-
     override fun parse(inputStream: InputStream): ParsingResult<JCompilationUnit> {
         return JavaKolasuParser().parse(inputStream)
     }
@@ -33,7 +32,7 @@ class JavaLionWebConversion : AbstractLionWebConversion<JCompilationUnit>(kLangu
                 val classifierInstance = chunk.classifierInstancesByID["foo_root_imports_0"]!!
                 assertEquals(1, classifierInstance.properties.size)
                 assertEquals("false", classifierInstance.properties.first().value)
-            }
+            },
         )
     }
 
@@ -41,9 +40,20 @@ class JavaLionWebConversion : AbstractLionWebConversion<JCompilationUnit>(kLangu
     fun arthas() {
         val inputStream = this.javaClass.getResourceAsStream("/java/Arthas.java") ?: throw IllegalStateException()
         checkSerializationAndDeserialization(inputStream, astChecker = { ast: JCompilationUnit ->
-            // <root>.declarations[0].members[1].body.statements[0].declarators[0].initializer.container.container.container.body nullness: expected value to be null but was [] (node type com.strumenta.javalangmodule.ast.JClassInstanceCreationExpr)
-            val initializer = ((ast.declarations[0].members[1] as JMethodDeclaration).body!!.statements[0] as JLocalVariableDeclaration).declarators[0].initializer
-            val jClassInstanceCreationExpr = (((initializer as JExpressionQualifiedMethodInvocationExpr).container as JExpressionQualifiedMethodInvocationExpr).container as JExpressionQualifiedMethodInvocationExpr).container as JClassInstanceCreationExpr
+            val initializer =
+                (
+                    (ast.declarations[0].members[1] as JMethodDeclaration).body!!
+                        .statements[0] as JLocalVariableDeclaration
+                ).declarators[0].initializer
+            val jClassInstanceCreationExpr =
+                (
+                    (
+                        (initializer as JExpressionQualifiedMethodInvocationExpr)
+                            .container as JExpressionQualifiedMethodInvocationExpr
+                    )
+                        .container as JExpressionQualifiedMethodInvocationExpr
+                )
+                    .container as JClassInstanceCreationExpr
             assertEquals(31, jClassInstanceCreationExpr.position?.start?.line)
             val body = jClassInstanceCreationExpr.body
             assertEquals(null, body)

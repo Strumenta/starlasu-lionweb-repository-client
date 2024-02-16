@@ -6,7 +6,6 @@ import java.io.InputStream
 import kotlin.test.Test
 
 class EGLLionWebConversion : AbstractLionWebConversion<EglCompilationUnit>(kLanguage) {
-
     override fun parse(inputStream: InputStream): ParsingResult<EglCompilationUnit> {
         val parser = EGLKolasuParser()
         return parser.parse(inputStream)
