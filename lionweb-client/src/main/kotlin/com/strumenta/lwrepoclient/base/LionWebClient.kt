@@ -70,9 +70,14 @@ class LionWebClient(
         }
     }
 
+
     fun storeTree(node: Node) {
         if (debug) {
-            treeSanityChecks(node, jsonSerialization = jsonSerialization)
+            try {
+                treeSanityChecks(node, jsonSerialization = jsonSerialization)
+            } catch (e: RuntimeException) {
+                throw RuntimeException("Failed to store tree $node", e)
+            }
         }
         val json = jsonSerialization.serializeTreesToJsonString(node)
         println("  JSON of ${json!!.encodeToByteArray().size} bytes")
@@ -90,11 +95,13 @@ class LionWebClient(
             .post(body)
             .build()
         httpClient.newCall(request).execute().use { response ->
-            println("  Response: ${response.code}")
             if (response.code != 200) {
+                val body = response.body?.string()
                 if (debug) {
-                    println("  Response: ${response.body?.string()}")
+                    println("  Response: ${response.code}")
+                    println("  Response: $body")
                 }
+                throw RuntimeException("Request failed with code ${response.code}: $body")
             }
         }
     }

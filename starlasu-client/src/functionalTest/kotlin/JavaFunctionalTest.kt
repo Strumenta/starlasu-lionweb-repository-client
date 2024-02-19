@@ -1,3 +1,4 @@
+import com.strumenta.kolasu.model.assignParents
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
 import org.slf4j.LoggerFactory
 import org.testcontainers.Testcontainers.exposeHostPorts
@@ -72,6 +73,23 @@ class JavaFunctionalTest {
     fun noPartitionsOnNewModelRepository() {
         val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort)
         assertEquals(emptyList(), kolasuClient.getPartitionIDs())
+    }
+
+    @Test
+    fun gettingPartionsAfterStoringNodes() {
+        val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort)
+        kolasuClient.registerLanguage(todoLanguage)
+
+        val todo = TodoProject("My errands list", mutableListOf(
+            Todo("Buy milk"),
+            Todo("Take the garbage out"),
+            Todo("Go for a walk"),
+        ))
+        todo.assignParents()
+        kolasuClient.storeTree(todo, "my-base")
+        val partitionIDs = kolasuClient.getPartitionIDs()
+        println("partitionIDs: $partitionIDs")
+        //assertEquals(emptyList(), kolasuClient.getPartitionIDs())
     }
 
 }
