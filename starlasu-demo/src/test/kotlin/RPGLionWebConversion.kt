@@ -4,7 +4,6 @@ import com.strumenta.rpgparser.model.CompilationUnit
 import com.strumenta.rpgparser.model.kLanguage
 import org.apache.commons.io.input.BOMInputStream
 import java.io.InputStream
-import kotlin.test.Ignore
 import kotlin.test.Test
 
 class RPGLionWebConversion : AbstractLionWebConversion<CompilationUnit>(kLanguage) {
@@ -16,7 +15,6 @@ class RPGLionWebConversion : AbstractLionWebConversion<CompilationUnit>(kLanguag
     }
 
     @Test
-    @Ignore
     fun cus300() {
         val inputStream = this.javaClass.getResourceAsStream("/rpg/qrpglesrc/CUS300.rpgle") ?: throw IllegalStateException()
         checkSerializationAndDeserialization(inputStream)

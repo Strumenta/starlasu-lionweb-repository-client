@@ -4,8 +4,6 @@ import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.LowLevelJsonSerialization
-import io.lionweb.lioncore.java.serialization.PrimitiveValuesSerialization.PrimitiveDeserializer
-import io.lionweb.lioncore.java.serialization.PrimitiveValuesSerialization.PrimitiveSerializer
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -30,14 +28,6 @@ class LionWebClient(
 
     fun registerLanguage(language: Language) {
         jsonSerialization.registerLanguage(language)
-    }
-
-    fun registerPrimitiveSerializer(dataTypeID: String, serializer: PrimitiveSerializer<Any>) {
-        jsonSerialization.primitiveValuesSerialization.registerSerializer(dataTypeID, serializer)
-    }
-
-    fun registerPrimitiveDeserializer(dataTypeID: String, serializer: PrimitiveDeserializer<Any>) {
-        jsonSerialization.primitiveValuesSerialization.registerDeserializer(dataTypeID, serializer)
     }
 
     fun getPartitionIDs(): List<String> {

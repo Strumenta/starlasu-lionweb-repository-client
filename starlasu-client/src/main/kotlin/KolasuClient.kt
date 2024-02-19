@@ -2,9 +2,11 @@ package com.strumenta.lwrepoclient.kolasu
 
 import com.strumenta.kolasu.language.KolasuLanguage
 import com.strumenta.kolasu.lionweb.LionWebModelConverter
+import com.strumenta.kolasu.lionweb.PrimitiveValueSerialization
 import com.strumenta.kolasu.model.Node
 import com.strumenta.lwrepoclient.base.LionWebClient
-import io.lionweb.lioncore.java.language.Enumeration
+import io.lionweb.lioncore.java.serialization.JsonSerialization
+import kotlin.reflect.KClass
 
 class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val debug: Boolean = true) {
 
@@ -17,24 +19,22 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     /**
      * Exposed for testing purposes
      */
-    val jsonSerialization = lionWebClient.jsonSerialization
+    val jsonSerialization: JsonSerialization
+        get() {
+            return nodeConverter.prepareJsonSerialization(
+                JsonSerialization.getStandardSerialization().apply {
+                    enableDynamicNodes()
+                }
+            )
+        }
 
     fun registerLanguage(kolasuLanguage: KolasuLanguage) {
         val lionwebLanguage = nodeConverter.exportLanguageToLionWeb(kolasuLanguage)
         lionWebClient.registerLanguage(lionwebLanguage)
-        kolasuLanguage.enumClasses.forEach { enumClass ->
-            val enumeration = lionwebLanguage.elements.filterIsInstance<Enumeration>().find { it.name == enumClass.simpleName }!!
-            val ec = enumClass
-            lionWebClient.registerPrimitiveSerializer(
-                enumeration.id!!
-            ) { value -> (value as Enum<*>).name }
-            val values = ec.members.find { it.name == "values" }!!.call() as Array<Enum<*>>
-            lionWebClient.registerPrimitiveDeserializer(
-                enumeration.id!!
-            ) { serialized ->
-                values.find { it.name == serialized } ?: throw RuntimeException("Cannot find enumeration value for $serialized (enum ${enumClass.qualifiedName})")
-            }
-        }
+    }
+
+    fun <E : Any>registerPrimitiveValueSerialization(kClass: KClass<E>, primitiveValueSerialization: PrimitiveValueSerialization<E>) {
+        nodeConverter.registerPrimitiveValueSerialization(kClass, primitiveValueSerialization)
     }
 
     fun getPartitionIDs(): List<String> {
