@@ -4,9 +4,8 @@ import com.strumenta.lwrepoclient.base.addContainment
 import com.strumenta.lwrepoclient.base.lwLanguage
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.language.LionCoreBuiltins
-import io.lionweb.lioncore.java.serialization.JsonSerialization
 
-val propertiesPartition : Concept
+val propertiesPartition: Concept
 val propertiesFile: Concept
 val property: Concept
 val propertiesLanguage = lwLanguage("Properties").apply {

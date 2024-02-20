@@ -12,19 +12,17 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-
 
 @Testcontainers
 class PropertiesFunctionalTest {
     val DB_CONTAINER_PORT = 5432
 
-    //@Container
+    // @Container
     @JvmField
     var db: PostgreSQLContainer<*>? = null
 
     @JvmField
-    var modelRepository : GenericContainer<*>? = null
+    var modelRepository: GenericContainer<*>? = null
 
     @BeforeTest
     fun setup() {
@@ -46,7 +44,8 @@ class PropertiesFunctionalTest {
         exposeHostPorts(dbPort)
         modelRepository = GenericContainer(
             ImageFromDockerfile()
-                .withFileFromClasspath("Dockerfile", "lionweb-repository-Dockerfile" ))
+                .withFileFromClasspath("Dockerfile", "lionweb-repository-Dockerfile")
+        )
             .dependsOn(db)
             .withNetwork(network)
             .withEnv("PGHOST", "mypgdb")
@@ -117,5 +116,4 @@ class PropertiesFunctionalTest {
         assertEquals("pf1", retrieved.id)
         assertEquals(propertiesFile, retrieved.concept)
     }
-
 }
