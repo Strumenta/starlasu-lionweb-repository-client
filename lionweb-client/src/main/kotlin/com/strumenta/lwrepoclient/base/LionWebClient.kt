@@ -4,6 +4,7 @@ import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.LowLevelJsonSerialization
+import io.lionweb.lioncore.java.serialization.UnknownParentPolicy
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -72,7 +73,8 @@ class LionWebClient(
                 if (debug) {
                     File("retrieved.json").writeText(data)
                 }
-                val nodes = jsonSerialization.deserializeToNodes(data, true)
+                jsonSerialization.unknownParentPolicy = UnknownParentPolicy.NULL_REFERENCES
+                val nodes = jsonSerialization.deserializeToNodes(data)
                 return nodes.find { it.id == rootId } ?: throw IllegalArgumentException()
             } else {
                 throw RuntimeException("Something went wrong while querying $url: http code ${response.code}, body: ${response.body?.string()}")
