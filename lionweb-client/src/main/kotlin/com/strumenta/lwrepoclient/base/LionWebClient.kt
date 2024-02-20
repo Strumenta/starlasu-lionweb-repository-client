@@ -37,41 +37,6 @@ class LionWebClient(
         treeStoringOperation(node, "createPartitions")
     }
 
-    private fun treeStoringOperation(node: Node, operation: String) {
-        if (debug) {
-            try {
-                treeSanityChecks(node, jsonSerialization = jsonSerialization)
-            } catch (e: RuntimeException) {
-                throw RuntimeException("Failed to store tree $node", e)
-            }
-        }
-        val json = jsonSerialization.serializeTreesToJsonString(node)
-        println("  JSON of ${json!!.encodeToByteArray().size} bytes")
-        if (debug) {
-            File("sent.json").writeText(json)
-        }
-
-        val body: RequestBody = json.compress()
-        println("  ${body.contentLength()} bytes sent")
-
-        // TODO control with flag http or https
-        val request: Request = Request.Builder()
-            .url("http://$hostname:$port/bulk/$operation")
-            .addHeader("Content-Encoding", "gzip")
-            .post(body)
-            .build()
-        httpClient.newCall(request).execute().use { response ->
-            if (response.code != 200) {
-                val body = response.body?.string()
-                if (debug) {
-                    println("  Response: ${response.code}")
-                    println("  Response: $body")
-                }
-                throw RuntimeException("Request failed with code ${response.code}: $body")
-            }
-        }
-    }
-
     fun getPartitionIDs(): List<String> {
         val url = "http://$hostname:$port/bulk/partitions"
         val request: Request = Request.Builder()
@@ -132,6 +97,41 @@ class LionWebClient(
         OkHttpClient().newCall(request).execute().use { response ->
             if (response.code != 200) {
                 throw RuntimeException("DB initialization failed, HTTP ${response.code}: ${response.body?.string()}")
+            }
+        }
+    }
+
+    private fun treeStoringOperation(node: Node, operation: String) {
+        if (debug) {
+            try {
+                treeSanityChecks(node, jsonSerialization = jsonSerialization)
+            } catch (e: RuntimeException) {
+                throw RuntimeException("Failed to store tree $node", e)
+            }
+        }
+        val json = jsonSerialization.serializeTreesToJsonString(node)
+        println("  JSON of ${json!!.encodeToByteArray().size} bytes")
+        if (debug) {
+            File("sent.json").writeText(json)
+        }
+
+        val body: RequestBody = json.compress()
+        println("  ${body.contentLength()} bytes sent")
+
+        // TODO control with flag http or https
+        val request: Request = Request.Builder()
+            .url("http://$hostname:$port/bulk/$operation")
+            .addHeader("Content-Encoding", "gzip")
+            .post(body)
+            .build()
+        httpClient.newCall(request).execute().use { response ->
+            if (response.code != 200) {
+                val body = response.body?.string()
+                if (debug) {
+                    println("  Response: ${response.code}")
+                    println("  Response: $body")
+                }
+                throw RuntimeException("Request failed with code ${response.code}: $body")
             }
         }
     }
