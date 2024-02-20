@@ -1,7 +1,7 @@
 FROM node
-RUN git clone https://github.com/ftomassetti/lionweb-repository.git
+RUN git clone https://github.com/LionWeb-io/lionweb-repository.git
 WORKDIR lionweb-repository
-RUN git checkout e7cc8f5
+RUN git checkout a966193
 RUN npm install
 RUN npm run build
 RUN echo "npm run database create" > run.sh
