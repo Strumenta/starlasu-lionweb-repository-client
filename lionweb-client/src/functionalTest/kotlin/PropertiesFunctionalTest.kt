@@ -12,6 +12,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 
 @Testcontainers
@@ -111,7 +112,10 @@ class PropertiesFunctionalTest {
         }
         client.storeTree(pf)
 
-        assertEquals(pf, client.retrieve("pf1"))
+        val retrieved = client.retrieve("pf1")
+        assertEquals(null, retrieved.parent)
+        assertEquals("pf1", retrieved.id)
+        assertEquals(propertiesFile, retrieved.concept)
     }
 
 }

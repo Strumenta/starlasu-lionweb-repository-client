@@ -104,7 +104,10 @@ class LionWebClient(
             if (response.code == 200) {
                 val data =
                     (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
-                val nodes = jsonSerialization.deserializeToNodes(data)
+                if (debug) {
+                    File("retrieved.json").writeText(data)
+                }
+                val nodes = jsonSerialization.deserializeToNodes(data, true)
                 return nodes.find { it.id == rootId } ?: throw IllegalArgumentException()
             } else {
                 throw RuntimeException("Something went wrong while querying $url: http code ${response.code}, body: ${response.body?.string()}")
