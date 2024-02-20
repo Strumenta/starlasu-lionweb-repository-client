@@ -91,7 +91,7 @@ class LionWebClient(
         }
     }
 
-    fun getPartition(rootId: String): Node {
+    fun retrieve(rootId: String): Node {
         val body: RequestBody = "{\"ids\":[\"$rootId\"] }".toRequestBody(JSON)
         val url = "http://$hostname:$port/bulk/retrieve"
         val urlBuilder = url.toHttpUrlOrNull()!!.newBuilder()

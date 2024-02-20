@@ -1,5 +1,5 @@
-import com.strumenta.kolasu.model.assignParents
 import com.strumenta.lwrepoclient.base.LionWebClient
+import com.strumenta.lwrepoclient.base.dynamicNode
 import org.testcontainers.Testcontainers.exposeHostPorts
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 
 
 @Testcontainers
-class TodoFunctionalTest {
+class PropertiesFunctionalTest {
     val DB_CONTAINER_PORT = 5432
 
     //@Container
@@ -74,21 +74,44 @@ class TodoFunctionalTest {
         assertEquals(emptyList(), kolasuClient.getPartitionIDs())
     }
 
-//    @Test
-//    fun gettingPartionsAfterStoringNodes() {
-//        val kolasuClient = LionWebClient(port = modelRepository!!.firstMappedPort)
-//        kolasuClient.registerLanguage(todoLanguage)
-//
-//        val todo = TodoProject("My errands list", mutableListOf(
-//            Todo("Buy milk"),
-//            Todo("Take the garbage out"),
-//            Todo("Go for a walk"),
-//        ))
-//        todo.assignParents()
-//        kolasuClient.storeTree(todo, "my-base")
-//        val partitionIDs = kolasuClient.getPartitionIDs()
-//        println("partitionIDs: $partitionIDs")
-//        //assertEquals(emptyList(), kolasuClient.getPartitionIDs())
-//    }
+    @Test
+    fun gettingPartionsAfterStoringPartitions() {
+        val client = LionWebClient(port = modelRepository!!.firstMappedPort)
+        client.registerLanguage(propertiesLanguage)
+
+        val pp1 = propertiesPartition.dynamicNode("pp1")
+        assertEquals(emptyList(), client.getPartitionIDs())
+        client.createPartition(pp1)
+        assertEquals(listOf("pp1"), client.getPartitionIDs())
+        assertEquals(pp1, client.retrieve("pp1"))
+    }
+
+    @Test
+    fun gettingNodessAfterStoringNodes() {
+        val client = LionWebClient(port = modelRepository!!.firstMappedPort)
+        client.registerLanguage(propertiesLanguage)
+
+        val pp1 = propertiesPartition.dynamicNode("pp1")
+        client.createPartition(pp1)
+
+        val pf = propertiesFile.dynamicNode("pf1").apply {
+            parent = pp1
+        }
+        val prop1 = property.dynamicNode("prop1").apply {
+            setPropertyValueByName("name", "Prop1")
+            pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+        }
+        val prop2 = property.dynamicNode().apply {
+            setPropertyValueByName("name", "Prop2")
+            pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+        }
+        val prop3 = property.dynamicNode().apply {
+            setPropertyValueByName("name", "Prop3")
+            pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+        }
+        client.storeTree(pf)
+
+        assertEquals(pf, client.retrieve("pf1"))
+    }
 
 }

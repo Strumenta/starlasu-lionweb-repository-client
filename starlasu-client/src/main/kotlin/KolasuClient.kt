@@ -49,7 +49,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     }
 
     fun getPartition(nodeId: String): Node {
-        val lwNode = lionWebClient.getPartition(nodeId)
+        val lwNode = lionWebClient.retrieve(nodeId)
         return nodeConverter.importModelFromLionWeb(lwNode)
     }
 
