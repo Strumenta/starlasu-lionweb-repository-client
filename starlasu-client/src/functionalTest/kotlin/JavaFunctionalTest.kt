@@ -13,7 +13,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-private val DB_CONTAINER_PORT = 5432
+private const val DB_CONTAINER_PORT = 5432
 
 @Testcontainers
 class JavaFunctionalTest {
@@ -82,11 +82,21 @@ class JavaFunctionalTest {
     }
 
     @Test
-    fun gettingPartionsAfterStoringNodes() {
-        val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort)
+    fun storePartitionAndGetItBack() {
+        val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort, debug = true)
         kolasuClient.registerLanguage(todoLanguage)
 
-        val todo =
+        assertEquals(emptyList(), kolasuClient.getPartitionIDs())
+
+        // We create an empty partition
+        val todoAccount = TodoAccount(mutableListOf())
+        kolasuClient.createPartition(todoAccount, "my-base")
+
+        val partitionIDs = kolasuClient.getPartitionIDs()
+        assertEquals(listOf("my-base_root"), partitionIDs)
+
+        // Now we want to attach a tree to the existing partition
+        val todoProject =
             TodoProject(
                 "My errands list",
                 mutableListOf(
@@ -95,10 +105,30 @@ class JavaFunctionalTest {
                     Todo("Go for a walk"),
                 ),
             )
-        todo.assignParents()
-        kolasuClient.storeTree(todo, "my-base")
-        val partitionIDs = kolasuClient.getPartitionIDs()
-        println("partitionIDs: $partitionIDs")
-        // assertEquals(emptyList(), kolasuClient.getPartitionIDs())
+        todoProject.assignParents()
+
+        kolasuClient.appendTree(todoProject, "my-base", "my-base_root", TodoAccount::projects)
+
+        // I can retrieve the entire partition
+        todoAccount.projects.add(todoProject)
+        todoAccount.assignParents()
+        val retrievedTodoAccount = kolasuClient.retrieve("my-base_root")
+        assertEquals(todoAccount, retrievedTodoAccount)
+
+        // I can retrieve just a portion of that partition. In that case the parent of the root of the
+        // subtree will appear null
+        val retrievedTodoProject = kolasuClient.retrieve("my-base_my-base_root_projects_0")
+        assertEquals(
+            TodoProject(
+                "My errands list",
+                mutableListOf(
+                    Todo("Buy milk"),
+                    Todo("Take the garbage out"),
+                    Todo("Go for a walk"),
+                ),
+            ).apply { assignParents() },
+            retrievedTodoProject,
+        )
+        assertEquals(null, retrievedTodoProject.parent)
     }
 }

@@ -2,6 +2,7 @@ package com.strumenta.lwrepoclient.base
 
 import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
+import io.lionweb.lioncore.java.model.impl.DynamicNode
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.LowLevelJsonSerialization
 import io.lionweb.lioncore.java.serialization.UnknownParentPolicy
@@ -15,7 +16,7 @@ import java.io.File
 class LionWebClient(
     val hostname: String = "localhost",
     val port: Int = 3005,
-    val debug: Boolean = true
+    val debug: Boolean = false
 ) {
 
     private var httpClient: OkHttpClient = OkHttpClient()
@@ -58,6 +59,7 @@ class LionWebClient(
     }
 
     fun retrieve(rootId: String): Node {
+        require(rootId.isNotBlank())
         val body: RequestBody = "{\"ids\":[\"$rootId\"] }".toRequestBody(JSON)
         val url = "http://$hostname:$port/bulk/retrieve"
         val urlBuilder = url.toHttpUrlOrNull()!!.newBuilder()
@@ -75,7 +77,10 @@ class LionWebClient(
                 }
                 jsonSerialization.unknownParentPolicy = UnknownParentPolicy.NULL_REFERENCES
                 val nodes = jsonSerialization.deserializeToNodes(data)
-                return nodes.find { it.id == rootId } ?: throw IllegalArgumentException()
+                return nodes.find { it.id == rootId } ?: throw IllegalArgumentException(
+                    "When requesting a subtree with rootId=$rootId we got back an answer without such ID. " +
+                        "IDs we got back: ${nodes.map { it.id }.joinToString(", ")}"
+                )
             } else {
                 throw RuntimeException("Something went wrong while querying $url: http code ${response.code}, body: ${response.body?.string()}")
             }
@@ -101,6 +106,27 @@ class LionWebClient(
                 throw RuntimeException("DB initialization failed, HTTP ${response.code}: ${response.body?.string()}")
             }
         }
+    }
+
+    /**
+     * This operation is not atomic. We hope that no one is changing the parent at the very
+     * same time.
+     */
+    fun appendTree(treeToAppend: Node, containerId: String, containmentName: String) {
+        // 1. Retrieve the parent
+        val parent = retrieve(containerId)
+
+        // 2. Add the tree to the parent
+        val containment = parent.concept.getContainmentByName(containmentName)
+            ?: throw IllegalArgumentException("The container has not containment named $containmentName")
+        if (!containment.isMultiple) {
+            throw IllegalArgumentException("The indicated containment is not multiple")
+        }
+        parent.addChild(containment, treeToAppend)
+        (treeToAppend as DynamicNode).parent = parent
+
+        // 3. Store the parent
+        storeTree(parent)
     }
 
     private fun treeStoringOperation(node: Node, operation: String) {

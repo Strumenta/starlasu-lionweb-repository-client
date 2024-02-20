@@ -1,5 +1,6 @@
 
 import com.strumenta.kolasu.language.KolasuLanguage
+import com.strumenta.kolasu.lionweb.StructuralLionWebNodeIdProvider
 import com.strumenta.kolasu.parsing.ParsingResult
 import com.strumenta.kolasu.testing.assertASTsAreEqual
 import com.strumenta.kolasu.traversing.children
@@ -45,7 +46,7 @@ abstract class AbstractLionWebConversion<R : KNode>(val kolasuLanguage: KolasuLa
         client.registerLanguage(kolasuLanguage)
         initializeClient(client)
         val baseId = "foo"
-        val lwAST = client.nodeConverter.exportModelToLionWeb(ast, baseId)
+        val lwAST = client.nodeConverter.exportModelToLionWeb(ast, StructuralLionWebNodeIdProvider(baseId))
         lwASTChecker.invoke(lwAST)
         val json = client.jsonSerialization.serializeTreeToJsonString(lwAST)
         jsonChecker.invoke(json)

@@ -8,7 +8,7 @@ import com.strumenta.javalangmodule.ast.kLanguage as JavaKolasuLanguage
 
 private fun retrieveNodes(client: KolasuClient) {
     val root =
-        client.getPartition(
+        client.retrieve(
             "Users_ftomassetti_repos_kolasu-java-langmodule_build_downloaded-examples_arthas_core_src_main_" +
                 "java_com_taobao_arthas_core_Arthas_java__root",
         )

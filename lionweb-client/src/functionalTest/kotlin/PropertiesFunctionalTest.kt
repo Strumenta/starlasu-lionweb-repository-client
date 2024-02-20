@@ -13,11 +13,11 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+private const val DB_CONTAINER_PORT = 5432
+
 @Testcontainers
 class PropertiesFunctionalTest {
-    val DB_CONTAINER_PORT = 5432
 
-    // @Container
     @JvmField
     var db: PostgreSQLContainer<*>? = null
 

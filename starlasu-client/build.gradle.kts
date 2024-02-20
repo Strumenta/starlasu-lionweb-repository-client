@@ -66,6 +66,7 @@ testing {
             dependencies {
                 implementation(project())
                 implementation("com.strumenta.kolasu:kolasu-core:$kolasuVersion")
+                implementation("com.strumenta.kolasu:kolasu-lionweb:$kolasuVersion")
                 implementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
                 implementation("io.kotest:kotest-runner-junit5-jvm:5.8.0")
                 implementation("com.strumenta.langmodules.kolasu-java-langmodule:ast:$javaModuleVersion")
