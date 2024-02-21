@@ -1,4 +1,4 @@
-name: Check
+name: Functional Tests
 
 on: [push]
 
@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ '11', '21' ]
+        java: [ '21' ]
     name: Java ${{ matrix.Java }} Check
 
     steps:
@@ -18,8 +18,8 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: ${{ matrix.java }}
-      - name: Test
+      - name: Functional Tests
         env:
           STRUMENTA_PACKAGES_USER: ${{ secrets.STRUMENTA_PACKAGES_USER }}
           STRUMENTA_PACKAGES_TOKEN: ${{ secrets.STRUMENTA_PACKAGES_TOKEN }}
-        run: ./gradlew check --stacktrace
+        run: ./gradlew functionalTest --stacktrace

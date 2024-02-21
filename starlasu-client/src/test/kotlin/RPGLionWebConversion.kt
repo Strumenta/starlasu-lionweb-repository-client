@@ -7,7 +7,6 @@ import java.io.InputStream
 import kotlin.test.Test
 
 class RPGLionWebConversion : AbstractLionWebConversion<CompilationUnit>(kLanguage) {
-
     override fun parse(inputStream: InputStream): ParsingResult<CompilationUnit> {
         val parser = RPGKolasuParser()
         RPGKolasuParser.parseComments = false
