@@ -95,50 +95,47 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      */
     fun <C : KNode, E : KNode> appendTree(
         treeToAppend: KNode,
-        baseId: String,
         containerId: String,
         containment: KProperty1<C, out Collection<out E>>,
     ) {
-        println("Kolasu.appendTree. Appending $treeToAppend (${treeToAppend.nodeType})")
         val container = lionWebClient.retrieve(containerId)
         val index = container.getChildrenByContainmentName(containment.name).size
         val lwTreeToAppend =
             nodeConverter.exportModelToLionWeb(
                 treeToAppend,
-                MockableStructuralLionWebNodeIdProvider(baseId, containerId, containment.name, index),
+                SubTreeLionWebNodeIdProvider(containerId, containment.name, index),
             )
-        File("lwTreeToAppend.json").writeText(nodeConverter.prepareJsonSerialization().serializeTreesToJsonString(lwTreeToAppend))
+        if (debug) {
+            File("lwTreeToAppend.json").writeText(
+                nodeConverter.prepareJsonSerialization().serializeTreesToJsonString(lwTreeToAppend)
+            )
+        }
         lionWebClient.appendTree(lwTreeToAppend, containerId, containment.name)
     }
 }
 
-private class MockableStructuralLionWebNodeIdProvider(
-    val baseId: String,
+private class SubTreeLionWebNodeIdProvider(
     val containerId: String,
     val containmentName: String,
     val containmentIndex: Int,
 ) :
     LionWebNodeIdProvider {
-    private val sourceIdProvider: SourceIdProvider = ConstantSourceIdProvider(baseId)
+    private val sourceIdProvider: SourceIdProvider = ConstantSourceIdProvider("")
 
     override fun id(kNode: Node): String {
-        val id = "${sourceIdProvider.sourceId(kNode.source)}_${kNode.positionalID}"
+        val id = if (kNode.parent == null) {
+            // Here we pretend we have already as parent the container
+            val postfix = "${containmentName}_$containmentIndex"
+            "${containerId}_$postfix"
+        } else {
+            val cp = kNode.containingProperty()!!
+            val postfix = if (cp.multiple) "${cp.name}_${kNode.indexInContainingProperty()!!}" else cp.name
+            "${id(kNode.parent!!)}_$postfix"
+        }
         if (!CommonChecks.isValidID(id)) {
             throw IllegalStateException("An invalid LionWeb Node ID has been produced")
         }
         return id
     }
 
-    private val KNode.positionalID: String
-        get() {
-            return if (this.parent == null) {
-                // Here we pretend we have already as parent the container
-                val postfix = "${containmentName}_$containmentIndex"
-                "${containerId}_$postfix"
-            } else {
-                val cp = this.containingProperty()!!
-                val postfix = if (cp.multiple) "${cp.name}_${this.indexInContainingProperty()!!}" else cp.name
-                "${this.parent!!.positionalID}_$postfix"
-            }
-        }
 }

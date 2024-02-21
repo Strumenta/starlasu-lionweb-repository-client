@@ -73,7 +73,7 @@ class LionWebClient(
                 val data =
                     (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
                 if (debug) {
-                    File("retrieved.json").writeText(data)
+                    File("retrieved-$rootId.json").writeText(data)
                 }
                 jsonSerialization.unknownParentPolicy = UnknownParentPolicy.NULL_REFERENCES
                 val nodes = jsonSerialization.deserializeToNodes(data)
