@@ -35,26 +35,31 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
 
         // We create an empty partition
         val partition = SimplePartition()
-        kolasuClient.createPartition(partition, "myPartition")
+        kolasuClient.idProvider[partition] = "myPartition"
+        kolasuClient.createPartition(partition)
 
         val partitionIDs = kolasuClient.getPartitionIDs()
-        assertEquals(listOf("myPartition_root"), partitionIDs)
+        val expectedPartitionId = kolasuClient.idFor(partition)
+        assertEquals("myPartition", expectedPartitionId)
+        assertEquals(listOf(expectedPartitionId), partitionIDs)
 
         // Now we want to attach a tree to the existing partition
         val javaAst1 = JavaKolasuParser().parse("""class A {}""").root!!
 
-        kolasuClient.appendTree(javaAst1, "myPartition_root", SimplePartition::stuff)
+        kolasuClient.appendTree(javaAst1, expectedPartitionId, SimplePartition::stuff)
 
         // I can retrieve the entire partition
         partition.stuff.add(javaAst1)
         partition.assignParents()
-        val retrievedPartition = kolasuClient.retrieve("myPartition_root")
+        val retrievedPartition = kolasuClient.retrieve(expectedPartitionId)
         assertEquals(partition, retrievedPartition)
 
         // I can retrieve just a portion of that partition. In that case the parent of the root of the
         // subtree will appear null
         javaAst1.parent = null
-        val retrievedAST1 = kolasuClient.retrieve("myPartition_root_stuff_0")
+        val expectedJavaAst1Id = kolasuClient.idFor(javaAst1)
+        assertEquals("myPartition", expectedPartitionId)
+        val retrievedAST1 = kolasuClient.retrieve(expectedJavaAst1Id)
         assertEquals(
             javaAst1,
             retrievedAST1,
@@ -72,33 +77,34 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
 
         // We create an empty partition
         val partition = SimplePartition()
-        kolasuClient.createPartition(partition, "myPartition")
+        kolasuClient.idProvider[partition] = "myPartition"
+        kolasuClient.createPartition(partition)
 
         val partitionIDs = kolasuClient.getPartitionIDs()
-        assertEquals(listOf("myPartition_root"), partitionIDs)
+        assertEquals(listOf("myPartition"), partitionIDs)
 
         // Now we want to attach several trees to the existing partition
         val javaAst1 = JavaKolasuParser().parse("""class A {}""").root!!
-        kolasuClient.appendTree(javaAst1, "myPartition_root", SimplePartition::stuff)
+        kolasuClient.appendTree(javaAst1, "myPartition", SimplePartition::stuff)
 
         val javaAst2 = JavaKolasuParser().parse("""class B {}""").root!!
-        kolasuClient.appendTree(javaAst2, "myPartition_root", SimplePartition::stuff)
+        kolasuClient.appendTree(javaAst2, "myPartition", SimplePartition::stuff)
 
         val javaAst3 = JavaKolasuParser().parse("""class C {}""").root!!
-        kolasuClient.appendTree(javaAst3, "myPartition_root", SimplePartition::stuff)
+        kolasuClient.appendTree(javaAst3, "myPartition", SimplePartition::stuff)
 
         // I can retrieve the entire partition
         partition.stuff.add(javaAst1)
         partition.stuff.add(javaAst2)
         partition.stuff.add(javaAst3)
         partition.assignParents()
-        val retrievedPartition = kolasuClient.retrieve("myPartition_root")
+        val retrievedPartition = kolasuClient.retrieve("myPartition")
         assertEquals(partition, retrievedPartition)
 
         // I can retrieve just a portion of that partition. In that case the parent of the root of the
         // subtree will appear null
         javaAst1.parent = null
-        val retrievedAST1 = kolasuClient.retrieve("myPartition_root_stuff_0")
+        val retrievedAST1 = kolasuClient.retrieve("myPartition_stuff_0")
         assertEquals(
             javaAst1,
             retrievedAST1,
@@ -106,7 +112,7 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
         assertEquals(null, retrievedAST1.parent)
 
         javaAst2.parent = null
-        val retrievedAST2 = kolasuClient.retrieve("myPartition_root_stuff_1")
+        val retrievedAST2 = kolasuClient.retrieve("myPartition_stuff_1")
         assertEquals(
             javaAst2,
             retrievedAST2,
@@ -114,7 +120,7 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
         assertEquals(null, retrievedAST2.parent)
 
         javaAst3.parent = null
-        val retrievedAST3 = kolasuClient.retrieve("myPartition_root_stuff_2")
+        val retrievedAST3 = kolasuClient.retrieve("myPartition_stuff_2")
         assertEquals(
             javaAst3,
             retrievedAST3,
