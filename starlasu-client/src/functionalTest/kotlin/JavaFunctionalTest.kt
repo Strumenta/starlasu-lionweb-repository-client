@@ -9,16 +9,15 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-
 @LionWebPartition
 data class SimplePartition(val stuff: MutableList<Node> = mutableListOf()) : Node()
 
 @Testcontainers
 class JavaFunctionalTest : AbstractFunctionalTest() {
-
-    private val simplePartitionLanguage = KolasuLanguage("my.simple.partition.language").apply {
-        addClass(SimplePartition::class)
-    }
+    private val simplePartitionLanguage =
+        KolasuLanguage("my.simple.partition.language").apply {
+            addClass(SimplePartition::class)
+        }
 
     @Test
     fun noPartitionsOnNewModelRepository() {
@@ -58,7 +57,7 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
         val retrievedAST1 = kolasuClient.retrieve("myPartition_root_stuff_0")
         assertEquals(
             javaAst1,
-            retrievedAST1
+            retrievedAST1,
         )
         assertEquals(null, retrievedAST1.parent)
     }
@@ -102,7 +101,7 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
         val retrievedAST1 = kolasuClient.retrieve("myPartition_root_stuff_0")
         assertEquals(
             javaAst1,
-            retrievedAST1
+            retrievedAST1,
         )
         assertEquals(null, retrievedAST1.parent)
 
@@ -110,7 +109,7 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
         val retrievedAST2 = kolasuClient.retrieve("myPartition_root_stuff_1")
         assertEquals(
             javaAst2,
-            retrievedAST2
+            retrievedAST2,
         )
         assertEquals(null, retrievedAST2.parent)
 
@@ -118,7 +117,7 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
         val retrievedAST3 = kolasuClient.retrieve("myPartition_root_stuff_2")
         assertEquals(
             javaAst3,
-            retrievedAST3
+            retrievedAST3,
         )
         assertEquals(null, retrievedAST3.parent)
     }

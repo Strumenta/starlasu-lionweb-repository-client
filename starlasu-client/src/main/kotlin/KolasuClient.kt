@@ -107,7 +107,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             )
         if (debug) {
             File("lwTreeToAppend.json").writeText(
-                nodeConverter.prepareJsonSerialization().serializeTreesToJsonString(lwTreeToAppend)
+                nodeConverter.prepareJsonSerialization().serializeTreesToJsonString(lwTreeToAppend),
             )
         }
         lionWebClient.appendTree(lwTreeToAppend, containerId, containment.name)
@@ -123,19 +123,19 @@ private class SubTreeLionWebNodeIdProvider(
     private val sourceIdProvider: SourceIdProvider = ConstantSourceIdProvider("")
 
     override fun id(kNode: Node): String {
-        val id = if (kNode.parent == null) {
-            // Here we pretend we have already as parent the container
-            val postfix = "${containmentName}_$containmentIndex"
-            "${containerId}_$postfix"
-        } else {
-            val cp = kNode.containingProperty()!!
-            val postfix = if (cp.multiple) "${cp.name}_${kNode.indexInContainingProperty()!!}" else cp.name
-            "${id(kNode.parent!!)}_$postfix"
-        }
+        val id =
+            if (kNode.parent == null) {
+                // Here we pretend we have already as parent the container
+                val postfix = "${containmentName}_$containmentIndex"
+                "${containerId}_$postfix"
+            } else {
+                val cp = kNode.containingProperty()!!
+                val postfix = if (cp.multiple) "${cp.name}_${kNode.indexInContainingProperty()!!}" else cp.name
+                "${id(kNode.parent!!)}_$postfix"
+            }
         if (!CommonChecks.isValidID(id)) {
             throw IllegalStateException("An invalid LionWeb Node ID has been produced")
         }
         return id
     }
-
 }

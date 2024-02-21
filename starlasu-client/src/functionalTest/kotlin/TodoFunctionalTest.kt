@@ -1,20 +1,11 @@
 import com.strumenta.kolasu.model.assignParents
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
-import org.testcontainers.containers.GenericContainer
-import org.testcontainers.containers.Network
-import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.containers.output.OutputFrame
-import org.testcontainers.images.builder.ImageFromDockerfile
 import org.testcontainers.junit.jupiter.Testcontainers
-import java.util.function.Consumer
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @Testcontainers
-class TodoFunctionalTest  : AbstractFunctionalTest() {
-
+class TodoFunctionalTest : AbstractFunctionalTest() {
     @Test
     fun noPartitionsOnNewModelRepository() {
         val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort)
