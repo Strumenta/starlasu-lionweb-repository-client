@@ -75,6 +75,39 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
         )
         assertEquals(null, retrievedTodoProject.parent)
     }
+
+    @Test
+    fun checkNodeIDs() {
+        val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort, debug = true)
+        kolasuClient.registerLanguage(todoLanguage)
+
+        assertEquals(emptyList(), kolasuClient.getPartitionIDs())
+
+        // We create an empty partition
+        val todoAccount = TodoAccount(mutableListOf())
+        // By default the partition IDs are derived from the source
+        todoAccount.setSource(SyntheticSource("my-wonderful-partition"))
+        kolasuClient.createPartition(todoAccount)
+
+        // Now we want to attach a tree to the existing partition
+        val todoProject =
+            TodoProject(
+                "My errands list",
+                mutableListOf(
+                    Todo("Buy milk"),
+                    Todo("Take the garbage out"),
+                    Todo("Go for a walk"),
+                ),
+            )
+        todoProject.assignParents()
+        kolasuClient.appendTree(todoProject, todoAccount, containment = TodoAccount::projects)
+
+        assertEquals("synthetic_my-wonderful-partition", kolasuClient.idFor(todoAccount))
+        assertEquals("synthetic_my-wonderful-partition_projects_0", kolasuClient.idFor(todoProject))
+        assertEquals("synthetic_my-wonderful-partition_projects_0_todos_0", kolasuClient.idFor(todoProject.todos[0]))
+        assertEquals("synthetic_my-wonderful-partition_projects_0_todos_1", kolasuClient.idFor(todoProject.todos[1]))
+        assertEquals("synthetic_my-wonderful-partition_projects_0_todos_2", kolasuClient.idFor(todoProject.todos[2]))
+    }
 }
 
 private fun KNode.setSource(source: Source) {

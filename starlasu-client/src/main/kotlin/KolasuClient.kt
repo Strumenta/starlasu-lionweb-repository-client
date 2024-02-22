@@ -24,40 +24,8 @@ import java.util.IdentityHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
-class SourceBasedPartitionIdProvider(val sourceIdProvider: SourceIdProvider = SimpleSourceIdProvider()) : LionWebNodeIdProvider {
-    override fun id(kNode: Node): String {
-        require(kNode.parent == null)
-        require(kNode.source != null)
-        // TODO update SimpleSourceIdProvider
-        if (kNode.source is SyntheticSource) {
-            return "synthetic_" + (kNode.source as SyntheticSource).description
-        }
-        return sourceIdProvider.sourceId(kNode.source)
-    }
-}
-
-class MapBasedPartitionIdProvider : LionWebNodeIdProvider {
-    private val map = IdentityHashMap<Node, String>()
-
-    override fun id(kNode: Node): String {
-        return map[kNode] ?: throw IllegalStateException()
-    }
-
-    operator fun set(
-        partition: KNode,
-        partitionId: String,
-    ) {
-        map[partition] = partitionId
-    }
-}
-
-// TODO consider if replacing LionWebNodeIdProvider
-interface LionWebRepositoryNodeIdProvider : LionWebNodeIdProvider {
-    // fun partitionId(node: Node) : String
-}
-
 class DefaultLionWebRepositoryNodeIdProvider(var sourceIdProvider: SourceIdProvider = SimpleSourceIdProvider()) :
-    LionWebRepositoryNodeIdProvider, LionWebNodeIdProvider {
+    LionWebNodeIdProvider {
     protected open fun partitionId(kNode: Node): String {
         require(kNode.parent == null)
         require(kNode.source != null)
@@ -91,7 +59,7 @@ class DefaultLionWebRepositoryNodeIdProvider(var sourceIdProvider: SourceIdProvi
         }
 }
 
-class OverridableIdProvider(private val kolasuClient: KolasuClient) : LionWebRepositoryNodeIdProvider {
+class OverridableIdProvider(private val kolasuClient: KolasuClient) : LionWebNodeIdProvider {
     private val overrides = IdentityHashMap<KNode, String>()
 
     override fun id(kNode: KNode): String {
@@ -115,7 +83,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      * Exposed for testing purposes
      */
     val nodeConverter = LionWebModelConverter()
-    var baseIdProvider: LionWebRepositoryNodeIdProvider = DefaultLionWebRepositoryNodeIdProvider()
+    var baseIdProvider: LionWebNodeIdProvider = DefaultLionWebRepositoryNodeIdProvider()
     val idProvider = OverridableIdProvider(this)
     private val lionWebClient = LionWebClient(hostname, port, debug = debug)
 
@@ -185,7 +153,14 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
 
     fun retrieve(nodeId: String): Node {
         val lwNode = lionWebClient.retrieve(nodeId)
-        return nodeConverter.importModelFromLionWeb(lwNode)
+        val kNode = nodeConverter.importModelFromLionWeb(lwNode)
+        kNode.walk().forEach { kNodeIt ->
+            // This should be based on the cache
+            // TODO create method called getCachedNode(kNode)
+            val lwNodeIt = nodeConverter.exportModelToLionWeb(kNodeIt)
+            idProvider[kNodeIt] = lwNodeIt.id!!
+        }
+        return kNode
     }
 
     /**
@@ -194,6 +169,18 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      */
     fun modelRepositoryInit() {
         lionWebClient.modelRepositoryInit()
+    }
+
+    /**
+     * This operation is not atomic. We hope that no one is changing the parent at the very
+     * same time.
+     */
+    fun <C : KNode, E : KNode> appendTree(
+        treeToAppend: KNode,
+        container: C,
+        containment: KProperty1<C, out Collection<out E>>,
+    ) {
+        appendTree(treeToAppend, idFor(container), containment)
     }
 
     /**
@@ -225,16 +212,6 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         }
         lionWebClient.appendTree(lwTreeToAppend, containerId, containment.name)
     }
-
-//    fun idForPartition(partition: KNode): String {
-//        require(partition.isPartition)
-//        return baseIdProvider.id(partition)
-//    }
-
-//    fun idForNode(kNode: KNode, partitionId: String, containmentName: String, containmentIndex: Int): String {
-//        require(!kNode.isPartition)
-//        return SubTreeLionWebNodeIdProvider(partitionId, containmentName, containmentIndex).id(kNode)
-//    }
 
     fun idFor(kNode: KNode): String {
         return idProvider.id(kNode)
