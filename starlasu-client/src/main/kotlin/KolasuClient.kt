@@ -7,11 +7,9 @@ import com.strumenta.kolasu.lionweb.LionWebModelConverter
 import com.strumenta.kolasu.lionweb.LionWebNodeIdProvider
 import com.strumenta.kolasu.lionweb.LionWebPartition
 import com.strumenta.kolasu.lionweb.PrimitiveValueSerialization
-import com.strumenta.kolasu.lionweb.SimpleSourceIdProvider
 import com.strumenta.kolasu.lionweb.SourceIdProvider
 import com.strumenta.kolasu.lionweb.StructuralLionWebNodeIdProvider
 import com.strumenta.kolasu.model.Node
-import com.strumenta.kolasu.model.SyntheticSource
 import com.strumenta.kolasu.model.children
 import com.strumenta.kolasu.model.containingProperty
 import com.strumenta.kolasu.model.indexInContainingProperty
@@ -20,69 +18,8 @@ import com.strumenta.lwrepoclient.base.LionWebClient
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.utils.CommonChecks
 import java.io.File
-import java.util.IdentityHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
-
-class DefaultLionWebRepositoryNodeIdProvider(var sourceIdProvider: SourceIdProvider = SimpleSourceIdProvider()) :
-    LionWebNodeIdProvider {
-    protected open fun partitionId(kNode: Node): String {
-        require(kNode.parent == null)
-        require(kNode.source != null)
-        // TODO update SimpleSourceIdProvider
-        if (kNode.source is SyntheticSource) {
-            return "synthetic_" + (kNode.source as SyntheticSource).description
-        }
-        return sourceIdProvider.sourceId(kNode.source)
-    }
-
-    override fun id(kNode: Node): String {
-        if (kNode.isPartition) {
-            return partitionId(kNode)
-        }
-        val id = "${sourceIdProvider.sourceId(kNode.source)}_${kNode.positionalID}"
-        if (!CommonChecks.isValidID(id)) {
-            throw IllegalStateException("An invalid LionWeb Node ID has been produced")
-        }
-        return id
-    }
-
-    private val KNode.positionalID: String
-        get() {
-            return if (this.parent == null) {
-                "root"
-            } else {
-                val cp = this.containingProperty()!!
-                val postfix = if (cp.multiple) "${cp.name}_${this.indexInContainingProperty()!!}" else cp.name
-                "${this.parent!!.positionalID}_$postfix"
-            }
-        }
-}
-
-/**
- * This NodeIdProvider remembers IDs explicitly set. This is useful because we often insert nodes in an existing
- * tree. In the moment we do the insertion we know where the Node will end up and we can calculate the ID based on
- * that. Later, if we access that Node without that contextual information we would not be able to recalculate the
- * same Node ID.
- */
-class OverridableNodeIdProvider(private val kolasuClient: KolasuClient) : LionWebNodeIdProvider {
-    private val overrides = IdentityHashMap<KNode, String>()
-
-    override fun id(kNode: KNode): String {
-        return if (overrides.containsKey(kNode)) {
-            overrides[kNode]!!
-        } else {
-            kolasuClient.baseIdProvider.id(kNode)
-        }
-    }
-
-    operator fun set(
-        kNode: KNode,
-        id: String,
-    ) {
-        overrides[kNode] = id
-    }
-}
 
 class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val debug: Boolean = false) {
     /**
@@ -249,6 +186,10 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      */
     fun idFor(kNode: KNode): String {
         return idProvider.id(kNode)
+    }
+
+    fun clearNodeIdCache() {
+        this.idProvider.clearOverrides()
     }
 }
 
