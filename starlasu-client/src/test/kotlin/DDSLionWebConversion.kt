@@ -13,7 +13,6 @@ import java.io.InputStream
 import kotlin.test.Test
 
 class DDSLionWebConversion : AbstractLionWebConversion<CompilationUnit>(kLanguage) {
-
     override fun parse(inputStream: InputStream): ParsingResult<CompilationUnit> {
         val parser = RPGKolasuParser(RPGFileType.DDS)
         RPGKolasuParser.parseComments = false
@@ -92,7 +91,7 @@ class DDSLionWebConversion : AbstractLionWebConversion<CompilationUnit>(kLanguag
                         is NumericEditCode -> "numeric:${value.code}"
                     }
                 }
-            }
+            },
         )
     }
 }
