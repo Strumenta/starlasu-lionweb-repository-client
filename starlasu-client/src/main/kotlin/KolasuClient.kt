@@ -59,7 +59,13 @@ class DefaultLionWebRepositoryNodeIdProvider(var sourceIdProvider: SourceIdProvi
         }
 }
 
-class OverridableIdProvider(private val kolasuClient: KolasuClient) : LionWebNodeIdProvider {
+/**
+ * This NodeIdProvider remembers IDs explicitly set. This is useful because we often insert nodes in an existing
+ * tree. In the moment we do the insertion we know where the Node will end up and we can calculate the ID based on
+ * that. Later, if we access that Node without that contextual information we would not be able to recalculate the
+ * same Node ID.
+ */
+class OverridableNodeIdProvider(private val kolasuClient: KolasuClient) : LionWebNodeIdProvider {
     private val overrides = IdentityHashMap<KNode, String>()
 
     override fun id(kNode: KNode): String {
@@ -83,8 +89,19 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      * Exposed for testing purposes
      */
     val nodeConverter = LionWebModelConverter()
+
+    /**
+     * This is the logic we use, unless the Node Id was explicitly set. This can be customized, if needed.
+     * For example, we may want to use some form of semantic Node ID for certain kinds of Nodes, like qualified names
+     * for Class Declarations.
+     */
     var baseIdProvider: LionWebNodeIdProvider = DefaultLionWebRepositoryNodeIdProvider()
-    val idProvider = OverridableIdProvider(this)
+
+    /**
+     * This is the idProvider we concretely use. This consider explicit overrides first, and if they are not
+     * present it fals back to the baseIdProvider.
+     */
+    val idProvider = OverridableNodeIdProvider(this)
     private val lionWebClient = LionWebClient(hostname, port, debug = debug)
 
     /**
@@ -151,6 +168,11 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         lionWebClient.storeTree(lwNode)
     }
 
+    /**
+     * The Client will remember the LionWeb IDs of the LionWeb nodes from which
+     * this tree has been obtained. Subsequently call to idFor will permit to retrieve
+     * such Node IDs.
+     */
     fun retrieve(nodeId: String): Node {
         val lwNode = lionWebClient.retrieve(nodeId)
         val kNode = nodeConverter.importModelFromLionWeb(lwNode)
@@ -186,6 +208,9 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     /**
      * This operation is not atomic. We hope that no one is changing the parent at the very
      * same time.
+     *
+     * Note that for all the nodes part of treeToAppend we will remember the Node ID associated to
+     * them. It will be possible to retrieve it by using idFor.
      */
     fun <C : KNode, E : KNode> appendTree(
         treeToAppend: KNode,
@@ -213,11 +238,24 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         lionWebClient.appendTree(lwTreeToAppend, containerId, containment.name)
     }
 
+    /**
+     * Return the Node ID associated to the Node. If the Client has already "seen"
+     * the Node before associated to a particular Node ID (either during insertion or retrieval)
+     * such Node ID will be returned. Otherwise the Node ID will be calculated based on the Node itself.
+     *
+     * Note that if you call this method on a Node before inserting it on the repository, we will not know
+     * _where_ in the repository you will insert it, therefore the ID you will get would be the one for the
+     * Node as "dangling in the void". The Node ID obtained after the insertion could be different!
+     */
     fun idFor(kNode: KNode): String {
         return idProvider.id(kNode)
     }
 }
 
+/**
+ * This logic consider where we plan to insert the Nodes and produce a Node ID considering
+ * that context.
+ */
 private class SubTreeLionWebNodeIdProvider(
     val containerId: String,
     val containmentName: String,
@@ -244,6 +282,13 @@ private class SubTreeLionWebNodeIdProvider(
     }
 }
 
-// TODO move to Kolasu
+/**
+ * Identify if a Node is a partition or not. This is based on the type of the Node.
+ * Nodes of Partition types should be always and exclusively used as partitions and never be placed within
+ * partitions.
+ * Conversely nodes of non-Partition types can only used within partitions and never be partitions themselves.
+ *
+ * TODO: Move to Kolasu
+ */
 val KNode.isPartition
     get() = this::class.annotations.any { it is LionWebPartition }
