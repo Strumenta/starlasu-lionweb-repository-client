@@ -1,3 +1,4 @@
+import com.strumenta.lwrepoclient.base.ClassifierKey
 import com.strumenta.lwrepoclient.base.FunctionalTestBuildConfig
 import com.strumenta.lwrepoclient.base.LionWebClient
 import com.strumenta.lwrepoclient.base.dynamicNode
@@ -128,5 +129,42 @@ class PropertiesFunctionalTest {
         assertEquals(null, retrieved.parent)
         assertEquals("pf1", retrieved.id)
         assertEquals(propertiesFile, retrieved.concept)
+    }
+
+    @Test
+    fun getNodesByClassifier() {
+        val client = LionWebClient(port = modelRepository!!.firstMappedPort)
+        client.registerLanguage(propertiesLanguage)
+
+        val pp1 = propertiesPartition.dynamicNode("pp1")
+        client.createPartition(pp1)
+
+        val pf =
+            propertiesFile.dynamicNode("pf1").apply {
+                parent = pp1
+            }
+        val prop1 =
+            property.dynamicNode("prop1").apply {
+                setPropertyValueByName("name", "Prop1")
+                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+            }
+        val prop2 =
+            property.dynamicNode("prop2").apply {
+                setPropertyValueByName("name", "Prop2")
+                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+            }
+        val prop3 =
+            property.dynamicNode("prop3").apply {
+                setPropertyValueByName("name", "Prop3")
+                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+            }
+        client.storeTree(pf)
+
+        val nodesByClassifier = client.nodesByClassifier()
+        assertEquals(mapOf(
+            ClassifierKey("language-properties-key", "properties-Property-key") to setOf("prop1", "prop2", "prop3"),
+            ClassifierKey("language-properties-key", "properties-PropertiesPartition-key") to setOf("pp1"),
+            ClassifierKey("language-properties-key", "properties-PropertiesFile-key") to setOf("pf1")
+        ), nodesByClassifier)
     }
 }

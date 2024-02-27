@@ -20,10 +20,9 @@ val kotestVersion = extra["kotestVersion"]
 val kotlinVersion = extra["kotlinVersion"]
 
 dependencies {
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
     implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
+    implementation("com.google.code.gson:gson:2.10.1")
 }
 
 testing {

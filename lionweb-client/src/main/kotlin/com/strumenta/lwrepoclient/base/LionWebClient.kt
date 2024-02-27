@@ -1,5 +1,6 @@
 package com.strumenta.lwrepoclient.base
 
+import com.google.gson.JsonParser
 import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.impl.DynamicNode
@@ -12,6 +13,9 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
+import java.net.HttpURLConnection
+
+data class ClassifierKey(val languageKey: String, val classifierKey: String)
 
 class LionWebClient(
     val hostname: String = "localhost",
@@ -48,7 +52,7 @@ class LionWebClient(
                 .get()
                 .build()
         httpClient.newCall(request).execute().use { response ->
-            if (response.code == 200) {
+            if (response.code == HttpURLConnection.HTTP_OK) {
                 val data =
                     (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
                 val chunk = LowLevelJsonSerialization().deserializeSerializationBlock(data)
@@ -71,7 +75,7 @@ class LionWebClient(
                 .post(body)
                 .build()
         httpClient.newCall(request).execute().use { response ->
-            if (response.code == 200) {
+            if (response.code == HttpURLConnection.HTTP_OK) {
                 val data =
                     (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
                 if (debug) {
@@ -107,7 +111,7 @@ class LionWebClient(
                 .post("".toRequestBody())
                 .build()
         OkHttpClient().newCall(request).execute().use { response ->
-            if (response.code != 200) {
+            if (response.code != HttpURLConnection.HTTP_OK) {
                 throw RuntimeException("DB initialization failed, HTTP ${response.code}: ${response.body?.string()}")
             }
         }
@@ -139,6 +143,29 @@ class LionWebClient(
         storeTree(parent)
     }
 
+    fun nodesByClassifier() : Map<ClassifierKey, Set<String>> {
+        val url = "http://$hostname:$port/inspection/nodesByClassifier"
+        val request: Request =
+            Request.Builder()
+                .url(url)
+                .get()
+                .build()
+        OkHttpClient().newCall(request).execute().use { response ->
+            val body = response.body?.string()
+            if (response.code != HttpURLConnection.HTTP_OK) {
+                throw RuntimeException("DB initialization failed, HTTP ${response.code}: $body")
+            }
+            val data = JsonParser.parseString(body)
+            val result = mutableMapOf<ClassifierKey, Set<String>>()
+            data.asJsonArray.map { it.asJsonObject }.forEach { entry ->
+                val classifierKey = ClassifierKey(entry["language"].asString, entry["classifier"].asString)
+                val ids : Set<String> = entry["ids"].asJsonArray.map { it.asString }.toSet()
+                result[classifierKey] = ids
+            }
+            return result
+        }
+    }
+
     private fun treeStoringOperation(
         node: Node,
         operation: String,
@@ -167,7 +194,7 @@ class LionWebClient(
                 .post(body)
                 .build()
         httpClient.newCall(request).execute().use { response ->
-            if (response.code != 200) {
+            if (response.code != HttpURLConnection.HTTP_OK) {
                 val body = response.body?.string()
                 if (debug) {
                     println("  Response: ${response.code}")
