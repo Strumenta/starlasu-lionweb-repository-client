@@ -16,17 +16,17 @@ import java.io.File
 class LionWebClient(
     val hostname: String = "localhost",
     val port: Int = 3005,
-    val debug: Boolean = false
+    val debug: Boolean = false,
 ) {
-
     private var httpClient: OkHttpClient = OkHttpClient()
 
     /**
      * Exposed for testing purposes
      */
-    val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
-        enableDynamicNodes()
-    }
+    val jsonSerialization =
+        JsonSerialization.getStandardSerialization().apply {
+            enableDynamicNodes()
+        }
 
     fun registerLanguage(language: Language) {
         jsonSerialization.registerLanguage(language)
@@ -41,11 +41,12 @@ class LionWebClient(
 
     fun getPartitionIDs(): List<String> {
         val url = "http://$hostname:$port/bulk/partitions"
-        val request: Request = Request.Builder()
-            .url(url)
-            .addHeader("Accept-Encoding", "gzip")
-            .get()
-            .build()
+        val request: Request =
+            Request.Builder()
+                .url(url)
+                .addHeader("Accept-Encoding", "gzip")
+                .get()
+                .build()
         httpClient.newCall(request).execute().use { response ->
             if (response.code == 200) {
                 val data =
@@ -64,10 +65,11 @@ class LionWebClient(
         val url = "http://$hostname:$port/bulk/retrieve"
         val urlBuilder = url.toHttpUrlOrNull()!!.newBuilder()
         urlBuilder.addQueryParameter("depthLimit", "99")
-        val request: Request = Request.Builder()
-            .url(urlBuilder.build())
-            .post(body)
-            .build()
+        val request: Request =
+            Request.Builder()
+                .url(urlBuilder.build())
+                .post(body)
+                .build()
         httpClient.newCall(request).execute().use { response ->
             if (response.code == 200) {
                 val data =
@@ -79,10 +81,12 @@ class LionWebClient(
                 val nodes = jsonSerialization.deserializeToNodes(data)
                 return nodes.find { it.id == rootId } ?: throw IllegalArgumentException(
                     "When requesting a subtree with rootId=$rootId we got back an answer without such ID. " +
-                        "IDs we got back: ${nodes.map { it.id }.joinToString(", ")}"
+                        "IDs we got back: ${nodes.map { it.id }.joinToString(", ")}",
                 )
             } else {
-                throw RuntimeException("Something went wrong while querying $url: http code ${response.code}, body: ${response.body?.string()}")
+                throw RuntimeException(
+                    "Something went wrong while querying $url: http code ${response.code}, body: ${response.body?.string()}",
+                )
             }
         }
     }
@@ -97,10 +101,11 @@ class LionWebClient(
      */
     fun modelRepositoryInit() {
         val url = "http://$hostname:$port/init"
-        val request: Request = Request.Builder()
-            .url(url)
-            .post("".toRequestBody())
-            .build()
+        val request: Request =
+            Request.Builder()
+                .url(url)
+                .post("".toRequestBody())
+                .build()
         OkHttpClient().newCall(request).execute().use { response ->
             if (response.code != 200) {
                 throw RuntimeException("DB initialization failed, HTTP ${response.code}: ${response.body?.string()}")
@@ -112,13 +117,18 @@ class LionWebClient(
      * This operation is not atomic. We hope that no one is changing the parent at the very
      * same time.
      */
-    fun appendTree(treeToAppend: Node, containerId: String, containmentName: String) {
+    fun appendTree(
+        treeToAppend: Node,
+        containerId: String,
+        containmentName: String,
+    ) {
         // 1. Retrieve the parent
         val parent = retrieve(containerId)
 
         // 2. Add the tree to the parent
-        val containment = parent.concept.getContainmentByName(containmentName)
-            ?: throw IllegalArgumentException("The container has not containment named $containmentName")
+        val containment =
+            parent.concept.getContainmentByName(containmentName)
+                ?: throw IllegalArgumentException("The container has not containment named $containmentName")
         if (!containment.isMultiple) {
             throw IllegalArgumentException("The indicated containment is not multiple")
         }
@@ -129,7 +139,10 @@ class LionWebClient(
         storeTree(parent)
     }
 
-    private fun treeStoringOperation(node: Node, operation: String) {
+    private fun treeStoringOperation(
+        node: Node,
+        operation: String,
+    ) {
         if (debug) {
             try {
                 treeSanityChecks(node, jsonSerialization = jsonSerialization)
@@ -147,11 +160,12 @@ class LionWebClient(
         println("  ${body.contentLength()} bytes sent")
 
         // TODO control with flag http or https
-        val request: Request = Request.Builder()
-            .url("http://$hostname:$port/bulk/$operation")
-            .addHeader("Content-Encoding", "gzip")
-            .post(body)
-            .build()
+        val request: Request =
+            Request.Builder()
+                .url("http://$hostname:$port/bulk/$operation")
+                .addHeader("Content-Encoding", "gzip")
+                .post(body)
+                .build()
         httpClient.newCall(request).execute().use { response ->
             if (response.code != 200) {
                 val body = response.body?.string()
