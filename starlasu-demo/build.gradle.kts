@@ -1,6 +1,6 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.9.22"
-    id("org.jetbrains.dokka") version "1.9.10"
+    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.dokka)
     alias(libs.plugins.ktlint)
     id("java-library")
 }

@@ -3,12 +3,12 @@ import java.net.URI
 plugins {
     java
     `jvm-test-suite`
-    id("org.jetbrains.kotlin.jvm") version "1.9.22"
-    id("org.jetbrains.dokka") version "1.9.10"
+    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.dokka)
     alias(libs.plugins.ktlint)
     id("java-library")
-    id("com.vanniktech.maven.publish") version "0.27.0"
-    id("com.github.gmazzo.buildconfig") version "5.3.5"
+    alias(libs.plugins.superPublish)
+    alias(libs.plugins.buildConfig)
 }
 
 val ktorVersion = extra["ktorVersion"]
