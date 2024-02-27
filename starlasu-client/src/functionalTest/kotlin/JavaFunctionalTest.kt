@@ -1,3 +1,18 @@
+import com.strumenta.javalangmodule.ast.JClassDeclaration
+import com.strumenta.javalangmodule.ast.JCompilationUnit
+import com.strumenta.javalangmodule.ast.JEntityType
+import com.strumenta.javalangmodule.ast.JFieldDecl
+import com.strumenta.javalangmodule.ast.JIntType
+import com.strumenta.javalangmodule.ast.JIntegerLiteralExpr
+import com.strumenta.javalangmodule.ast.JMethodBody
+import com.strumenta.javalangmodule.ast.JMethodDeclaration
+import com.strumenta.javalangmodule.ast.JMultiplicationExpr
+import com.strumenta.javalangmodule.ast.JParameterDeclaration
+import com.strumenta.javalangmodule.ast.JReferenceExpr
+import com.strumenta.javalangmodule.ast.JReturnStatement
+import com.strumenta.javalangmodule.ast.JSumExpr
+import com.strumenta.javalangmodule.ast.JVariableDeclarator
+import com.strumenta.javalangmodule.ast.JVoidType
 import com.strumenta.javalangmodule.ast.kLanguage
 import com.strumenta.javalangmodule.parser.JavaKolasuParser
 import com.strumenta.kolasu.language.KolasuLanguage
@@ -126,5 +141,54 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
             retrievedAST3,
         )
         assertEquals(null, retrievedAST3.parent)
+    }
+
+    @Test
+    fun getNodesByConcept() {
+        val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort, debug = true)
+        kolasuClient.registerLanguage(kLanguage)
+        kolasuClient.registerLanguage(simplePartitionLanguage)
+
+        // We create an empty partition
+        val partition = SimplePartition()
+        kolasuClient.idProvider[partition] = "myPartition"
+        kolasuClient.createPartition(partition)
+
+        // Now we want to attach several trees to the existing partition
+        val javaAst1 = JavaKolasuParser().parse("""class A {
+            |  int i;
+            |  void foo(int a) { return i * a + 2; }
+            |}""".trimMargin()).root!!
+        kolasuClient.appendTree(javaAst1, "myPartition", SimplePartition::stuff)
+
+        val javaAst2 = JavaKolasuParser().parse("""class B extends A {}""").root!!
+        kolasuClient.appendTree(javaAst2, "myPartition", SimplePartition::stuff)
+
+        val javaAst3 = JavaKolasuParser().parse("""class C {}""").root!!
+        kolasuClient.appendTree(javaAst3, "myPartition", SimplePartition::stuff)
+
+        val result = kolasuClient.nodesByConcept()
+        assertEquals(setOf(
+            JIntegerLiteralExpr::class,
+            JReferenceExpr::class,
+            SimplePartition::class,
+            JMethodDeclaration::class,
+            JFieldDecl::class,
+            JVoidType::class,
+            JCompilationUnit::class,
+            JParameterDeclaration::class,
+            JMultiplicationExpr::class,
+            JMethodBody::class,
+            JClassDeclaration::class,
+            JIntType::class,
+            JVariableDeclarator::class,
+            JSumExpr::class,
+            JEntityType::class,
+            JReturnStatement::class
+        ), result.keys)
+
+        assertEquals(setOf("myPartition_stuff_0_declarations_0_members_1_body_statements_0_value_right"), result[JIntegerLiteralExpr::class])
+        assertEquals(setOf("myPartition"), result[SimplePartition::class])
+        assertEquals(setOf("myPartition_stuff_0", "myPartition_stuff_1", "myPartition_stuff_2"), result[JCompilationUnit::class])
     }
 }

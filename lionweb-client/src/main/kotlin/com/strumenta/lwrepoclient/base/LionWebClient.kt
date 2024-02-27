@@ -21,15 +21,21 @@ class LionWebClient(
     val hostname: String = "localhost",
     val port: Int = 3005,
     val debug: Boolean = false,
+    val jsonSerializationProvider: (() -> JsonSerialization)? = null
 ) {
     private var httpClient: OkHttpClient = OkHttpClient()
 
     /**
      * Exposed for testing purposes
      */
-    val jsonSerialization =
+    val defaultJsonSerialization =
         JsonSerialization.getStandardSerialization().apply {
             enableDynamicNodes()
+        }
+
+    val jsonSerialization : JsonSerialization
+        get() {
+            return jsonSerializationProvider?.invoke() ?: defaultJsonSerialization
         }
 
     fun registerLanguage(language: Language) {
