@@ -1,3 +1,4 @@
+import com.strumenta.lwrepoclient.base.FunctionalTestBuildConfig
 import com.strumenta.lwrepoclient.base.LionWebClient
 import com.strumenta.lwrepoclient.base.dynamicNode
 import org.testcontainers.Testcontainers.exposeHostPorts
@@ -45,6 +46,7 @@ class PropertiesFunctionalTest {
         modelRepository = GenericContainer(
             ImageFromDockerfile()
                 .withFileFromClasspath("Dockerfile", "lionweb-repository-Dockerfile")
+                .withBuildArg("lionwebRepositoryCommitId", FunctionalTestBuildConfig.LIONWEB_REPOSITORY_COMMIT_ID)
         )
             .dependsOn(db)
             .withNetwork(network)

@@ -5,10 +5,10 @@ plugins {
     `jvm-test-suite`
     id("org.jetbrains.kotlin.jvm") version "1.9.22"
     id("org.jetbrains.dokka") version "1.9.10"
-    id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
-
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
     id("java-library")
     id("com.vanniktech.maven.publish") version "0.27.0"
+    id("com.github.gmazzo.buildconfig") version "5.3.5"
 }
 
 val ktorVersion = extra["ktorVersion"]
@@ -127,4 +127,14 @@ afterEvaluate {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+}
+
+val lionwebRepositoryCommitID = extra["lionwebRepositoryCommitID"]
+
+buildConfig {
+    sourceSets.getByName("functionalTest") {
+        packageName("com.strumenta.lwrepoclient.base")
+        buildConfigField("String", "LIONWEB_REPOSITORY_COMMIT_ID", "\"${lionwebRepositoryCommitID}\"")
+        useKotlinOutput()
+    }
 }
