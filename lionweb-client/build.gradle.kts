@@ -5,7 +5,7 @@ plugins {
     `jvm-test-suite`
     id("org.jetbrains.kotlin.jvm") version "1.9.22"
     id("org.jetbrains.dokka") version "1.9.10"
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
+    alias(libs.plugins.ktlint)
     id("java-library")
     id("com.vanniktech.maven.publish") version "0.27.0"
     id("com.github.gmazzo.buildconfig") version "5.3.5"

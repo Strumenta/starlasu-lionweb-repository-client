@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.9.10" apply(false)
     id("org.jetbrains.kotlin.jvm") version "1.9.22" apply(false)
     id("com.vanniktech.maven.publish") version "0.27.0"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
 }
 
 tasks {
@@ -32,6 +33,7 @@ subprojects {
     apply(plugin = "java")
     apply(plugin = "signing")
     apply(plugin = "org.jetbrains.dokka")
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
     tasks.withType<Test>().all {
         testLogging {
@@ -41,13 +43,24 @@ subprojects {
         }
     }
 
+    ktlint {
+        filter {
+            exclude { element ->
+                element
+                    .file
+                    .absolutePath
+                    .split(File.separator)
+                    .contains("build")
+            }
+        }
+    }
 }
 
 configure<ReleaseExtension> {
     buildTasks.set(
         listOf(
             ":lionweb-client:publish",
-            ":starlasu-client:publish"
+            ":starlasu-client:publish",
         ),
     )
     git {
@@ -55,4 +68,3 @@ configure<ReleaseExtension> {
         pushToRemote.set("origin")
     }
 }
-
