@@ -4,8 +4,8 @@ plugins {
     id("net.researchgate.release") version "3.0.2"
     id("org.jetbrains.dokka") version "1.9.10" apply(false)
     id("org.jetbrains.kotlin.jvm") version "1.9.22" apply(false)
-    id("com.vanniktech.maven.publish") version "0.27.0"
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
+    alias(libs.plugins.superPublish)
+    alias(libs.plugins.ktlint)
 }
 
 tasks {
