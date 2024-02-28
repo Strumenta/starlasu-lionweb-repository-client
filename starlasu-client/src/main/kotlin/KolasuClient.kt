@@ -17,6 +17,7 @@ import com.strumenta.kolasu.traversing.walk
 import com.strumenta.lwrepoclient.base.LionWebClient
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.serialization.JsonSerialization
+import io.lionweb.lioncore.java.serialization.UnknownParentPolicy
 import io.lionweb.lioncore.java.utils.CommonChecks
 import java.io.File
 import kotlin.reflect.KClass
@@ -50,6 +51,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             return nodeConverter.prepareJsonSerialization(
                 JsonSerialization.getStandardSerialization().apply {
                     enableDynamicNodes()
+                    unknownParentPolicy = UnknownParentPolicy.NULL_REFERENCES
                 },
             )
         }
