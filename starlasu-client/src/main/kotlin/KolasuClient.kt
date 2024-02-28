@@ -193,7 +193,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         this.idProvider.clearOverrides()
     }
 
-    fun nodesByConcept(): Map<KClass<*>, Set<String>>  {
+    fun nodesByConcept(): Map<KClass<*>, Set<String>> {
         val lionwebResult = lionWebClient.nodesByClassifier()
         val kolasuResult =
             lionwebResult.map { entry ->
