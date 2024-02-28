@@ -9,9 +9,10 @@ import io.lionweb.lioncore.java.language.LionCoreBuiltins
 
 val propertiesFile: Concept
 val property: Concept
-val propertiesLanguage = lwLanguage("Properties").apply {
-    propertiesFile = addConcept("PropertiesFile")
-    property = addConcept("Property")
-    property.addImplementedInterface(LionCoreBuiltins.getINamed())
-    propertiesFile.addContainment("properties", property, Multiplicity.ZERO_TO_MANY)
-}
+val propertiesLanguage =
+    lwLanguage("Properties").apply {
+        propertiesFile = addConcept("PropertiesFile")
+        property = addConcept("Property")
+        property.addImplementedInterface(LionCoreBuiltins.getINamed())
+        propertiesFile.addContainment("properties", property, Multiplicity.ZERO_TO_MANY)
+    }

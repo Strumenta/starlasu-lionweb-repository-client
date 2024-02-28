@@ -3,12 +3,12 @@ import java.net.URI
 plugins {
     java
     `jvm-test-suite`
-    id("org.jetbrains.kotlin.jvm") version "1.9.22"
-    id("org.jetbrains.dokka") version "1.9.10"
-    id("org.jlleitschuh.gradle.ktlint") version "11.6.1"
-
+    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.ktlint)
     id("java-library")
-    id("com.vanniktech.maven.publish") version "0.27.0"
+    alias(libs.plugins.superPublish)
+    alias(libs.plugins.buildConfig)
 }
 
 val ktorVersion = extra["ktorVersion"]
@@ -20,10 +20,9 @@ val kotestVersion = extra["kotestVersion"]
 val kotlinVersion = extra["kotlinVersion"]
 
 dependencies {
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
     implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
+    implementation("com.google.code.gson:gson:2.10.1")
 }
 
 testing {
@@ -127,4 +126,14 @@ afterEvaluate {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+}
+
+val lionwebRepositoryCommitID = extra["lionwebRepositoryCommitID"]
+
+buildConfig {
+    sourceSets.getByName("functionalTest") {
+        packageName("com.strumenta.lwrepoclient.base")
+        buildConfigField("String", "LIONWEB_REPOSITORY_COMMIT_ID", "\"${lionwebRepositoryCommitID}\"")
+        useKotlinOutput()
+    }
 }

@@ -1,3 +1,4 @@
+import com.strumenta.lwrepoclient.base.FunctionalTestBuildConfig
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
 import org.testcontainers.containers.PostgreSQLContainer
@@ -43,7 +44,8 @@ abstract class AbstractFunctionalTest {
         modelRepository =
             GenericContainer(
                 ImageFromDockerfile()
-                    .withFileFromClasspath("Dockerfile", "lionweb-repository-Dockerfile"),
+                    .withFileFromClasspath("Dockerfile", "lionweb-repository-Dockerfile")
+                    .withBuildArg("lionwebRepositoryCommitId", FunctionalTestBuildConfig.LIONWEB_REPOSITORY_COMMIT_ID),
             )
                 .dependsOn(db)
                 .withNetwork(network)

@@ -15,3 +15,7 @@ Currently this library is published in private GitHub Packages. For details see 
 The coordinates are:
 * group: "com.strumenta.lionwebrepoclient", artifactId: "lwrepoclient-base"
 * group: "com.strumenta.lionwebrepoclient", artifactId: "lwrepoclient-starlasu"
+
+## Which version of the LionWeb repository is supported?
+
+The one indicated by the property `lionwebRepositoryCommitID` in _gradle.properties_.

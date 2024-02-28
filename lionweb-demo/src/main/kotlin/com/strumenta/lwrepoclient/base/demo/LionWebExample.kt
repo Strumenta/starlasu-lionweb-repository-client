@@ -20,18 +20,21 @@ private suspend fun retrieveNodes(client: LionWebClient) {
 
 private suspend fun storeNodes(client: LionWebClient) {
     val pf = propertiesFile.dynamicNode("pf1")
-    val prop1 = property.dynamicNode("prop1").apply {
-        setPropertyValueByName("name", "Prop1")
-        pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
-    }
-    val prop2 = property.dynamicNode().apply {
-        setPropertyValueByName("name", "Prop2")
-        pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
-    }
-    val prop3 = property.dynamicNode().apply {
-        setPropertyValueByName("name", "Prop3")
-        pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
-    }
+    val prop1 =
+        property.dynamicNode("prop1").apply {
+            setPropertyValueByName("name", "Prop1")
+            pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+        }
+    val prop2 =
+        property.dynamicNode().apply {
+            setPropertyValueByName("name", "Prop2")
+            pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+        }
+    val prop3 =
+        property.dynamicNode().apply {
+            setPropertyValueByName("name", "Prop3")
+            pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+        }
 
     client.storeTree(pf)
 }

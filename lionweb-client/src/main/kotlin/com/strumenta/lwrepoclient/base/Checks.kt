@@ -11,7 +11,7 @@ import java.io.File
 fun treeSanityChecks(
     node: Node,
     parents: MutableMap<String, String?> = mutableMapOf(),
-    jsonSerialization: JsonSerialization
+    jsonSerialization: JsonSerialization,
 ) {
     try {
         if (parents.containsKey(node.id!!)) {
