@@ -40,7 +40,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      * present it fals back to the baseIdProvider.
      */
     val idProvider = OverridableNodeIdProvider(this)
-    private val lionWebClient = LionWebClient(hostname, port, debug = debug, jsonSerializationProvider = {this.jsonSerialization})
+    private val lionWebClient = LionWebClient(hostname, port, debug = debug, jsonSerializationProvider = { this.jsonSerialization })
 
     /**
      * Exposed for testing purposes
@@ -193,27 +193,28 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         this.idProvider.clearOverrides()
     }
 
-    fun nodesByConcept() : Map<KClass<*>, Set<String>>{
+    fun nodesByConcept(): Map<KClass<*>, Set<String>>  {
         val lionwebResult = lionWebClient.nodesByClassifier()
-        val kolasuResult = lionwebResult.map { entry ->
-            val languageKey = entry.key.languageKey
-            val lionWebLanguage = nodeConverter.knownLWLanguages().find { it.key == languageKey }
-            if (lionWebLanguage == null) {
-                null
-            } else {
-                val lionWebClassifier = lionWebLanguage.elements.find { it.key == entry.key.classifierKey }
-                if (lionWebClassifier is Concept) {
-                    val kolasuClass = nodeConverter.getClassifiersToKolasuClassesMapping()[lionWebClassifier]
-                    if (kolasuClass == null) {
-                        null
-                    } else {
-                        kolasuClass to entry.value
-                    }
+        val kolasuResult =
+            lionwebResult.map { entry ->
+                val languageKey = entry.key.languageKey
+                val lionWebLanguage = nodeConverter.knownLWLanguages().find { it.key == languageKey }
+                if (lionWebLanguage == null) {
+                    null
                 } else {
-                    throw IllegalStateException("Classifier $lionWebClassifier is unexpected, as it is not a Concept")
+                    val lionWebClassifier = lionWebLanguage.elements.find { it.key == entry.key.classifierKey }
+                    if (lionWebClassifier is Concept) {
+                        val kolasuClass = nodeConverter.getClassifiersToKolasuClassesMapping()[lionWebClassifier]
+                        if (kolasuClass == null) {
+                            null
+                        } else {
+                            kolasuClass to entry.value
+                        }
+                    } else {
+                        throw IllegalStateException("Classifier $lionWebClassifier is unexpected, as it is not a Concept")
+                    }
                 }
-            }
-        }.filterNotNull().toMap()
+            }.filterNotNull().toMap()
         return kolasuResult
     }
 }

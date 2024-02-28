@@ -155,10 +155,14 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
         kolasuClient.createPartition(partition)
 
         // Now we want to attach several trees to the existing partition
-        val javaAst1 = JavaKolasuParser().parse("""class A {
+        val javaAst1 =
+            JavaKolasuParser().parse(
+                """class A {
             |  int i;
             |  void foo(int a) { return i * a + 2; }
-            |}""".trimMargin()).root!!
+            |}
+                """.trimMargin(),
+            ).root!!
         kolasuClient.appendTree(javaAst1, "myPartition", SimplePartition::stuff)
 
         val javaAst2 = JavaKolasuParser().parse("""class B extends A {}""").root!!
@@ -168,26 +172,32 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
         kolasuClient.appendTree(javaAst3, "myPartition", SimplePartition::stuff)
 
         val result = kolasuClient.nodesByConcept()
-        assertEquals(setOf(
-            JIntegerLiteralExpr::class,
-            JReferenceExpr::class,
-            SimplePartition::class,
-            JMethodDeclaration::class,
-            JFieldDecl::class,
-            JVoidType::class,
-            JCompilationUnit::class,
-            JParameterDeclaration::class,
-            JMultiplicationExpr::class,
-            JMethodBody::class,
-            JClassDeclaration::class,
-            JIntType::class,
-            JVariableDeclarator::class,
-            JSumExpr::class,
-            JEntityType::class,
-            JReturnStatement::class
-        ), result.keys)
+        assertEquals(
+            setOf(
+                JIntegerLiteralExpr::class,
+                JReferenceExpr::class,
+                SimplePartition::class,
+                JMethodDeclaration::class,
+                JFieldDecl::class,
+                JVoidType::class,
+                JCompilationUnit::class,
+                JParameterDeclaration::class,
+                JMultiplicationExpr::class,
+                JMethodBody::class,
+                JClassDeclaration::class,
+                JIntType::class,
+                JVariableDeclarator::class,
+                JSumExpr::class,
+                JEntityType::class,
+                JReturnStatement::class,
+            ),
+            result.keys,
+        )
 
-        assertEquals(setOf("myPartition_stuff_0_declarations_0_members_1_body_statements_0_value_right"), result[JIntegerLiteralExpr::class])
+        assertEquals(
+            setOf("myPartition_stuff_0_declarations_0_members_1_body_statements_0_value_right"),
+            result[JIntegerLiteralExpr::class],
+        )
         assertEquals(setOf("myPartition"), result[SimplePartition::class])
         assertEquals(setOf("myPartition_stuff_0", "myPartition_stuff_1", "myPartition_stuff_2"), result[JCompilationUnit::class])
     }

@@ -161,10 +161,13 @@ class PropertiesFunctionalTest {
         client.storeTree(pf)
 
         val nodesByClassifier = client.nodesByClassifier()
-        assertEquals(mapOf(
-            ClassifierKey("language-properties-key", "properties-Property-key") to setOf("prop1", "prop2", "prop3"),
-            ClassifierKey("language-properties-key", "properties-PropertiesPartition-key") to setOf("pp1"),
-            ClassifierKey("language-properties-key", "properties-PropertiesFile-key") to setOf("pf1")
-        ), nodesByClassifier)
+        assertEquals(
+            mapOf(
+                ClassifierKey("language-properties-key", "properties-Property-key") to setOf("prop1", "prop2", "prop3"),
+                ClassifierKey("language-properties-key", "properties-PropertiesPartition-key") to setOf("pp1"),
+                ClassifierKey("language-properties-key", "properties-PropertiesFile-key") to setOf("pf1"),
+            ),
+            nodesByClassifier,
+        )
     }
 }

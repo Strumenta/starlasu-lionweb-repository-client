@@ -21,7 +21,7 @@ class LionWebClient(
     val hostname: String = "localhost",
     val port: Int = 3005,
     val debug: Boolean = false,
-    val jsonSerializationProvider: (() -> JsonSerialization)? = null
+    val jsonSerializationProvider: (() -> JsonSerialization)? = null,
 ) {
     private var httpClient: OkHttpClient = OkHttpClient()
 
@@ -33,7 +33,7 @@ class LionWebClient(
             enableDynamicNodes()
         }
 
-    val jsonSerialization : JsonSerialization
+    val jsonSerialization: JsonSerialization
         get() {
             return jsonSerializationProvider?.invoke() ?: defaultJsonSerialization
         }
@@ -149,7 +149,7 @@ class LionWebClient(
         storeTree(parent)
     }
 
-    fun nodesByClassifier() : Map<ClassifierKey, Set<String>> {
+    fun nodesByClassifier(): Map<ClassifierKey, Set<String>> {
         val url = "http://$hostname:$port/inspection/nodesByClassifier"
         val request: Request =
             Request.Builder()
@@ -165,7 +165,7 @@ class LionWebClient(
             val result = mutableMapOf<ClassifierKey, Set<String>>()
             data.asJsonArray.map { it.asJsonObject }.forEach { entry ->
                 val classifierKey = ClassifierKey(entry["language"].asString, entry["classifier"].asString)
-                val ids : Set<String> = entry["ids"].asJsonArray.map { it.asString }.toSet()
+                val ids: Set<String> = entry["ids"].asJsonArray.map { it.asString }.toSet()
                 result[classifierKey] = ids
             }
             return result
