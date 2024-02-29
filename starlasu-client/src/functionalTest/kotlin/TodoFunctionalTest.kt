@@ -1,11 +1,15 @@
+import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.lionweb.KNode
 import com.strumenta.kolasu.model.Point
 import com.strumenta.kolasu.model.Position
+import com.strumenta.kolasu.model.ReferenceByName
 import com.strumenta.kolasu.model.SimpleOrigin
 import com.strumenta.kolasu.model.Source
 import com.strumenta.kolasu.model.SyntheticSource
 import com.strumenta.kolasu.model.assignParents
+import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
+import junit.framework.TestCase.assertTrue
 import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -107,6 +111,68 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
         assertEquals("synthetic_my-wonderful-partition_projects_0_todos_0", kolasuClient.idFor(todoProject.todos[0]))
         assertEquals("synthetic_my-wonderful-partition_projects_0_todos_1", kolasuClient.idFor(todoProject.todos[1]))
         assertEquals("synthetic_my-wonderful-partition_projects_0_todos_2", kolasuClient.idFor(todoProject.todos[2]))
+    }
+
+    @Test
+    fun symbolResolution() {
+        val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort, debug = true)
+        kolasuClient.registerLanguage(todoLanguage)
+
+        // We create an empty partition
+        val todoAccount = TodoAccount(mutableListOf())
+        todoAccount.setSource(SyntheticSource("my-wonderful-partition"))
+        val partitionID = kolasuClient.createPartition(todoAccount)
+
+        // Now we want to attach a tree to the existing partition
+        val todoProject1 =
+            TodoProject(
+                "My errands list",
+                mutableListOf(
+                    Todo("Buy milk"),
+                    Todo("garbage-out", "Take the garbage out"),
+                    Todo("Go for a walk"),
+                ),
+            )
+        todoProject1.assignParents()
+        kolasuClient.appendTree(todoProject1, todoAccount, containment = TodoAccount::projects)
+
+        var todoProject2 =
+            TodoProject(
+                "My other errands list",
+                mutableListOf(
+                    Todo("BD", "Buy diary"),
+                    Todo("WD", "Write in diary", ReferenceByName("BD")),
+                    Todo("garbage-in", "Produce more garbage", ReferenceByName("garbage-out")),
+                ),
+            )
+        todoProject2.assignParents()
+        val todoProject2ID = kolasuClient.appendTree(todoProject2, todoAccount, containment = TodoAccount::projects)
+
+        var sri = kolasuClient.loadSRI(partitionID)
+        var todosInSri = sri.find(Todo::class).toList()
+        assertEquals(0, todosInSri.size)
+
+        val storedSri = kolasuClient.populateSRI(partitionID) { TodoSymbolProvider(it) }
+        todosInSri = storedSri.find(Todo::class).toList()
+        assertEquals(6, todosInSri.size)
+
+        // we check that also retrieving it we get back the same value, so we test persistence here
+        sri = kolasuClient.loadSRI(partitionID)
+        todosInSri = sri.find(Todo::class).toList()
+        assertEquals(6, todosInSri.size)
+
+        kolasuClient.performSymbolResolutionOnPartition(partitionID) { sri: SymbolRepository, nodeIdProvider: NodeIdProvider ->
+            TodoScopeProvider(sri, nodeIdProvider)
+        }
+        todoProject2 = kolasuClient.retrieve(todoProject2ID) as TodoProject
+        assertTrue(todoProject2.todos[1].prerequisite!!.referred != null)
+        assertEquals("BD", todoProject2.todos[1].prerequisite!!.referred!!.name)
+        assertEquals("Buy diary", todoProject2.todos[1].prerequisite!!.referred!!.description)
+
+        assertTrue(todoProject2.todos[2].prerequisite!!.referred == null)
+        assertTrue(todoProject2.todos[2].prerequisite!!.identifier != null)
+        // TODO update the identifier
+        assertEquals("XXXX", todoProject2.todos[2].prerequisite!!.identifier)
     }
 }
 

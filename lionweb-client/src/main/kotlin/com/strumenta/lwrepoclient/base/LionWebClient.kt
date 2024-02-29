@@ -88,6 +88,10 @@ class LionWebClient(
                     File("retrieved-$rootId.json").writeText(data)
                 }
                 jsonSerialization.unknownParentPolicy = UnknownParentPolicy.NULL_REFERENCES
+
+                Dovremmo dirgli che per i nodi che non conosce nelle refernce
+                dovrebbe instanziare settare il campo identifier invece di crashare
+
                 val nodes = jsonSerialization.deserializeToNodes(data)
                 return nodes.find { it.id == rootId } ?: throw IllegalArgumentException(
                     "When requesting a subtree with rootId=$rootId we got back an answer without such ID. " +

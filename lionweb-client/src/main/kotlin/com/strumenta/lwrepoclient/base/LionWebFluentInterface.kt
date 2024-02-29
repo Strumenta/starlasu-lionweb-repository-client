@@ -12,7 +12,8 @@ import kotlin.random.Random
  * Create a LionWeb Language with the given name.
  */
 fun lwLanguage(name: String): Language {
-    return Language(name, "language-${name.lowercase()}-id", "language-${name.lowercase()}-key", "1")
+    val cleanedName = name.lowercase().replace('.', '_')
+    return Language(name, "language-${cleanedName}-id", "language-${cleanedName}-key", "1")
 }
 
 fun Language.addConcept(name: String): Concept {

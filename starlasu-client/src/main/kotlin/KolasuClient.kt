@@ -10,10 +10,14 @@ import com.strumenta.kolasu.lionweb.LionWebPartition
 import com.strumenta.kolasu.lionweb.PrimitiveValueSerialization
 import com.strumenta.kolasu.lionweb.StructuralLionWebNodeIdProvider
 import com.strumenta.kolasu.model.Node
+import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.model.children
 import com.strumenta.kolasu.model.containingProperty
 import com.strumenta.kolasu.model.indexInContainingProperty
+import com.strumenta.kolasu.semantics.scope.provider.ScopeProvider
+import com.strumenta.kolasu.semantics.symbol.provider.SymbolProvider
 import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
+import com.strumenta.kolasu.semantics.symbol.resolver.SymbolResolver
 import com.strumenta.kolasu.traversing.walk
 import com.strumenta.lwrepoclient.base.LionWebClient
 import io.lionweb.lioncore.java.language.Concept
@@ -24,7 +28,16 @@ import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
+/**
+ * The logic of assignments of IDs is based on the positions of the elements within the partition,
+ * so that the containment of the node within the partition and its index within the containment affect the ID.
+ * Eventually we should change that, and consider for example the name of the file and its path relative to the root
+ * of the directory imported.
+ */
 class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val debug: Boolean = false) {
+
+
+
     /**
      * Exposed for testing purposes
      */
@@ -44,6 +57,10 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     val idProvider = OverridableNodeIdProvider(this)
     private val lionWebClient = LionWebClient(hostname, port, debug = debug, jsonSerializationProvider = { this.jsonSerialization })
 
+    init {
+        lionWebClient.registerLanguage(sriLanguage)
+    }
+
     /**
      * Exposed for testing purposes
      */
@@ -53,6 +70,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
                 JsonSerialization.getStandardSerialization().apply {
                     enableDynamicNodes()
                     unknownParentPolicy = UnknownParentPolicy.NULL_REFERENCES
+                    registerLanguage(sriLanguage)
                 },
             )
         }
@@ -76,12 +94,13 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     /**
      * When this method is called, we calculate the Node ID for the partition using the standard idProvider.
      */
-    fun createPartition(kPartition: Node) {
+    fun createPartition(kPartition: Node): String {
         if (kPartition.children.isNotEmpty()) {
             throw IllegalArgumentException("When creating a partition, please specify a single node")
         }
         val lwPartition = nodeConverter.exportModelToLionWeb(kPartition, idProvider)
         lionWebClient.createPartition(lwPartition)
+        return lwPartition.id!!
     }
 
     /**
@@ -90,7 +109,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     fun createPartition(
         kPartition: Node,
         partitionID: String,
-    ) {
+    ): String {
         if (kPartition.children.isNotEmpty()) {
             throw IllegalArgumentException("When creating a partition, please specify a single node")
         }
@@ -109,6 +128,15 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         lionWebClient.storeTree(lwNode)
     }
 
+    fun storeTree(
+        kNode: Node,
+    ) {
+        // Otherwise if we changed the node in the meantime, changes are not stored
+        nodeConverter.clearNodesMapping()
+        val lwNode = nodeConverter.exportModelToLionWeb(kNode, idProvider)
+        lionWebClient.storeTree(lwNode)
+    }
+
     /**
      * The Client will remember the LionWeb IDs of the LionWeb nodes from which
      * this tree has been obtained. Subsequently call to idFor will permit to retrieve
@@ -117,6 +145,8 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     fun retrieve(nodeId: String): Node {
         val lwNode = lionWebClient.retrieve(nodeId)
         val kNode = nodeConverter.importModelFromLionWeb(lwNode)
+        // TODO ensure this is called by importModelFromLionWeb
+        kNode.assignParents()
         kNode.walk().forEach { kNodeIt ->
             // This should be based on the cache
             // TODO create method called getCachedNode(kNode)
@@ -142,8 +172,8 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         treeToAppend: KNode,
         container: C,
         containment: KProperty1<C, out Collection<out E>>,
-    ) {
-        appendTree(treeToAppend, idFor(container), containment)
+    ): String {
+        return appendTree(treeToAppend, idFor(container), containment)
     }
 
     /**
@@ -157,7 +187,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         treeToAppend: KNode,
         containerId: String,
         containment: KProperty1<C, out Collection<out E>>,
-    ) {
+    ): String {
         val container = lionWebClient.retrieve(containerId)
         val index = container.getChildrenByContainmentName(containment.name).size
         val lwTreeToAppend =
@@ -177,6 +207,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             )
         }
         lionWebClient.appendTree(lwTreeToAppend, containerId, containment.name)
+        return lwTreeToAppend.id!!
     }
 
     /**
@@ -196,27 +227,31 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         this.idProvider.clearOverrides()
     }
 
-    fun populateSRI(partitionID: String) {
+    fun populateSRI(partitionID: String, symbolProviderFactory: (nodeIdProvider: NodeIdProvider) -> SymbolProvider) : SRI {
+        val symbolProvider = symbolProviderFactory.invoke(this@KolasuClient.idProvider)
+
         val sri = loadSRI(partitionID)
         val partition = retrieve(partitionID)
 
         partition.children.forEach { ast ->
-            populateSRI(sri, ast)
+            populateSRI(sri, ast, symbolProvider)
         }
 
         storeSRI(partitionID, sri)
+        return sri
     }
 
     fun performSymbolResolutionOnPartition(
         partitionID: String,
-        triggerPopulateSRI: Boolean = true,
+        scopeProviderProvider: (sri: SymbolRepository, nodeIdProvider: NodeIdProvider) -> ScopeProvider
     ) {
         val sri = loadSRI(partitionID)
         val partition = retrieve(partitionID)
+        val scopeProvider = scopeProviderProvider.invoke(sri, idProvider)
 
         partition.children.forEach { ast ->
-            performSymbolResolutionOnAST(sri, ast)
-            storeTree(ast, TODO())
+            performSymbolResolutionOnAST(ast, scopeProvider)
+            storeTree(ast)
         }
     }
 
@@ -245,29 +280,47 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return kolasuResult
     }
 
-    private fun loadSRI(partitionID: String): SymbolRepository {
-        TODO()
+    fun loadSRI(partitionID: String): SRI {
+        val nodeId = SRI.sriNodeID(partitionID)
+        return if (getPartitionIDs().contains(nodeId)) {
+            SRI.fromLionWeb(lionWebClient.retrieve(nodeId), this)
+        } else {
+            // If it does not exist then it is empty
+            SRI(this, partitionID)
+        }
     }
 
     private fun storeSRI(
         partitionID: String,
-        sri: SymbolRepository,
+        sri: SRI,
     ) {
-        TODO()
+        if (!getPartitionIDs().contains(SRI.sriNodeID(partitionID))) {
+            // we first need to store the partition
+            val emptySRI = SRI(this,  partitionID)
+            lionWebClient.createPartition(emptySRI.toLionWeb())
+        }
+        lionWebClient.storeTree(sri.toLionWeb())
     }
 
     private fun populateSRI(
-        sri: SymbolRepository,
+        sri: SRI,
         ast: Node,
+        symbolProvider: SymbolProvider
     ) {
-        TODO()
+        ast.walk().forEach { node ->
+            val symbol = symbolProvider.symbolFor(node)
+            if (symbol != null) {
+                sri.symbols.add(symbol)
+            }
+        }
     }
 
     private fun performSymbolResolutionOnAST(
-        sri: SymbolRepository,
         ast: Node,
+        scopeProvider: ScopeProvider
     ) {
-        TODO()
+        val symbolResolver = SymbolResolver(scopeProvider)
+        symbolResolver.resolve(ast, entireTree = true)
     }
 }
 
