@@ -1,18 +1,19 @@
 package com.strumenta.lwrepoclient.kolasu
 
+import com.strumenta.kolasu.ids.ConstantSourceIdProvider
+import com.strumenta.kolasu.ids.NodeIdProvider
+import com.strumenta.kolasu.ids.SourceIdProvider
 import com.strumenta.kolasu.language.KolasuLanguage
-import com.strumenta.kolasu.lionweb.ConstantSourceIdProvider
 import com.strumenta.kolasu.lionweb.KNode
 import com.strumenta.kolasu.lionweb.LionWebModelConverter
-import com.strumenta.kolasu.lionweb.LionWebNodeIdProvider
 import com.strumenta.kolasu.lionweb.LionWebPartition
 import com.strumenta.kolasu.lionweb.PrimitiveValueSerialization
-import com.strumenta.kolasu.lionweb.SourceIdProvider
 import com.strumenta.kolasu.lionweb.StructuralLionWebNodeIdProvider
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.model.children
 import com.strumenta.kolasu.model.containingProperty
 import com.strumenta.kolasu.model.indexInContainingProperty
+import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
 import com.strumenta.kolasu.traversing.walk
 import com.strumenta.lwrepoclient.base.LionWebClient
 import io.lionweb.lioncore.java.language.Concept
@@ -34,7 +35,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      * For example, we may want to use some form of semantic Node ID for certain kinds of Nodes, like qualified names
      * for Class Declarations.
      */
-    var baseIdProvider: LionWebNodeIdProvider = DefaultLionWebRepositoryNodeIdProvider()
+    var baseIdProvider: NodeIdProvider = DefaultLionWebRepositoryNodeIdProvider()
 
     /**
      * This is the idProvider we concretely use. This consider explicit overrides first, and if they are not
@@ -195,6 +196,30 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         this.idProvider.clearOverrides()
     }
 
+    fun populateSRI(partitionID: String) {
+        val sri = loadSRI(partitionID)
+        val partition = retrieve(partitionID)
+
+        partition.children.forEach { ast ->
+            populateSRI(sri, ast)
+        }
+
+        storeSRI(partitionID, sri)
+    }
+
+    fun performSymbolResolutionOnPartition(
+        partitionID: String,
+        triggerPopulateSRI: Boolean = true,
+    ) {
+        val sri = loadSRI(partitionID)
+        val partition = retrieve(partitionID)
+
+        partition.children.forEach { ast ->
+            performSymbolResolutionOnAST(sri, ast)
+            storeTree(ast, TODO())
+        }
+    }
+
     fun nodesByConcept(): Map<KClass<*>, Set<String>> {
         val lionwebResult = lionWebClient.nodesByClassifier()
         val kolasuResult =
@@ -219,6 +244,31 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             }.filterNotNull().toMap()
         return kolasuResult
     }
+
+    private fun loadSRI(partitionID: String): SymbolRepository {
+        TODO()
+    }
+
+    private fun storeSRI(
+        partitionID: String,
+        sri: SymbolRepository,
+    ) {
+        TODO()
+    }
+
+    private fun populateSRI(
+        sri: SymbolRepository,
+        ast: Node,
+    ) {
+        TODO()
+    }
+
+    private fun performSymbolResolutionOnAST(
+        sri: SymbolRepository,
+        ast: Node,
+    ) {
+        TODO()
+    }
 }
 
 /**
@@ -230,7 +280,7 @@ private class SubTreeLionWebNodeIdProvider(
     val containmentName: String,
     val containmentIndex: Int,
 ) :
-    LionWebNodeIdProvider {
+    NodeIdProvider {
     private val sourceIdProvider: SourceIdProvider = ConstantSourceIdProvider("")
 
     override fun id(kNode: Node): String {

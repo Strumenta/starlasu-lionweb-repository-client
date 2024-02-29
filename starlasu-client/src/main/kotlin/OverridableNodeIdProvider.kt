@@ -1,7 +1,7 @@
 package com.strumenta.lwrepoclient.kolasu
 
+import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.lionweb.KNode
-import com.strumenta.kolasu.lionweb.LionWebNodeIdProvider
 import java.util.IdentityHashMap
 
 /**
@@ -10,7 +10,7 @@ import java.util.IdentityHashMap
  * that. Later, if we access that Node without that contextual information we would not be able to recalculate the
  * same Node ID.
  */
-class OverridableNodeIdProvider(private val kolasuClient: KolasuClient) : LionWebNodeIdProvider {
+class OverridableNodeIdProvider(private val kolasuClient: KolasuClient) : NodeIdProvider {
     private val overrides = IdentityHashMap<KNode, String>()
 
     override fun id(kNode: KNode): String {

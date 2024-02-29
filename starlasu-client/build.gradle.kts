@@ -95,6 +95,7 @@ dependencies {
     implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
     implementation("com.strumenta.kolasu:kolasu-core:$kolasuVersion")
     implementation("com.strumenta.kolasu:kolasu-lionweb:$kolasuVersion")
+    implementation("com.strumenta.kolasu:kolasu-semantics:$kolasuVersion")
     implementation(project(":lionweb-client"))
 
     testImplementation(kotlin("test-junit5"))

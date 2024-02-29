@@ -1,9 +1,9 @@
 package com.strumenta.lwrepoclient.kolasu
 
+import com.strumenta.kolasu.ids.NodeIdProvider
+import com.strumenta.kolasu.ids.SimpleSourceIdProvider
+import com.strumenta.kolasu.ids.SourceIdProvider
 import com.strumenta.kolasu.lionweb.KNode
-import com.strumenta.kolasu.lionweb.LionWebNodeIdProvider
-import com.strumenta.kolasu.lionweb.SimpleSourceIdProvider
-import com.strumenta.kolasu.lionweb.SourceIdProvider
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.model.SyntheticSource
 import com.strumenta.kolasu.model.containingProperty
@@ -11,7 +11,7 @@ import com.strumenta.kolasu.model.indexInContainingProperty
 import io.lionweb.lioncore.java.utils.CommonChecks
 
 class DefaultLionWebRepositoryNodeIdProvider(var sourceIdProvider: SourceIdProvider = SimpleSourceIdProvider()) :
-    LionWebNodeIdProvider {
+    NodeIdProvider {
     protected open fun partitionId(kNode: Node): String {
         require(kNode.parent == null)
         require(kNode.source != null)
