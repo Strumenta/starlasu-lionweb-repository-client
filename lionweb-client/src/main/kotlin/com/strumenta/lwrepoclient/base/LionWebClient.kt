@@ -6,7 +6,7 @@ import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.impl.DynamicNode
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.LowLevelJsonSerialization
-import io.lionweb.lioncore.java.serialization.UnknownParentPolicy
+import io.lionweb.lioncore.java.serialization.UnavailableNodePolicy
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -87,10 +87,8 @@ class LionWebClient(
                 if (debug) {
                     File("retrieved-$rootId.json").writeText(data)
                 }
-                jsonSerialization.unknownParentPolicy = UnknownParentPolicy.NULL_REFERENCES
-
-                Dovremmo dirgli che per i nodi che non conosce nelle refernce
-                dovrebbe instanziare settare il campo identifier invece di crashare
+                jsonSerialization.unavailableParentPolicy = UnavailableNodePolicy.NULL_REFERENCES
+                jsonSerialization.unavailableReferenceTargetPolicy = UnavailableNodePolicy.PROXY_NODES
 
                 val nodes = jsonSerialization.deserializeToNodes(data)
                 return nodes.find { it.id == rootId } ?: throw IllegalArgumentException(

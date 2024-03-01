@@ -1,5 +1,6 @@
 import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.lionweb.KNode
+import com.strumenta.kolasu.lionweb.LionWebLanguageConverter
 import com.strumenta.kolasu.model.Point
 import com.strumenta.kolasu.model.Position
 import com.strumenta.kolasu.model.ReferenceByName
@@ -9,8 +10,10 @@ import com.strumenta.kolasu.model.SyntheticSource
 import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
+import io.lionweb.lioncore.java.serialization.JsonSerialization
 import junit.framework.TestCase.assertTrue
 import org.testcontainers.junit.jupiter.Testcontainers
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -170,10 +173,9 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
         assertEquals("Buy diary", todoProject2.todos[1].prerequisite!!.referred!!.description)
 
         assertTrue(todoProject2.todos[2].prerequisite!!.referred == null)
-        assertTrue(todoProject2.todos[2].prerequisite!!.identifier != null)
-        // TODO update the identifier
-        assertEquals("XXXX", todoProject2.todos[2].prerequisite!!.identifier)
+        assertTrue(todoProject2.todos[2].prerequisite!!.identifier == "synthetic_my-wonderful-partition_projects_0_todos_1")
     }
+
 }
 
 private fun KNode.setSource(source: Source) {
