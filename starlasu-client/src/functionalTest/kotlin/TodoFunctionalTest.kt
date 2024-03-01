@@ -1,6 +1,5 @@
 import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.lionweb.KNode
-import com.strumenta.kolasu.lionweb.LionWebLanguageConverter
 import com.strumenta.kolasu.model.Point
 import com.strumenta.kolasu.model.Position
 import com.strumenta.kolasu.model.ReferenceByName
@@ -10,10 +9,8 @@ import com.strumenta.kolasu.model.SyntheticSource
 import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
-import io.lionweb.lioncore.java.serialization.JsonSerialization
 import junit.framework.TestCase.assertTrue
 import org.testcontainers.junit.jupiter.Testcontainers
-import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -165,7 +162,7 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
         assertEquals(6, todosInSri.size)
 
         kolasuClient.performSymbolResolutionOnPartition(partitionID) { sri: SymbolRepository, nodeIdProvider: NodeIdProvider ->
-            TodoScopeProvider(sri, nodeIdProvider)
+            TodoScopeProvider(sri)
         }
         todoProject2 = kolasuClient.retrieve(todoProject2ID) as TodoProject
         assertTrue(todoProject2.todos[1].prerequisite!!.referred != null)
@@ -175,7 +172,6 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
         assertTrue(todoProject2.todos[2].prerequisite!!.referred == null)
         assertTrue(todoProject2.todos[2].prerequisite!!.identifier == "synthetic_my-wonderful-partition_projects_0_todos_1")
     }
-
 }
 
 private fun KNode.setSource(source: Source) {

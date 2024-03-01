@@ -32,19 +32,23 @@ class SRI(private val kolasuClient: KolasuClient, val partitionID: String) : Sym
     }
 
     companion object {
-        fun fromLionWeb(sriNode: LWNode, kolasuClient: KolasuClient) : SRI {
+        fun fromLionWeb(
+            sriNode: LWNode,
+            kolasuClient: KolasuClient,
+        ): SRI {
             require(sriNode.concept == sriConcept)
             require(sriNode.id!!.endsWith(idSuffix))
             val partitionID = sriNode.id!!.removeSuffix(idSuffix)
             val sri = SRI(kolasuClient, partitionID)
             sriNode.getChildrenByContainmentName("entries").forEach { symbolNode ->
                 val typesStr = symbolNode.getPropertyValueByName("types") as String
-                val symbolDescription = SymbolDescription(
-                    symbolNode.getPropertyValueByName("representedIdentifier") as String,
-                    symbolNode.getPropertyValueByName("name") as String,
-                    if (typesStr.isEmpty()) emptyList() else typesStr.split(":"),
-                    emptyMap()
-                )
+                val symbolDescription =
+                    SymbolDescription(
+                        symbolNode.getPropertyValueByName("name") as String,
+                        symbolNode.getPropertyValueByName("representedIdentifier") as String,
+                        if (typesStr.isEmpty()) emptyList() else typesStr.split(":"),
+                        emptyMap(),
+                    )
                 sri.symbols.add(symbolDescription)
             }
             return sri
@@ -56,13 +60,12 @@ class SRI(private val kolasuClient: KolasuClient, val partitionID: String) : Sym
 
         private val idSuffix = "-SRI"
     }
-
 }
 
-fun SRI.toLionWeb() : LWNode {
+fun SRI.toLionWeb(): LWNode {
     val sriNode = DynamicNode(this.sriNodeID, sriConcept)
     this.symbols.forEach { symbol ->
-        val symbolNode = DynamicNode(symbol.identifier+"_symbol", symbolConcept)
+        val symbolNode = DynamicNode(symbol.identifier + "_symbol", symbolConcept)
         symbolNode.setPropertyValueByName("representedIdentifier", symbol.identifier)
         symbolNode.setPropertyValueByName("name", symbol.name)
         symbolNode.setPropertyValueByName("types", symbol.types.joinToString(":"))
@@ -71,14 +74,15 @@ fun SRI.toLionWeb() : LWNode {
     return sriNode
 }
 
-val sriLanguage = lwLanguage("com.strumenta.SymbolResolutionIndex").apply {
-    val sri = addConcept("SRI")
-    val symbol = addConcept("Symbol")
-    symbol.addImplementedInterface(LionCoreBuiltins.getINamed())
-    sri.addContainment("entries", symbol, LWMultiplicity.ZERO_TO_MANY)
-    symbol.addProperty("representedIdentifier", LionCoreBuiltins.getString())
-    symbol.addProperty("types", LionCoreBuiltins.getString())
-}
+val sriLanguage =
+    lwLanguage("com.strumenta.SymbolResolutionIndex").apply {
+        val sri = addConcept("SRI")
+        val symbol = addConcept("Symbol")
+        symbol.addImplementedInterface(LionCoreBuiltins.getINamed())
+        sri.addContainment("entries", symbol, LWMultiplicity.ZERO_TO_MANY)
+        symbol.addProperty("representedIdentifier", LionCoreBuiltins.getString())
+        symbol.addProperty("types", LionCoreBuiltins.getString())
+    }
 val sriConcept by lazy {
     sriLanguage.getConceptByName("SRI")!!
 }

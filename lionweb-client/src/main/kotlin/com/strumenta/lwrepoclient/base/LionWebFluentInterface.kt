@@ -13,7 +13,7 @@ import kotlin.random.Random
  */
 fun lwLanguage(name: String): Language {
     val cleanedName = name.lowercase().replace('.', '_')
-    return Language(name, "language-${cleanedName}-id", "language-${cleanedName}-key", "1")
+    return Language(name, "language-$cleanedName-id", "language-$cleanedName-key", "1")
 }
 
 fun Language.addConcept(name: String): Concept {

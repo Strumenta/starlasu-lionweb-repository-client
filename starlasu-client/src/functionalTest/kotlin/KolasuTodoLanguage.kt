@@ -4,16 +4,11 @@ import com.strumenta.kolasu.lionweb.LionWebPartition
 import com.strumenta.kolasu.model.Named
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.model.ReferenceByName
-import com.strumenta.kolasu.semantics.identifier.provider.IdentifierProvider
 import com.strumenta.kolasu.semantics.scope.provider.declarative.DeclarativeScopeProvider
 import com.strumenta.kolasu.semantics.scope.provider.declarative.scopeFor
-import com.strumenta.kolasu.semantics.symbol.description.StringValueDescription
-import com.strumenta.kolasu.semantics.symbol.description.SymbolDescription
-import com.strumenta.kolasu.semantics.symbol.provider.SymbolProvider
 import com.strumenta.kolasu.semantics.symbol.provider.declarative.DeclarativeSymbolProvider
 import com.strumenta.kolasu.semantics.symbol.provider.declarative.symbolFor
 import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
-import kotlin.reflect.KClass
 
 @LionWebPartition
 data class TodoAccount(val projects: MutableList<TodoProject>) : Node()
@@ -34,21 +29,14 @@ val todoLanguage =
         addClass(TodoProject::class)
     }
 
-class TodoSymbolProvider(nodeIdProvider: NodeIdProvider) : DeclarativeSymbolProvider(nodeIdProvider.asIdentifierProvider(),
+class TodoSymbolProvider(nodeIdProvider: NodeIdProvider) : DeclarativeSymbolProvider(
+    nodeIdProvider,
     symbolFor<Todo> {
         this.name(it.node.name)
-    }
+    },
 )
 
-private fun NodeIdProvider.asIdentifierProvider(): IdentifierProvider {
-    return object : IdentifierProvider {
-        override fun <NodeTy : Node> getIdentifierFor(node: NodeTy, typedAs: KClass<in NodeTy>?): String? {
-            return this@asIdentifierProvider.id(node)
-        }
-    }
-}
-
-class TodoScopeProvider(val sri: SymbolRepository, override var nodeIdProvider: NodeIdProvider) : DeclarativeScopeProvider(
+class TodoScopeProvider(val sri: SymbolRepository) : DeclarativeScopeProvider(
     scopeFor(Todo::prerequisite) {
         // We first consider local todos, as they may shadow todos from other projects
         (it.node.parent as TodoProject).todos.forEach {
@@ -59,5 +47,5 @@ class TodoScopeProvider(val sri: SymbolRepository, override var nodeIdProvider: 
         sri.find(Todo::class).forEach {
             define(it.name!!, it)
         }
-    }
+    },
 )

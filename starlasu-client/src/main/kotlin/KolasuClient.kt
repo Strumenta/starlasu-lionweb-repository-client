@@ -35,9 +35,6 @@ import kotlin.reflect.KProperty1
  * of the directory imported.
  */
 class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val debug: Boolean = false) {
-
-
-
     /**
      * Exposed for testing purposes
      */
@@ -129,9 +126,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         lionWebClient.storeTree(lwNode)
     }
 
-    fun storeTree(
-        kNode: Node,
-    ) {
+    fun storeTree(kNode: Node) {
         // Otherwise if we changed the node in the meantime, changes are not stored
         nodeConverter.clearNodesMapping()
         val lwNode = nodeConverter.exportModelToLionWeb(kNode, idProvider)
@@ -228,7 +223,10 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         this.idProvider.clearOverrides()
     }
 
-    fun populateSRI(partitionID: String, symbolProviderFactory: (nodeIdProvider: NodeIdProvider) -> SymbolProvider) : SRI {
+    fun populateSRI(
+        partitionID: String,
+        symbolProviderFactory: (nodeIdProvider: NodeIdProvider) -> SymbolProvider,
+    ): SRI {
         val symbolProvider = symbolProviderFactory.invoke(this@KolasuClient.idProvider)
 
         val sri = loadSRI(partitionID)
@@ -244,7 +242,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
 
     fun performSymbolResolutionOnPartition(
         partitionID: String,
-        scopeProviderProvider: (sri: SymbolRepository, nodeIdProvider: NodeIdProvider) -> ScopeProvider
+        scopeProviderProvider: (sri: SymbolRepository, nodeIdProvider: NodeIdProvider) -> ScopeProvider,
     ) {
         val sri = loadSRI(partitionID)
         val partition = retrieve(partitionID)
@@ -297,7 +295,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     ) {
         if (!getPartitionIDs().contains(SRI.sriNodeID(partitionID))) {
             // we first need to store the partition
-            val emptySRI = SRI(this,  partitionID)
+            val emptySRI = SRI(this, partitionID)
             lionWebClient.createPartition(emptySRI.toLionWeb())
         }
         lionWebClient.storeTree(sri.toLionWeb())
@@ -306,7 +304,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     private fun populateSRI(
         sri: SRI,
         ast: Node,
-        symbolProvider: SymbolProvider
+        symbolProvider: SymbolProvider,
     ) {
         ast.walk().forEach { node ->
             val symbol = symbolProvider.symbolFor(node)
@@ -318,7 +316,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
 
     private fun performSymbolResolutionOnAST(
         ast: Node,
-        scopeProvider: ScopeProvider
+        scopeProvider: ScopeProvider,
     ) {
         val symbolResolver = SymbolResolver(scopeProvider)
         symbolResolver.resolve(ast, entireTree = true)
