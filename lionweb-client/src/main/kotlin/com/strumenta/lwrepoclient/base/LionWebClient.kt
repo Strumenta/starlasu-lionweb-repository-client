@@ -1,5 +1,6 @@
 package com.strumenta.lwrepoclient.base
 
+import com.google.gson.JsonElement
 import com.google.gson.JsonParser
 import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
@@ -25,6 +26,12 @@ class LionWebClient(
 ) {
     private var httpClient: OkHttpClient = OkHttpClient()
 
+    private fun log(message: String) {
+        if (debug) {
+            println(message)
+        }
+    }
+
     /**
      * Exposed for testing purposes
      */
@@ -49,6 +56,23 @@ class LionWebClient(
         treeStoringOperation(node, "createPartitions")
     }
 
+    private fun <T> processChunkResponse(
+        data: String,
+        chunkProcessor: (JsonElement) -> T,
+    ): T {
+        val json = JsonParser.parseString(data).asJsonObject
+        val success = json.get("success").asBoolean
+        val messages = json.get("messages").asJsonArray
+        if (!messages.isEmpty) {
+            log("Messages received: $messages")
+        }
+        if (!success) {
+            throw RuntimeException("Request failed. Messages: $messages")
+        }
+        val chunkJson = json.get("chunk")
+        return chunkProcessor.invoke(chunkJson)
+    }
+
     fun getPartitionIDs(): List<String> {
         val url = "http://$hostname:$port/bulk/partitions"
         val request: Request =
@@ -61,8 +85,10 @@ class LionWebClient(
             if (response.code == HttpURLConnection.HTTP_OK) {
                 val data =
                     (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
-                val chunk = LowLevelJsonSerialization().deserializeSerializationBlock(data)
-                return chunk.classifierInstances.mapNotNull { it.id }
+                return processChunkResponse(data) {
+                    val chunk = LowLevelJsonSerialization().deserializeSerializationBlock(it)
+                    chunk.classifierInstances.mapNotNull { it.id }
+                }
             } else {
                 throw RuntimeException("Got back ${response.code}: ${response.body?.string()}")
             }
@@ -90,11 +116,13 @@ class LionWebClient(
                 jsonSerialization.unavailableParentPolicy = UnavailableNodePolicy.NULL_REFERENCES
                 jsonSerialization.unavailableReferenceTargetPolicy = UnavailableNodePolicy.PROXY_NODES
 
-                val nodes = jsonSerialization.deserializeToNodes(data)
-                return nodes.find { it.id == rootId } ?: throw IllegalArgumentException(
-                    "When requesting a subtree with rootId=$rootId we got back an answer without such ID. " +
-                        "IDs we got back: ${nodes.map { it.id }.joinToString(", ")}",
-                )
+                return processChunkResponse(data) {
+                    val nodes = jsonSerialization.deserializeToNodes(it)
+                    nodes.find { it.id == rootId } ?: throw IllegalArgumentException(
+                        "When requesting a subtree with rootId=$rootId we got back an answer without such ID. " +
+                            "IDs we got back: ${nodes.map { it.id }.joinToString(", ")}",
+                    )
+                }
             } else {
                 throw RuntimeException(
                     "Something went wrong while querying $url: http code ${response.code}, body: ${response.body?.string()}",
