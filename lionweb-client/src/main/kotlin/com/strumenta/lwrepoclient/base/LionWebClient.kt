@@ -56,6 +56,29 @@ class LionWebClient(
         treeStoringOperation(node, "createPartitions")
     }
 
+    fun deletePartition(node: Node) {
+        deletePartition(node.id ?: throw IllegalStateException("Node ID not specified"))
+    }
+
+    fun deletePartition(nodeID: String) {
+        val body: RequestBody = "[\"$nodeID\"]".toRequestBody(JSON)
+        val request: Request =
+            Request.Builder()
+                .url("http://$hostname:$port/bulk/deletePartitions")
+                .post(body)
+                .build()
+        httpClient.newCall(request).execute().use { response ->
+            if (response.code != HttpURLConnection.HTTP_OK) {
+                val body = response.body?.string()
+                if (debug) {
+                    println("  Response: ${response.code}")
+                    println("  Response: $body")
+                }
+                throw RuntimeException("Request failed with code ${response.code}: $body")
+            }
+        }
+    }
+
     private fun <T> processChunkResponse(
         data: String,
         chunkProcessor: (JsonElement) -> T,
@@ -110,9 +133,7 @@ class LionWebClient(
             if (response.code == HttpURLConnection.HTTP_OK) {
                 val data =
                     (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
-                if (debug) {
-                    File("retrieved-$rootId.json").writeText(data)
-                }
+                debugFile("retrieved-$rootId.json") { data }
                 jsonSerialization.unavailableParentPolicy = UnavailableNodePolicy.NULL_REFERENCES
                 jsonSerialization.unavailableReferenceTargetPolicy = UnavailableNodePolicy.PROXY_NODES
 
@@ -122,6 +143,85 @@ class LionWebClient(
                         "When requesting a subtree with rootId=$rootId we got back an answer without such ID. " +
                             "IDs we got back: ${nodes.map { it.id }.joinToString(", ")}",
                     )
+                }
+            } else {
+                throw RuntimeException(
+                    "Something went wrong while querying $url: http code ${response.code}, body: ${response.body?.string()}",
+                )
+            }
+        }
+    }
+
+    fun getAncestorsId(nodeID: String): List<String> {
+        val result = mutableListOf<String>()
+        var currentNodeID: String? = nodeID
+        while (currentNodeID != null) {
+            currentNodeID = getParentId(currentNodeID)
+            if (currentNodeID != null) {
+                result.add(currentNodeID)
+            }
+        }
+        return result
+    }
+
+    fun isNodeExisting(nodeID: String): Boolean {
+        require(nodeID.isNotBlank())
+        val body: RequestBody = "{\"ids\":[\"$nodeID\"] }".toRequestBody(JSON)
+        val url = "http://$hostname:$port/bulk/retrieve"
+        val urlBuilder = url.toHttpUrlOrNull()!!.newBuilder()
+        urlBuilder.addQueryParameter("depthLimit", "0")
+        val request: Request =
+            Request.Builder()
+                .url(urlBuilder.build())
+                .post(body)
+                .build()
+        httpClient.newCall(request).execute().use { response ->
+            if (response.code == HttpURLConnection.HTTP_OK) {
+                val data =
+                    (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
+                debugFile("isNodeExisting-$nodeID.json") { data }
+                return processChunkResponse(data) { chunk ->
+                    val nodes = chunk.asJsonObject.get("nodes").asJsonArray
+                    !nodes.isEmpty
+                }
+            } else {
+                throw RuntimeException(
+                    "Something went wrong while querying $url: http code ${response.code}, body: ${response.body?.string()}",
+                )
+            }
+        }
+    }
+
+    fun getParentId(nodeID: String): String? {
+        require(nodeID.isNotBlank())
+        val body: RequestBody = "{\"ids\":[\"$nodeID\"] }".toRequestBody(JSON)
+        val url = "http://$hostname:$port/bulk/retrieve"
+        val urlBuilder = url.toHttpUrlOrNull()!!.newBuilder()
+        urlBuilder.addQueryParameter("depthLimit", "0")
+        val request: Request =
+            Request.Builder()
+                .url(urlBuilder.build())
+                .post(body)
+                .build()
+        httpClient.newCall(request).execute().use { response ->
+            if (response.code == HttpURLConnection.HTTP_OK) {
+                val data =
+                    (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
+                debugFile("getParentId-$nodeID.json") { data }
+                return processChunkResponse(data) { chunk ->
+                    val nodes = chunk.asJsonObject.get("nodes").asJsonArray
+                    require(nodes.size() == 1) {
+                        "When asking for the parent Id of $nodeID we were expecting to get one node back. " +
+                            "We got ${nodes.size()}"
+                    }
+                    val node = nodes.get(0).asJsonObject
+                    require(nodeID == node.get("id").asString)
+                    val parentNode = node.get("parent")
+                    if (parentNode.isJsonNull) {
+                        null
+                    } else {
+                        parentNode.asString
+                    }
                 }
             } else {
                 throw RuntimeException(
@@ -162,6 +262,7 @@ class LionWebClient(
         containerId: String,
         containmentName: String,
     ) {
+        // TODO avoid retrieving the whole parent (just do level 1)
         // 1. Retrieve the parent
         val parent = retrieve(containerId)
 
@@ -215,9 +316,7 @@ class LionWebClient(
         }
         val json = jsonSerialization.serializeTreesToJsonString(node)
         println("  JSON of ${json!!.encodeToByteArray().size} bytes")
-        if (debug) {
-            File("sent.json").writeText(json)
-        }
+        debugFile("sent.json") { json }
 
         val body: RequestBody = json.compress()
         println("  ${body.contentLength()} bytes sent")
@@ -239,5 +338,27 @@ class LionWebClient(
                 throw RuntimeException("Request failed with code ${response.code}: $body")
             }
         }
+    }
+
+    private fun debugFile(
+        relativePath: String,
+        text: () -> String,
+    ) {
+        debugFileHelper(debug, relativePath, text)
+    }
+}
+
+fun debugFileHelper(
+    debug: Boolean,
+    relativePath: String,
+    text: () -> String,
+) {
+    if (debug) {
+        val debugDir = File("debug")
+        if (!debugDir.exists()) {
+            debugDir.mkdir()
+        }
+        val file = File(debugDir, relativePath)
+        file.writeText(text.invoke())
     }
 }

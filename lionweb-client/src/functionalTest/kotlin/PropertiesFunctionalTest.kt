@@ -80,8 +80,61 @@ class PropertiesFunctionalTest {
 
     @Test
     fun noPartitionsOnNewModelRepository() {
-        val kolasuClient = LionWebClient(port = modelRepository!!.firstMappedPort)
-        assertEquals(emptyList(), kolasuClient.getPartitionIDs())
+        val client = LionWebClient(port = modelRepository!!.firstMappedPort)
+        assertEquals(emptyList(), client.getPartitionIDs())
+    }
+
+    @Test
+    fun isNodeExisting() {
+        val client = LionWebClient(port = modelRepository!!.firstMappedPort)
+        assertEquals(false, client.isNodeExisting("pp1"))
+        assertEquals(false, client.isNodeExisting("pf1"))
+        assertEquals(false, client.isNodeExisting("prop1"))
+        assertEquals(false, client.isNodeExisting("prop2"))
+        assertEquals(false, client.isNodeExisting("prop3"))
+
+        val pp1 = propertiesPartition.dynamicNode("pp1")
+        client.createPartition(pp1)
+
+        assertEquals(true, client.isNodeExisting("pp1"))
+        assertEquals(false, client.isNodeExisting("pf1"))
+        assertEquals(false, client.isNodeExisting("prop1"))
+        assertEquals(false, client.isNodeExisting("prop2"))
+        assertEquals(false, client.isNodeExisting("prop3"))
+
+        val pf =
+            propertiesFile.dynamicNode("pf1").apply {
+                parent = pp1
+            }
+        val prop1 =
+            property.dynamicNode("prop1").apply {
+                setPropertyValueByName("name", "Prop1")
+                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+            }
+        val prop2 =
+            property.dynamicNode("prop2").apply {
+                setPropertyValueByName("name", "Prop2")
+                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+            }
+        val prop3 =
+            property.dynamicNode("prop3").apply {
+                setPropertyValueByName("name", "Prop3")
+                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+            }
+        client.storeTree(pf)
+
+        assertEquals(true, client.isNodeExisting("pp1"))
+        assertEquals(true, client.isNodeExisting("pf1"))
+        assertEquals(true, client.isNodeExisting("prop1"))
+        assertEquals(true, client.isNodeExisting("prop2"))
+        assertEquals(true, client.isNodeExisting("prop3"))
+
+        client.deletePartition("pp1")
+        assertEquals(false, client.isNodeExisting("pp1"))
+        assertEquals(false, client.isNodeExisting("pf1"))
+        assertEquals(false, client.isNodeExisting("prop1"))
+        assertEquals(false, client.isNodeExisting("prop2"))
+        assertEquals(false, client.isNodeExisting("prop3"))
     }
 
     @Test

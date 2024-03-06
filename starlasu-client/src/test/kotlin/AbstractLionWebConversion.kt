@@ -53,7 +53,7 @@ abstract class AbstractLionWebConversion<R : KNode>(val kolasuLanguage: KolasuLa
         val lwASTDeserialized =
             client.jsonSerialization.deserializeToNodes(json)
                 .find { it.id == lwAST.id } ?: throw IllegalStateException()
-        val astDeserialized = client.nodeConverter.importModelFromLionWeb(lwASTDeserialized)
+        val astDeserialized = client.nodeConverter.importModelFromLionWeb(lwASTDeserialized) as KNode
 
         assertASTsAreEqual(ast, astDeserialized)
     }
