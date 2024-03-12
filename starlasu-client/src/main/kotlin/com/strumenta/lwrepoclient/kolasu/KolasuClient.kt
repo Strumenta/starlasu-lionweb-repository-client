@@ -16,6 +16,9 @@ import com.strumenta.kolasu.model.children
 import com.strumenta.kolasu.traversing.walkDescendants
 import com.strumenta.lwrepoclient.base.LionWebClient
 import com.strumenta.lwrepoclient.base.debugFileHelper
+import com.strumenta.lwrepoclient.kolasu.patterns.Pattern
+import com.strumenta.lwrepoclient.kolasu.patterns.PatternInstance
+import com.strumenta.lwrepoclient.kolasu.patterns.matchPattern
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.UnavailableNodePolicy
@@ -328,6 +331,17 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             "We were expecting the node $result to have ID $nodeID while it has ID ${idFor(result)}"
         }
         return result
+    }
+
+    //
+    // Patterns
+    //
+
+    fun findPatternInstances(pattern: Pattern) : List<PatternInstance> {
+        val nodeIDs = this.nodesByConcept()[pattern::class] ?: emptySet()
+        return nodeIDs.map { getNode(it) }.mapNotNull {
+            it.matchPattern(pattern)
+        }.toList()
     }
 
     //

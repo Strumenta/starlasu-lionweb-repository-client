@@ -1,3 +1,5 @@
+package com.strumenta.lwrepoclient.kolasu
+
 import com.strumenta.egl.ast.EglCompilationUnit
 import com.strumenta.egl.ast.kLanguage
 import com.strumenta.egl.parser.EGLKolasuParser

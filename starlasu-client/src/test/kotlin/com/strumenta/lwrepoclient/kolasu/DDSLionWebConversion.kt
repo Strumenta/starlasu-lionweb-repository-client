@@ -1,6 +1,7 @@
+package com.strumenta.lwrepoclient.kolasu
+
 import com.strumenta.kolasu.lionweb.PrimitiveValueSerialization
 import com.strumenta.kolasu.parsing.ParsingResult
-import com.strumenta.lwrepoclient.kolasu.KolasuClient
 import com.strumenta.rpgparser.RPGFileType
 import com.strumenta.rpgparser.RPGKolasuParser
 import com.strumenta.rpgparser.model.AlphabeticEditCode

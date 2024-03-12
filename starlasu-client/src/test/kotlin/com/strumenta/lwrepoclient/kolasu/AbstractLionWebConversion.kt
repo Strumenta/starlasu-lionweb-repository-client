@@ -1,11 +1,10 @@
-
+package com.strumenta.lwrepoclient.kolasu
 import com.strumenta.kolasu.language.KolasuLanguage
 import com.strumenta.kolasu.lionweb.StructuralLionWebNodeIdProvider
 import com.strumenta.kolasu.parsing.ParsingResult
 import com.strumenta.kolasu.testing.assertASTsAreEqual
 import com.strumenta.kolasu.traversing.children
 import com.strumenta.kolasu.traversing.walk
-import com.strumenta.lwrepoclient.kolasu.KolasuClient
 import java.io.InputStream
 import com.strumenta.kolasu.model.Node as KNode
 import io.lionweb.lioncore.java.model.Node as LWNode

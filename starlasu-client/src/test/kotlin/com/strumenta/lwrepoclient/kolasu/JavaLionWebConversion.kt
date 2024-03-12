@@ -1,3 +1,5 @@
+package com.strumenta.lwrepoclient.kolasu
+
 import com.strumenta.javalangmodule.ast.JClassInstanceCreationExpr
 import com.strumenta.javalangmodule.ast.JCompilationUnit
 import com.strumenta.javalangmodule.ast.JExpressionQualifiedMethodInvocationExpr

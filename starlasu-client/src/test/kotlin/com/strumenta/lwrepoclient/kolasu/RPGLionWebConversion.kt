@@ -1,3 +1,5 @@
+package com.strumenta.lwrepoclient.kolasu
+
 import com.strumenta.kolasu.parsing.ParsingResult
 import com.strumenta.rpgparser.RPGKolasuParser
 import com.strumenta.rpgparser.model.CompilationUnit
