@@ -94,6 +94,7 @@ dependencies {
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     implementation("com.strumenta.kolasu:kolasu-core:$kolasuVersion")
     implementation("com.strumenta.kolasu:kolasu-lionweb:$kolasuVersion")
     implementation("com.strumenta.kolasu:kolasu-semantics:$kolasuVersion")
