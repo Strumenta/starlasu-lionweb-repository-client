@@ -5,6 +5,7 @@ import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.ids.SimpleSourceIdProvider
 import com.strumenta.kolasu.ids.SourceIdProvider
 import com.strumenta.kolasu.lionweb.KNode
+import com.strumenta.kolasu.lionweb.isPartition
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.model.containingProperty
 import com.strumenta.kolasu.model.indexInContainingProperty
@@ -25,10 +26,6 @@ class DefaultLionWebRepositoryNodeIdProvider(
             require(kNode.source != null) {
                 "When calculating the partitionId we either need a not with IDLogic or with a source: $kNode"
             }
-            // TODO update SimpleSourceIdProvider
-//            if (kNode.source is SyntheticSource) {
-//                return "synthetic_" + (kNode.source as SyntheticSource).description
-//            }
             return "partition_${sourceIdProvider.sourceId(kNode.source)}"
         }
     }

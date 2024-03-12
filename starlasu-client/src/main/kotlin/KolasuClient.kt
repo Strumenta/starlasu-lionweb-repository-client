@@ -6,9 +6,9 @@ import com.strumenta.kolasu.language.KolasuLanguage
 import com.strumenta.kolasu.lionweb.KNode
 import com.strumenta.kolasu.lionweb.LWNode
 import com.strumenta.kolasu.lionweb.LionWebModelConverter
-import com.strumenta.kolasu.lionweb.LionWebPartition
 import com.strumenta.kolasu.lionweb.LionWebRootSource
 import com.strumenta.kolasu.lionweb.PrimitiveValueSerialization
+import com.strumenta.kolasu.lionweb.isPartition
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.model.Source
 import com.strumenta.kolasu.model.assignParents
@@ -17,8 +17,6 @@ import com.strumenta.kolasu.traversing.walkDescendants
 import com.strumenta.lwrepoclient.base.LionWebClient
 import com.strumenta.lwrepoclient.base.debugFileHelper
 import io.lionweb.lioncore.java.language.Concept
-import io.lionweb.lioncore.java.model.impl.DynamicNode
-import io.lionweb.lioncore.java.model.impl.ProxyNode
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.UnavailableNodePolicy
 import kotlin.reflect.KClass
@@ -434,14 +432,4 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     ) {
         debugFileHelper(debug, relativePath, text)
     }
-}
-
-private fun LWNode.setParentID(parentID: String?) {
-    val parent =
-        if (parentID == null) {
-            null
-        } else {
-            ProxyNode(parentID)
-        }
-    (this as DynamicNode).parent = parent
 }
