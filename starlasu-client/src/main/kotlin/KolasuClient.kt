@@ -1,58 +1,72 @@
 package com.strumenta.lwrepoclient.kolasu
 
-import com.strumenta.kolasu.ids.ConstantSourceIdProvider
+import com.strumenta.kolasu.ids.IDLogic
 import com.strumenta.kolasu.ids.NodeIdProvider
-import com.strumenta.kolasu.ids.SourceIdProvider
 import com.strumenta.kolasu.language.KolasuLanguage
 import com.strumenta.kolasu.lionweb.KNode
+import com.strumenta.kolasu.lionweb.LWNode
 import com.strumenta.kolasu.lionweb.LionWebModelConverter
-import com.strumenta.kolasu.lionweb.LionWebPartition
+import com.strumenta.kolasu.lionweb.LionWebRootSource
 import com.strumenta.kolasu.lionweb.PrimitiveValueSerialization
-import com.strumenta.kolasu.lionweb.StructuralLionWebNodeIdProvider
+import com.strumenta.kolasu.lionweb.isPartition
 import com.strumenta.kolasu.model.Node
+import com.strumenta.kolasu.model.Source
 import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.model.children
-import com.strumenta.kolasu.model.containingProperty
-import com.strumenta.kolasu.model.indexInContainingProperty
-import com.strumenta.kolasu.semantics.scope.provider.ScopeProvider
-import com.strumenta.kolasu.semantics.symbol.provider.SymbolProvider
-import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
-import com.strumenta.kolasu.semantics.symbol.resolver.SymbolResolver
-import com.strumenta.kolasu.traversing.walk
+import com.strumenta.kolasu.traversing.walkDescendants
 import com.strumenta.lwrepoclient.base.LionWebClient
+import com.strumenta.lwrepoclient.base.debugFileHelper
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.UnavailableNodePolicy
-import io.lionweb.lioncore.java.utils.CommonChecks
-import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 /**
- * The logic of assignments of IDs is based on the positions of the elements within the partition,
- * so that the containment of the node within the partition and its index within the containment affect the ID.
- * Eventually we should change that, and consider for example the name of the file and its path relative to the root
- * of the directory imported.
+ * Partitions are top level entries in the repository. While they are still nodes, they must be dealt with through
+ * specific methods.
+ *
+ * The main aspect to consider is how IDs are attributed to nodes. We distinguish two cases:
+ * - Dependent ID Nodes (DIN): these are nodes which ID depends on their position in the tree (i.e., looking
+ *   at the parents and nodes above). In other words, changing their parent or any ancestor of their parent, will
+ *   change their ID.
+ * - Independent ID Nodes (IIN) Nodes which can get an ID, based purely on themselves (i.e., without considering
+ *   their parent or any ancestor
+ *
+ * "Container" nodes such as partitions or other nodes created to organize ASTs (e.g., to represent files and
+ * directories) should be made as IIN. Also, the roots of ASTs should be made as IIN. All other nodes can be treated
+ * as DIN.
+ *
+ * The problem with IIN is that we must create the conditions so that we get the same ID for each of them when we store
+ * them and when we retrieve them from the LionWeb Repository, irrespectively of the fact that we store them directly
+ * (or we store their parent or any ancestor) and that we retrieve them directly (or we retrieve their parent or any
+ * ancestor).
+ *
+ * For a node to be IIN it should either (i) be a partition, (ii) being reported as being a source base node type,
+ * or (iii) implement IDLogic.
  */
 class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val debug: Boolean = false) {
+    val sourceBasedNodeTypes = mutableSetOf<KClass<*>>()
+
     /**
      * Exposed for testing purposes
      */
     val nodeConverter = LionWebModelConverter()
 
     /**
-     * This is the logic we use, unless the Node Id was explicitly set. This can be customized, if needed.
+     * This is the logic we use to assign Node IDs. This can be customized, if needed.
      * For example, we may want to use some form of semantic Node ID for certain kinds of Nodes, like qualified names
      * for Class Declarations.
      */
-    var baseIdProvider: NodeIdProvider = DefaultLionWebRepositoryNodeIdProvider()
+    val idProvider: NodeIdProvider = DefaultLionWebRepositoryNodeIdProvider(sourceBasedNodeTypes)
 
-    /**
-     * This is the idProvider we concretely use. This consider explicit overrides first, and if they are not
-     * present it fals back to the baseIdProvider.
-     */
-    val idProvider = OverridableNodeIdProvider(this)
-    private val lionWebClient = LionWebClient(hostname, port, debug = debug, jsonSerializationProvider = { this.jsonSerialization })
+    internal val lionWebClient =
+        LionWebClient(
+            hostname,
+            port,
+            debug = debug,
+            jsonSerializationProvider = { this.jsonSerialization },
+        )
 
     init {
         lionWebClient.registerLanguage(sriLanguage)
@@ -73,6 +87,10 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             )
         }
 
+    //
+    // Configuration
+    //
+
     fun registerLanguage(kolasuLanguage: KolasuLanguage) {
         val lionwebLanguage = nodeConverter.exportLanguageToLionWeb(kolasuLanguage)
         lionWebClient.registerLanguage(lionwebLanguage)
@@ -85,72 +103,236 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         nodeConverter.registerPrimitiveValueSerialization(kClass, primitiveValueSerialization)
     }
 
+    //
+    // Operation on partitions
+    //
+
     fun getPartitionIDs(): List<String> {
         return lionWebClient.getPartitionIDs()
     }
 
+    fun partitionExist(kPartition: Node): Boolean {
+        require(kPartition.isPartition) {
+            "The given Node is not of partition type"
+        }
+        return partitionExist(idFor(kPartition))
+    }
+
+    fun partitionExist(partitionID: String): Boolean {
+        return getPartitionIDs().contains(partitionID)
+    }
+
+    fun partitionNotExist(kPartition: Node): Boolean {
+        return !partitionExist(kPartition)
+    }
+
     /**
-     * When this method is called, we calculate the Node ID for the partition using the standard idProvider.
+     * We create the partition and returns its ID.
+     *
+     * The node specified should be of partition type.
+     *
+     * The node should not have children. If you want to create a partition with children, first create it without
+     * children and then call updatePartition.
+     *
+     * The partition should not already exist.
      */
     fun createPartition(kPartition: Node): String {
+        require(kPartition.isPartition) {
+            "The given Node is not of partition type"
+        }
+        require(partitionNotExist(kPartition)) {
+            "Partition already exist, cannot be created again"
+        }
         if (kPartition.children.isNotEmpty()) {
             throw IllegalArgumentException("When creating a partition, please specify a single node")
         }
-        val lwPartition = nodeConverter.exportModelToLionWeb(kPartition, idProvider)
+        val lwPartition = toLionWeb(kPartition)
         lionWebClient.createPartition(lwPartition)
         return lwPartition.id!!
     }
 
     /**
-     * When this method is called, we specify an explicitly ID for the Node, and it will be remembered.
+     * We update the partition and returns its ID.
+     *
+     * The node specified should be of partition type.
+     *
+     * The partition should already exist.
      */
-    fun createPartition(
-        kPartition: Node,
-        partitionID: String,
-    ): String {
-        if (kPartition.children.isNotEmpty()) {
-            throw IllegalArgumentException("When creating a partition, please specify a single node")
+    fun updatePartition(kPartition: Node): String {
+        require(kPartition.isPartition) {
+            "The given Node is not of partition type"
         }
-        idProvider[kPartition] = partitionID
-        return createPartition(kPartition)
+        require(partitionNotExist(kPartition)) {
+            "Partition does not exist, cannot be updated"
+        }
+        val lwPartition = toLionWeb(kPartition)
+        lionWebClient.storeTree(lwPartition)
+        return lwPartition.id!!
     }
 
     /**
-     * @param parentId when we store a subtree, we can specify where to attach it by specifying the parentId
+     * Consider this will retrieve the partition and all the roots it contains.
+     * This may mean a very large amount of data.
      */
-    fun storeTree(
+    fun retrievePartition(nodeID: String): KNode {
+        val lwNode = lionWebClient.retrieve(nodeID)
+        return nodeConverter.importModelFromLionWeb(lwNode) as KNode
+    }
+
+    fun deletePartition(kPartition: Node) {
+        require(kPartition.isPartition) {
+            "The given Node is not of partition type"
+        }
+        require(partitionExist(kPartition)) {
+            "Partition already exist, cannot be created again"
+        }
+        deletePartition(idFor(kPartition))
+    }
+
+    fun deletePartition(partitionId: String) {
+        require(partitionExist(partitionId)) {
+            "Partition does not exist"
+        }
+        lionWebClient.deletePartition(partitionId)
+    }
+
+    //
+    // Operation on non-partition
+    //
+
+    /**
+     * Here node means "non partition node".
+     */
+    fun nodeExist(nodeId: String): Boolean {
+        if (!lionWebClient.isNodeExisting(nodeId)) {
+            return false
+        }
+        val parentId = lionWebClient.getParentId(nodeId)
+        return if (parentId == null) {
+            false
+        } else {
+            partitionExist(parentId)
+        }
+    }
+
+    /**
+     * Here node means "non partition node".
+     */
+    fun nodeNotExist(nodeId: String): Boolean {
+        return !nodeExist(nodeId)
+    }
+
+    /**
+     * Here node means "non partition node".
+     *
+     * This method should be used only with IIN.
+     */
+    fun createNode(
         kNode: Node,
-        baseId: String,
-    ) {
-        val lwNode = nodeConverter.exportModelToLionWeb(kNode, StructuralLionWebNodeIdProvider(baseId))
-        lionWebClient.storeTree(lwNode)
-    }
-
-    fun storeTree(kNode: Node) {
-        // Otherwise if we changed the node in the meantime, changes are not stored
-        nodeConverter.clearNodesMapping()
-        val lwNode = nodeConverter.exportModelToLionWeb(kNode, idProvider)
-        lionWebClient.storeTree(lwNode)
+        kContainer: Node,
+        containment: KProperty1<*, *>,
+    ): String {
+        return createNode(kNode, idFor(kContainer), containment)
     }
 
     /**
-     * The Client will remember the LionWeb IDs of the LionWeb nodes from which
-     * this tree has been obtained. Subsequently call to idFor will permit to retrieve
-     * such Node IDs.
+     * Here node means "non partition node".
+     *
+     * This method should be used only with IIN.
      */
-    fun retrieve(nodeId: String): Node {
-        val lwNode = lionWebClient.retrieve(nodeId)
-        val kNode = nodeConverter.importModelFromLionWeb(lwNode)
-        // TODO ensure this is called by importModelFromLionWeb
-        kNode.assignParents()
-        kNode.walk().forEach { kNodeIt ->
-            // This should be based on the cache
-            // TODO create method called getCachedNode(kNode)
-            val lwNodeIt = nodeConverter.exportModelToLionWeb(kNodeIt)
-            idProvider[kNodeIt] = lwNodeIt.id!!
+    fun createNode(
+        kNode: Node,
+        containerID: String,
+        containment: KProperty1<*, *>,
+    ): String {
+        requireIIDNode(kNode)
+        val lwTreeToAppend = toLionWeb(kNode)
+        debugFile("createNode-${lwTreeToAppend.id}.json") {
+            nodeConverter.prepareJsonSerialization().serializeTreesToJsonString(lwTreeToAppend)
         }
-        return kNode
+        lionWebClient.appendTree(lwTreeToAppend, containerID, containment.name)
+        return lwTreeToAppend.id!!
     }
+
+    /**
+     * Here node means "non partition node".
+     */
+    fun updateNode(kNode: KNode): String {
+        require(!kNode.isPartition) {
+            "The given Node is of partition type"
+        }
+        require(nodeExist(idFor(kNode))) {
+            "We can only update existing roots. Root with id ${idFor(kNode)} not found"
+        }
+        kNode.assignParents()
+        val lwNode = toLionWeb(kNode)
+        // Now, if the parent of this node is null we need to find the real parent from the model repository
+        // Otherwise we need to be sure to set the parent anyway
+        if (lwNode.parent == null) {
+            val parentIdOnServer = lionWebClient.getParentId(lwNode.id!!)
+            lwNode.setParentID(parentIdOnServer)
+        }
+        lionWebClient.storeTree(lwNode)
+        return lwNode.id!!
+    }
+
+    /**
+     * Here node means "non partition node".
+     */
+    fun getNode(nodeID: String): KNode {
+        val lwNode = lionWebClient.retrieve(nodeID)
+        val result = nodeConverter.importModelFromLionWeb(lwNode) as KNode
+
+        fun adjustSource(
+            result: KNode,
+            lwNode: LWNode,
+            source: Source? = null,
+        ) {
+            val nodeID = lwNode.id!!
+
+            val ancestorsIds = lionWebClient.getAncestorsId(nodeID)
+            val sourceId =
+                when (ancestorsIds.size) {
+                    0 -> {
+                        require(nodeID.startsWith("partition_")) {
+                            "Expected node without ancestor to have an ID starting with partition_. It is instead: $nodeID"
+                        }
+                        nodeID.removePrefix("partition_")
+                    }
+                    1 -> {
+                        // the only ancestor is the partition, so this node is the root
+                        if (!isIDBasedOnSource(result)) {
+                            require(nodeID.endsWith("_root"))
+                            nodeID.removeSuffix("_root")
+                        } else {
+                            require(nodeID.startsWith("source_"))
+                            nodeID.removePrefix("source_")
+                        }
+                    }
+                    else -> {
+                        val sourceId = ancestorsIds.last { it.startsWith("source_") }!!.removePrefix("source_")
+                        sourceId
+                    }
+                }
+            result.withSource(LionWebRootSource(sourceId))
+
+            result.children.forEach { child ->
+                // here we count on the cache...
+                val lwChild = nodeConverter.exportModelToLionWeb(child)
+                adjustSource(child, lwChild)
+            }
+        }
+        adjustSource(result, lwNode)
+
+        require(nodeID == idFor(result)) {
+            "We were expecting the node $result to have ID $nodeID while it has ID ${idFor(result)}"
+        }
+        return result
+    }
+
+    //
+    // Other operations
+    //
 
     /**
      * To be called exactly once, to ensure the Model Repository is initialized.
@@ -158,52 +340,6 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      */
     fun modelRepositoryInit() {
         lionWebClient.modelRepositoryInit()
-    }
-
-    /**
-     * This operation is not atomic. We hope that no one is changing the parent at the very
-     * same time.
-     */
-    fun <C : KNode, E : KNode> appendTree(
-        treeToAppend: KNode,
-        container: C,
-        containment: KProperty1<C, out Collection<out E>>,
-    ): String {
-        return appendTree(treeToAppend, idFor(container), containment)
-    }
-
-    /**
-     * This operation is not atomic. We hope that no one is changing the parent at the very
-     * same time.
-     *
-     * Note that for all the nodes part of treeToAppend we will remember the Node ID associated to
-     * them. It will be possible to retrieve it by using idFor.
-     */
-    fun <C : KNode, E : KNode> appendTree(
-        treeToAppend: KNode,
-        containerId: String,
-        containment: KProperty1<C, out Collection<out E>>,
-    ): String {
-        val container = lionWebClient.retrieve(containerId)
-        val index = container.getChildrenByContainmentName(containment.name).size
-        val lwTreeToAppend =
-            nodeConverter.exportModelToLionWeb(
-                treeToAppend,
-                SubTreeLionWebNodeIdProvider(containerId, containment.name, index),
-            )
-        treeToAppend.walk().forEach { kNode ->
-            // This should be based on the cache
-            // TODO create method called getCachedNode(kNode)
-            val lwNode = nodeConverter.exportModelToLionWeb(kNode)
-            idProvider[kNode] = lwNode.id!!
-        }
-        if (debug) {
-            File("lwTreeToAppend.json").writeText(
-                nodeConverter.prepareJsonSerialization().serializeTreesToJsonString(lwTreeToAppend),
-            )
-        }
-        lionWebClient.appendTree(lwTreeToAppend, containerId, containment.name)
-        return lwTreeToAppend.id!!
     }
 
     /**
@@ -217,41 +353,6 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      */
     fun idFor(kNode: KNode): String {
         return idProvider.id(kNode)
-    }
-
-    fun clearNodeIdCache() {
-        this.idProvider.clearOverrides()
-    }
-
-    fun populateSRI(
-        partitionID: String,
-        symbolProviderFactory: (nodeIdProvider: NodeIdProvider) -> SymbolProvider,
-    ): SRI {
-        val symbolProvider = symbolProviderFactory.invoke(this@KolasuClient.idProvider)
-
-        val sri = loadSRI(partitionID)
-        val partition = retrieve(partitionID)
-
-        partition.children.forEach { ast ->
-            populateSRI(sri, ast, symbolProvider)
-        }
-
-        storeSRI(partitionID, sri)
-        return sri
-    }
-
-    fun performSymbolResolutionOnPartition(
-        partitionID: String,
-        scopeProviderProvider: (sri: SymbolRepository, nodeIdProvider: NodeIdProvider) -> ScopeProvider,
-    ) {
-        val sri = loadSRI(partitionID)
-        val partition = retrieve(partitionID)
-        val scopeProvider = scopeProviderProvider.invoke(sri, idProvider)
-
-        partition.children.forEach { ast ->
-            performSymbolResolutionOnAST(ast, scopeProvider)
-            storeTree(ast)
-        }
     }
 
     fun nodesByConcept(): Map<KClass<*>, Set<String>> {
@@ -279,6 +380,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return kolasuResult
     }
 
+    // TODO: move this to Code Insight Studio
     fun loadSRI(partitionID: String): SRI {
         val nodeId = SRI.sriNodeID(partitionID)
         return if (getPartitionIDs().contains(nodeId)) {
@@ -289,77 +391,45 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         }
     }
 
-    private fun storeSRI(
-        partitionID: String,
-        sri: SRI,
-    ) {
-        if (!getPartitionIDs().contains(SRI.sriNodeID(partitionID))) {
-            // we first need to store the partition
-            val emptySRI = SRI(this, partitionID)
-            lionWebClient.createPartition(emptySRI.toLionWeb())
-        }
-        lionWebClient.storeTree(sri.toLionWeb())
-    }
+    //
+    // Private methods
+    //
 
-    private fun populateSRI(
-        sri: SRI,
-        ast: Node,
-        symbolProvider: SymbolProvider,
-    ) {
-        ast.walk().forEach { node ->
-            val symbol = symbolProvider.symbolFor(node)
-            if (symbol != null) {
-                sri.symbols.add(symbol)
+    private fun toLionWeb(kNode: Node): LWNode {
+        require(kNode.isPartition || kNode.source != null) {
+            "When exporting to LionWeb we consider the source of the node to determine its Node ID, " +
+                "so it should have one"
+        }
+        kNode.assignParents()
+        if (!kNode.isPartition) {
+            kNode.walkDescendants().forEach { descendant ->
+                if (descendant.source == null) {
+                    descendant.source = kNode.source
+                }
             }
         }
+        nodeConverter.clearNodesMapping()
+        return nodeConverter.exportModelToLionWeb(kNode, idProvider, considerParent = true)
     }
 
-    private fun performSymbolResolutionOnAST(
-        ast: Node,
-        scopeProvider: ScopeProvider,
-    ) {
-        val symbolResolver = SymbolResolver(scopeProvider)
-        symbolResolver.resolve(ast, entireTree = true)
+    private fun isIDBasedOnSource(node: KNode): Boolean {
+        return node !is IDLogic && (node.isPartition || sourceBasedNodeTypes.contains(node::class))
     }
-}
 
-/**
- * This logic consider where we plan to insert the Nodes and produce a Node ID considering
- * that context.
- */
-private class SubTreeLionWebNodeIdProvider(
-    val containerId: String,
-    val containmentName: String,
-    val containmentIndex: Int,
-) :
-    NodeIdProvider {
-    private val sourceIdProvider: SourceIdProvider = ConstantSourceIdProvider("")
+    private fun isIIN(node: KNode): Boolean {
+        return isIDBasedOnSource(node) || node is IDLogic
+    }
 
-    override fun id(kNode: Node): String {
-        val id =
-            if (kNode.parent == null) {
-                // Here we pretend we have already as parent the container
-                val postfix = "${containmentName}_$containmentIndex"
-                "${containerId}_$postfix"
-            } else {
-                val cp = kNode.containingProperty()!!
-                val postfix = if (cp.multiple) "${cp.name}_${kNode.indexInContainingProperty()!!}" else cp.name
-                "${id(kNode.parent!!)}_$postfix"
-            }
-        if (!CommonChecks.isValidID(id)) {
-            throw IllegalStateException("An invalid LionWeb Node ID has been produced")
+    private fun requireIIDNode(kNode: Node) {
+        require(isIIN(kNode)) {
+            "CreateNode should be used only for nodes that can calculate their own ID independently from their position"
         }
-        return id
+    }
+
+    private fun debugFile(
+        relativePath: String,
+        text: () -> String,
+    ) {
+        debugFileHelper(debug, relativePath, text)
     }
 }
-
-/**
- * Identify if a Node is a partition or not. This is based on the type of the Node.
- * Nodes of Partition types should be always and exclusively used as partitions and never be placed within
- * partitions.
- * Conversely nodes of non-Partition types can only used within partitions and never be partitions themselves.
- *
- * TODO: Move to Kolasu
- */
-val KNode.isPartition
-    get() = this::class.annotations.any { it is LionWebPartition }

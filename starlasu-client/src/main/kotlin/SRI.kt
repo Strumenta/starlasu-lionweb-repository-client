@@ -13,6 +13,7 @@ import io.lionweb.lioncore.java.model.impl.DynamicNode
 import kotlin.reflect.KClass
 import com.strumenta.lwrepoclient.base.Multiplicity as LWMultiplicity
 
+// TODO: move this to code-insight-studio
 class SRI(private val kolasuClient: KolasuClient, val partitionID: String) : SymbolRepository {
     val symbols = mutableListOf<SymbolDescription>()
 
@@ -62,6 +63,7 @@ class SRI(private val kolasuClient: KolasuClient, val partitionID: String) : Sym
     }
 }
 
+// TODO: move this to code-insight-studio
 fun SRI.toLionWeb(): LWNode {
     val sriNode = DynamicNode(this.sriNodeID, sriConcept)
     this.symbols.forEach { symbol ->
@@ -74,6 +76,7 @@ fun SRI.toLionWeb(): LWNode {
     return sriNode
 }
 
+// TODO: move this to code-insight-studio
 val sriLanguage =
     lwLanguage("com.strumenta.SymbolResolutionIndex").apply {
         val sri = addConcept("SRI")
@@ -83,9 +86,13 @@ val sriLanguage =
         symbol.addProperty("representedIdentifier", LionCoreBuiltins.getString())
         symbol.addProperty("types", LionCoreBuiltins.getString())
     }
+
+// TODO: move this to code-insight-studio
 val sriConcept by lazy {
     sriLanguage.getConceptByName("SRI")!!
 }
+
+// TODO: move this to code-insight-studio
 val symbolConcept by lazy {
     sriLanguage.getConceptByName("Symbol")!!
 }
