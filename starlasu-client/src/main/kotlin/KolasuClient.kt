@@ -294,23 +294,24 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             val sourceId =
                 when (ancestorsIds.size) {
                     0 -> {
-                        require(nodeID.startsWith("partition_")) {
-                            "Expected node without ancestor to have an ID starting with partition_. It is instead: $nodeID"
+                        require(nodeID.startsWith(PARTITION_PREFIX)) {
+                            "Expected node without ancestor to have an ID starting with $PARTITION_PREFIX. " +
+                                "It is instead: $nodeID"
                         }
-                        nodeID.removePrefix("partition_")
+                        nodeID.removePrefix(PARTITION_PREFIX)
                     }
                     1 -> {
                         // the only ancestor is the partition, so this node is the root
                         if (!isIDBasedOnSource(result)) {
-                            require(nodeID.endsWith("_root"))
-                            nodeID.removeSuffix("_root")
+                            require(nodeID.endsWith(ROOT_POSTFIX))
+                            nodeID.removeSuffix(ROOT_POSTFIX)
                         } else {
-                            require(nodeID.startsWith("source_"))
-                            nodeID.removePrefix("source_")
+                            require(nodeID.startsWith(SOURCE_PREFIX))
+                            nodeID.removePrefix(SOURCE_PREFIX)
                         }
                     }
                     else -> {
-                        val sourceId = ancestorsIds.last { it.startsWith("source_") }!!.removePrefix("source_")
+                        val sourceId = ancestorsIds.last { it.startsWith(SOURCE_PREFIX) }!!.removePrefix(SOURCE_PREFIX)
                         sourceId
                     }
                 }
@@ -398,7 +399,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     private fun toLionWeb(kNode: Node): LWNode {
         require(kNode.isPartition || kNode.source != null || kNode is IDLogic) {
             "When exporting to LionWeb, if the Node is not a partition and it does not implement IDLogic, then we " +
-                    "consider the source of the node to determine its Node ID, so it should have one"
+                "consider the source of the node to determine its Node ID, so it should have one"
         }
         kNode.assignParents()
         if (!kNode.isPartition) {

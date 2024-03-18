@@ -12,6 +12,10 @@ import com.strumenta.kolasu.model.indexInContainingProperty
 import io.lionweb.lioncore.java.utils.CommonChecks
 import kotlin.reflect.KClass
 
+const val PARTITION_PREFIX = "partition_"
+const val SOURCE_PREFIX = "source_"
+const val ROOT_POSTFIX = "_root"
+
 class DefaultLionWebRepositoryNodeIdProvider(
     val sourceBasedNodeTypes: Set<KClass<*>>,
     var sourceIdProvider: SourceIdProvider = SimpleSourceIdProvider(),
@@ -21,12 +25,12 @@ class DefaultLionWebRepositoryNodeIdProvider(
         require(kNode.parent == null)
 
         if (kNode is IDLogic) {
-            return "partition_${(kNode as IDLogic).calculatedID}"
+            return "$PARTITION_PREFIX${(kNode as IDLogic).calculatedID}"
         } else {
             require(kNode.source != null) {
                 "When calculating the partitionId we either need a not with IDLogic or with a source: $kNode"
             }
-            return "partition_${sourceIdProvider.sourceId(kNode.source)}"
+            return "$PARTITION_PREFIX${sourceIdProvider.sourceId(kNode.source)}"
         }
     }
 
@@ -35,7 +39,7 @@ class DefaultLionWebRepositoryNodeIdProvider(
             when {
                 kNode.isPartition -> partitionId(kNode)
                 kNode is IDLogic -> kNode.calculatedID
-                sourceBasedNodeTypes.contains(kNode::class) -> "source_" + sourceIdProvider.sourceId(kNode.source)
+                sourceBasedNodeTypes.contains(kNode::class) -> SOURCE_PREFIX + sourceIdProvider.sourceId(kNode.source)
                 else -> {
                     require(kNode.source != null) {
                         "Node $kNode is not a partition, it does not implement IDLogic, and it has not a source set, therefore it " +
@@ -44,6 +48,15 @@ class DefaultLionWebRepositoryNodeIdProvider(
                     "${sourceIdProvider.sourceId(kNode.source)}_${kNode.positionalID}"
                 }
             }
+        if (!kNode.isPartition && id.startsWith(PARTITION_PREFIX)) {
+            throw IllegalStateException("The node is not a partition but its ID has the prefix used for partitions")
+        }
+        if (!sourceBasedNodeTypes.contains(kNode::class) && id.startsWith(SOURCE_PREFIX)) {
+            throw IllegalStateException(
+                "The node is not a source based node but its ID has the prefix used for " +
+                    "source based nodes",
+            )
+        }
         if (!CommonChecks.isValidID(id)) {
             throw IllegalStateException("An invalid LionWeb Node ID has been produced ($id)")
         }
