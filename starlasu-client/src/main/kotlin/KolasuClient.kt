@@ -10,7 +10,6 @@ import com.strumenta.kolasu.lionweb.LionWebRootSource
 import com.strumenta.kolasu.lionweb.PrimitiveValueSerialization
 import com.strumenta.kolasu.lionweb.isPartition
 import com.strumenta.kolasu.model.Node
-import com.strumenta.kolasu.model.Source
 import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.model.children
 import com.strumenta.kolasu.traversing.walkDescendants
@@ -286,36 +285,50 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         fun adjustSource(
             result: KNode,
             lwNode: LWNode,
-            source: Source? = null,
         ) {
             val nodeID = lwNode.id!!
+            if (result !is IDLogic) {
+                val ancestorsIds = lionWebClient.getAncestorsId(nodeID)
+                val sourceId =
+                    when (ancestorsIds.size) {
+                        0 -> {
+                            require(nodeID.startsWith(PARTITION_PREFIX)) {
+                                "Expected node without ancestor to have an ID starting with $PARTITION_PREFIX. " +
+                                    "It is instead: $nodeID"
+                            }
+                            nodeID.removePrefix(PARTITION_PREFIX)
+                        }
 
-            val ancestorsIds = lionWebClient.getAncestorsId(nodeID)
-            val sourceId =
-                when (ancestorsIds.size) {
-                    0 -> {
-                        require(nodeID.startsWith(PARTITION_PREFIX)) {
-                            "Expected node without ancestor to have an ID starting with $PARTITION_PREFIX. " +
-                                "It is instead: $nodeID"
+                        1 -> {
+                            // the only ancestor is the partition, so this node is the root
+                            if (!isIDBasedOnSource(result)) {
+                                if (nodeID.endsWith(ROOT_POSTFIX)) {
+                                    nodeID.removeSuffix(ROOT_POSTFIX)
+                                } else {
+                                    nodeID
+                                }
+                            } else {
+                                require(nodeID.startsWith(SOURCE_PREFIX))
+                                nodeID.removePrefix(SOURCE_PREFIX)
+                            }
                         }
-                        nodeID.removePrefix(PARTITION_PREFIX)
-                    }
-                    1 -> {
-                        // the only ancestor is the partition, so this node is the root
-                        if (!isIDBasedOnSource(result)) {
-                            require(nodeID.endsWith(ROOT_POSTFIX))
-                            nodeID.removeSuffix(ROOT_POSTFIX)
-                        } else {
-                            require(nodeID.startsWith(SOURCE_PREFIX))
-                            nodeID.removePrefix(SOURCE_PREFIX)
+
+                        else -> {
+                            val ancestorsWithSourcePrefix = ancestorsIds.filter { it.startsWith(SOURCE_PREFIX) }
+                            if (ancestorsWithSourcePrefix.isEmpty()) {
+                                throw IllegalStateException(
+                                    "We are looking for the source containing $result. " +
+                                        "The node has ID $nodeID and it has these ancestors: $ancestorsIds. " +
+                                        "We cannot figure out the source has none of its ancestors is starting with " +
+                                        "$SOURCE_PREFIX",
+                                )
+                            } else {
+                                ancestorsWithSourcePrefix.last().removePrefix(SOURCE_PREFIX)
+                            }
                         }
                     }
-                    else -> {
-                        val sourceId = ancestorsIds.last { it.startsWith(SOURCE_PREFIX) }!!.removePrefix(SOURCE_PREFIX)
-                        sourceId
-                    }
-                }
-            result.withSource(LionWebRootSource(sourceId))
+                result.withSource(LionWebRootSource(sourceId))
+            }
 
             result.children.forEach { child ->
                 // here we count on the cache...
