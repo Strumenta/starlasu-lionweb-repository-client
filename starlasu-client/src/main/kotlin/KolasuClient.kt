@@ -245,7 +245,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         containerID: String,
         containment: KProperty1<*, *>,
     ): String {
-        requireIIDNode(kNode)
+        requireIINode(kNode)
         val lwTreeToAppend = toLionWeb(kNode)
         debugFile("createNode-${lwTreeToAppend.id}.json") {
             nodeConverter.prepareJsonSerialization().serializeTreesToJsonString(lwTreeToAppend)
@@ -396,9 +396,9 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     //
 
     private fun toLionWeb(kNode: Node): LWNode {
-        require(kNode.isPartition || kNode.source != null) {
-            "When exporting to LionWeb we consider the source of the node to determine its Node ID, " +
-                "so it should have one"
+        require(kNode.isPartition || kNode.source != null || kNode is IDLogic) {
+            "When exporting to LionWeb, if the Node is not a partition and it does not implement IDLogic, then we " +
+                    "consider the source of the node to determine its Node ID, so it should have one"
         }
         kNode.assignParents()
         if (!kNode.isPartition) {
@@ -420,7 +420,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return isIDBasedOnSource(node) || node is IDLogic
     }
 
-    private fun requireIIDNode(kNode: Node) {
+    private fun requireIINode(kNode: Node) {
         require(isIIN(kNode)) {
             "CreateNode should be used only for nodes that can calculate their own ID independently from their position"
         }
