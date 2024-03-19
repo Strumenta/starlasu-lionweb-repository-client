@@ -2,6 +2,7 @@ package com.strumenta.lwrepoclient.kolasu
 
 import com.strumenta.kolasu.ids.IDLogic
 import com.strumenta.kolasu.ids.NodeIdProvider
+import com.strumenta.kolasu.ids.NonRootCoordinates
 import com.strumenta.kolasu.language.KolasuLanguage
 import com.strumenta.kolasu.lionweb.KNode
 import com.strumenta.kolasu.lionweb.LWNode
@@ -244,13 +245,23 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         containerID: String,
         containment: KProperty1<*, *>,
     ): String {
-        requireIINode(kNode)
-        val lwTreeToAppend = toLionWeb(kNode)
-        debugFile("createNode-${lwTreeToAppend.id}.json") {
-            nodeConverter.prepareJsonSerialization().serializeTreesToJsonString(lwTreeToAppend)
+        when {
+            isIIN(kNode) -> {
+                requireIINode(kNode, "createNode")
+                val lwTreeToAppend = toLionWeb(kNode, containerID, containment.name)
+                debugFile("createNode-${lwTreeToAppend.id}.json") {
+                    nodeConverter.prepareJsonSerialization().serializeTreesToJsonString(lwTreeToAppend)
+                }
+                lionWebClient.appendTree(lwTreeToAppend, containerID, containment.name)
+                return lwTreeToAppend.id!!
+            }
+            else -> {
+                throw IllegalStateException(
+                    "CreateNode should be used only for nodes that can calculate their own ID independently from " +
+                        "their position. Instead we got $kNode (class: ${kNode.javaClass.canonicalName})",
+                )
+            }
         }
-        lionWebClient.appendTree(lwTreeToAppend, containerID, containment.name)
-        return lwTreeToAppend.id!!
     }
 
     /**
@@ -426,6 +437,32 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return nodeConverter.exportModelToLionWeb(kNode, idProvider, considerParent = true)
     }
 
+    private fun toLionWeb(
+        kNode: Node,
+        containerID: String,
+        containmentName: String,
+    ): LWNode {
+        require(kNode.isPartition || kNode.source != null || kNode is IDLogic) {
+            "When exporting to LionWeb, if the Node is not a partition and it does not implement IDLogic, then we " +
+                "consider the source of the node to determine its Node ID, so it should have one"
+        }
+        kNode.assignParents()
+        if (!kNode.isPartition) {
+            kNode.walkDescendants().forEach { descendant ->
+                if (descendant.source == null) {
+                    descendant.source = kNode.source
+                }
+            }
+        }
+        nodeConverter.clearNodesMapping()
+        return nodeConverter.exportModelToLionWeb(
+            kNode,
+            idProvider,
+            considerParent = true,
+            NonRootCoordinates(containerID, containmentName),
+        )
+    }
+
     private fun isIDBasedOnSource(node: KNode): Boolean {
         return node !is IDLogic && (node.isPartition || sourceBasedNodeTypes.contains(node::class))
     }
@@ -434,9 +471,13 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return isIDBasedOnSource(node) || node is IDLogic
     }
 
-    private fun requireIINode(kNode: Node) {
+    private fun requireIINode(
+        kNode: Node,
+        description: String,
+    ) {
         require(isIIN(kNode)) {
-            "CreateNode should be used only for nodes that can calculate their own ID independently from their position"
+            "$description should be used only for nodes that can calculate their own ID independently from " +
+                "their position. Instead we got $kNode (class: ${kNode.javaClass.canonicalName})"
         }
     }
 
@@ -447,3 +488,35 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         debugFileHelper(debug, relativePath, text)
     }
 }
+
+// private fun wrapKNode(kNode: Node, containerID: String, name: String): Node {
+//    return object : KNode(), IDLogic {
+//        @Internal
+//        override val nodeType: String
+//            get() = kNode.nodeType
+//        @Internal
+//        override val originalProperties: List<PropertyDescription>
+//            get() = kNode.originalProperties
+//        @Internal
+//        override var position: Position?
+//            get() = kNode.position
+//            set(value) {kNode.position = value}
+//        @Internal
+//        override val properties: List<PropertyDescription>
+//            get() = kNode.properties
+//        @Internal
+//        override val simpleNodeType: String
+//            get() = kNode.simpleNodeType
+//        @Internal
+//        override var source: Source?
+//            get() = kNode.source
+//            set(value) {kNode.source = value}
+//        @Internal
+//        override val sourceText: String?
+//            get() = kNode.sourceText
+//
+//        override fun calculatedID(nodeIdProvider: NodeIdProvider?): String {
+//            return (kNode as IDLogic).calculatedID(nodeIdProvider)
+//        }
+//    }
+// }

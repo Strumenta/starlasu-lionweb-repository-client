@@ -322,9 +322,10 @@ class LionWebClient(
         println("  ${body.contentLength()} bytes sent")
 
         // TODO control with flag http or https
+        val url = "http://$hostname:$port/bulk/$operation"
         val request: Request =
             Request.Builder()
-                .url("http://$hostname:$port/bulk/$operation")
+                .url(url)
                 .addHeader("Content-Encoding", "gzip")
                 .post(body)
                 .build()
@@ -335,7 +336,7 @@ class LionWebClient(
                     println("  Response: ${response.code}")
                     println("  Response: $body")
                 }
-                throw RuntimeException("Request failed with code ${response.code}: $body")
+                throw RequestFailureException(url, json, response.code, body)
             }
         }
     }
@@ -347,6 +348,13 @@ class LionWebClient(
         debugFileHelper(debug, relativePath, text)
     }
 }
+
+data class RequestFailureException(
+    val url: String,
+    val uncompressedBody: String?,
+    val responseCode: Int,
+    val responseBody: String?,
+) : RuntimeException("Request to $url failed with code $responseCode: $responseBody")
 
 fun debugFileHelper(
     debug: Boolean,

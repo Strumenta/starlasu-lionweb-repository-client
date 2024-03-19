@@ -29,7 +29,7 @@ class JavaLionWebConversion : AbstractLionWebConversion<JCompilationUnit>(kLangu
             },
             jsonChecker = { json: String ->
                 val chunk = LowLevelJsonSerialization().deserializeSerializationBlock(json)
-                val classifierInstance = chunk.classifierInstancesByID["foo_root_imports_0"]!!
+                val classifierInstance = chunk.classifierInstancesByID["foo_root_imports"]!!
                 assertEquals(1, classifierInstance.properties.size)
                 assertEquals("false", classifierInstance.properties.first().value)
             },

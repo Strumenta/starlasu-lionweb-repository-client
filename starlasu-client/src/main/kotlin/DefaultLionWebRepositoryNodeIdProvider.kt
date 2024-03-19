@@ -1,5 +1,6 @@
 package com.strumenta.lwrepoclient.kolasu
 
+import com.strumenta.kolasu.ids.Coordinates
 import com.strumenta.kolasu.ids.IDLogic
 import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.ids.SimpleSourceIdProvider
@@ -25,7 +26,7 @@ class DefaultLionWebRepositoryNodeIdProvider(
         require(kNode.parent == null)
 
         if (kNode is IDLogic) {
-            return "$PARTITION_PREFIX${(kNode as IDLogic).calculatedID}"
+            return "$PARTITION_PREFIX${(kNode as IDLogic).calculatedID(null)}"
         } else {
             require(kNode.source != null) {
                 "When calculating the partitionId we either need a not with IDLogic or with a source: $kNode"
@@ -34,11 +35,14 @@ class DefaultLionWebRepositoryNodeIdProvider(
         }
     }
 
-    override fun id(kNode: Node): String {
+    override fun idUsingCoordinates(
+        kNode: Node,
+        coordinates: Coordinates,
+    ): String {
         val id =
             when {
                 kNode.isPartition -> partitionId(kNode)
-                kNode is IDLogic -> kNode.calculatedID
+                kNode is IDLogic -> kNode.calculatedID(coordinates)
                 sourceBasedNodeTypes.contains(kNode::class) -> SOURCE_PREFIX + sourceIdProvider.sourceId(kNode.source)
                 else -> {
                     require(kNode.source != null) {
