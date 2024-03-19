@@ -17,6 +17,7 @@ import com.strumenta.javalangmodule.ast.JVariableDeclarator
 import com.strumenta.javalangmodule.ast.JVoidType
 import com.strumenta.javalangmodule.ast.kLanguage
 import com.strumenta.javalangmodule.parser.JavaKolasuParser
+import com.strumenta.kolasu.ids.Coordinates
 import com.strumenta.kolasu.ids.IDLogic
 import com.strumenta.kolasu.language.KolasuLanguage
 import com.strumenta.kolasu.lionweb.LionWebPartition
@@ -37,8 +38,9 @@ data class SimplePartition(
     val name: String,
     val stuff: MutableList<Node> = mutableListOf(),
 ) : Node(), IDLogic {
-    override val calculatedID: String
-        get() = "SimplePartition_$name"
+    override fun calculatedID(coordinates: Coordinates?): String {
+        return "SimplePartition_$name"
+    }
 }
 
 @Testcontainers
