@@ -488,35 +488,3 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         debugFileHelper(debug, relativePath, text)
     }
 }
-
-// private fun wrapKNode(kNode: Node, containerID: String, name: String): Node {
-//    return object : KNode(), IDLogic {
-//        @Internal
-//        override val nodeType: String
-//            get() = kNode.nodeType
-//        @Internal
-//        override val originalProperties: List<PropertyDescription>
-//            get() = kNode.originalProperties
-//        @Internal
-//        override var position: Position?
-//            get() = kNode.position
-//            set(value) {kNode.position = value}
-//        @Internal
-//        override val properties: List<PropertyDescription>
-//            get() = kNode.properties
-//        @Internal
-//        override val simpleNodeType: String
-//            get() = kNode.simpleNodeType
-//        @Internal
-//        override var source: Source?
-//            get() = kNode.source
-//            set(value) {kNode.source = value}
-//        @Internal
-//        override val sourceText: String?
-//            get() = kNode.sourceText
-//
-//        override fun calculatedID(nodeIdProvider: NodeIdProvider?): String {
-//            return (kNode as IDLogic).calculatedID(nodeIdProvider)
-//        }
-//    }
-// }
