@@ -3,6 +3,7 @@ package com.strumenta.lwrepoclient.kolasu
 import com.strumenta.kolasu.ids.Coordinates
 import com.strumenta.kolasu.ids.IDLogic
 import com.strumenta.kolasu.ids.NodeIdProvider
+import com.strumenta.kolasu.ids.RootCoordinates
 import com.strumenta.kolasu.ids.SimpleSourceIdProvider
 import com.strumenta.kolasu.ids.SourceIdProvider
 import com.strumenta.kolasu.lionweb.KNode
@@ -26,7 +27,7 @@ class DefaultLionWebRepositoryNodeIdProvider(
         require(kNode.parent == null)
 
         if (kNode is IDLogic) {
-            return "$PARTITION_PREFIX${(kNode as IDLogic).calculatedID(null)}"
+            return "$PARTITION_PREFIX${(kNode as IDLogic).calculatedID(RootCoordinates)}"
         } else {
             require(kNode.source != null) {
                 "When calculating the partitionId we either need a not with IDLogic or with a source: $kNode"

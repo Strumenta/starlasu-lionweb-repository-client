@@ -38,7 +38,7 @@ data class SimplePartition(
     val name: String,
     val stuff: MutableList<Node> = mutableListOf(),
 ) : Node(), IDLogic {
-    override fun calculatedID(coordinates: Coordinates?): String {
+    override fun calculatedID(coordinates: Coordinates): String {
         return "SimplePartition_$name"
     }
 }
