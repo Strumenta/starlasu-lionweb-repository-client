@@ -203,15 +203,33 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     /**
      * Here node means "non partition node".
      */
+    fun nodeExist(kNode: KNode): Boolean {
+        return nodeExist(idFor(kNode))
+    }
+
+    /**
+     * Here node means "non partition node".
+     */
     fun nodeExist(nodeId: String): Boolean {
+        return nodeExistWithExplanation(nodeId) == null
+    }
+
+    fun nodeExistWithExplanation(kNode: KNode): String? {
+        return nodeExistWithExplanation(idFor(kNode))
+    }
+
+    /**
+     * Here node means "non partition node".
+     */
+    fun nodeExistWithExplanation(nodeId: String): String? {
         if (!lionWebClient.isNodeExisting(nodeId)) {
-            return false
+            return "Node with ID $nodeId not found"
         }
         val parentId = lionWebClient.getParentId(nodeId)
         return if (parentId == null) {
-            false
+            "Node with ID $nodeId has null parent, so it is a partition and not a normal node"
         } else {
-            partitionExist(parentId)
+            null
         }
     }
 
@@ -271,8 +289,9 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         require(!kNode.isPartition) {
             "The given Node is of partition type"
         }
-        require(nodeExist(idFor(kNode))) {
-            "We can only update existing roots. Root with id ${idFor(kNode)} not found"
+        val msg = nodeExistWithExplanation(idFor(kNode))
+        require(msg == null) {
+            "We can only update existing nodes. While this is not a valid node because: $msg"
         }
         kNode.assignParents()
         val lwNode = toLionWeb(kNode)
