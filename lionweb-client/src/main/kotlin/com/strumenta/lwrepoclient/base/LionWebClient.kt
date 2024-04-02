@@ -5,6 +5,7 @@ import com.google.gson.JsonParser
 import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.impl.DynamicNode
+import io.lionweb.lioncore.java.model.impl.ProxyNode
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import io.lionweb.lioncore.java.serialization.LowLevelJsonSerialization
 import io.lionweb.lioncore.java.serialization.UnavailableNodePolicy
@@ -275,6 +276,8 @@ class LionWebClient(
         }
         parent.addChild(containment, treeToAppend)
         (treeToAppend as DynamicNode).parent = parent
+
+        (parent as DynamicNode).parent = getParentId(parent.id!!)?.let { ProxyNode(it) }
 
         // 3. Store the parent
         storeTree(parent)
