@@ -119,7 +119,7 @@ class LionWebClient(
         }
     }
 
-    fun retrieve(rootId: String): Node {
+    fun retrieve(rootId: String, withProxyParent: Boolean = false): Node {
         require(rootId.isNotBlank())
         val body: RequestBody = "{\"ids\":[\"$rootId\"] }".toRequestBody(JSON)
         val url = "http://$hostname:$port/bulk/retrieve"
@@ -135,11 +135,13 @@ class LionWebClient(
                 val data =
                     (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
                 debugFile("retrieved-$rootId.json") { data }
-                jsonSerialization.unavailableParentPolicy = UnavailableNodePolicy.NULL_REFERENCES
-                jsonSerialization.unavailableReferenceTargetPolicy = UnavailableNodePolicy.PROXY_NODES
 
                 return processChunkResponse(data) {
-                    val nodes = jsonSerialization.deserializeToNodes(it)
+                    val js = jsonSerialization
+                    js.unavailableParentPolicy = if (withProxyParent) UnavailableNodePolicy.PROXY_NODES
+                    else UnavailableNodePolicy.NULL_REFERENCES
+                    js.unavailableReferenceTargetPolicy = UnavailableNodePolicy.PROXY_NODES
+                    val nodes = js.deserializeToNodes(it)
                     nodes.find { it.id == rootId } ?: throw IllegalArgumentException(
                         "When requesting a subtree with rootId=$rootId we got back an answer without such ID. " +
                             "IDs we got back: ${nodes.map { it.id }.joinToString(", ")}",

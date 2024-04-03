@@ -231,4 +231,39 @@ class PropertiesFunctionalTest {
         val client = LionWebClient(port = modelRepository!!.firstMappedPort)
         assertThrows<UnexistingNodeException> { client.getParentId("my-unexistingNode") }
     }
+
+    @Test
+    fun getNodesWithProxyParent() {
+        val client = LionWebClient(port = modelRepository!!.firstMappedPort)
+        client.registerLanguage(propertiesLanguage)
+
+        val pp1 = propertiesPartition.dynamicNode("pp1")
+        client.createPartition(pp1)
+
+        val pf =
+            propertiesFile.dynamicNode("pf1").apply {
+                parent = pp1
+            }
+        val prop1 =
+            property.dynamicNode("prop1").apply {
+                setPropertyValueByName("name", "Prop1")
+                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+            }
+        val prop2 =
+            property.dynamicNode("prop2").apply {
+                setPropertyValueByName("name", "Prop2")
+                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+            }
+        val prop3 =
+            property.dynamicNode("prop3").apply {
+                setPropertyValueByName("name", "Prop3")
+                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+            }
+        client.storeTree(pf)
+
+        val prop3retrievedWithoutProxyParent = client.retrieve("prop3", withProxyParent = false)
+        assertEquals(null, prop3retrievedWithoutProxyParent.parent)
+        val prop3retrievedWithProxyParent = client.retrieve("prop3", withProxyParent = true)
+        assertEquals("pf1", prop3retrievedWithProxyParent.parent.id)
+    }
 }
