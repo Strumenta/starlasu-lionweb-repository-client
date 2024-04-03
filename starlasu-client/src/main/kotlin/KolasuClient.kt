@@ -346,12 +346,25 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
                         else -> {
                             val ancestorsWithSourcePrefix = ancestorsIds.filter { it.startsWith(SOURCE_PREFIX) }
                             if (ancestorsWithSourcePrefix.isEmpty()) {
-                                throw IllegalStateException(
-                                    "We are looking for the source containing $result. " +
-                                        "The node has ID $nodeID and it has these ancestors: $ancestorsIds. " +
-                                        "We cannot figure out the source has none of its ancestors is starting with " +
-                                        "$SOURCE_PREFIX",
-                                )
+                                if (isIDBasedOnSource(result)) {
+                                    if (nodeID.startsWith(SOURCE_PREFIX)) {
+                                        nodeID.removePrefix(SOURCE_PREFIX)
+                                    } else {
+                                        throw IllegalStateException(
+                                            "We are looking for the source containing $result. " +
+                                                "The node has ID $nodeID and it has these ancestors: $ancestorsIds. " +
+                                                "We cannot figure out the source has none of its ancestors is starting with " +
+                                                "$SOURCE_PREFIX",
+                                        )
+                                    }
+                                } else {
+                                    throw IllegalStateException(
+                                        "We are looking for the source containing $result. " +
+                                            "The node has ID $nodeID and it has these ancestors: $ancestorsIds. " +
+                                            "We cannot figure out the source has none of its ancestors is starting with " +
+                                            "$SOURCE_PREFIX",
+                                    )
+                                }
                             } else {
                                 ancestorsWithSourcePrefix.last().removePrefix(SOURCE_PREFIX)
                             }
