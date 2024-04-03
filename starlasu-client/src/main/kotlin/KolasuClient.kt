@@ -1,5 +1,6 @@
 package com.strumenta.lwrepoclient.kolasu
 
+import com.strumenta.kolasu.ids.Coordinates
 import com.strumenta.kolasu.ids.IDLogic
 import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.ids.NonRootCoordinates
@@ -7,6 +8,7 @@ import com.strumenta.kolasu.language.KolasuLanguage
 import com.strumenta.kolasu.lionweb.KNode
 import com.strumenta.kolasu.lionweb.LWNode
 import com.strumenta.kolasu.lionweb.LionWebModelConverter
+import com.strumenta.kolasu.lionweb.LionWebPartition
 import com.strumenta.kolasu.lionweb.LionWebRootSource
 import com.strumenta.kolasu.lionweb.PrimitiveValueSerialization
 import com.strumenta.kolasu.lionweb.isPartition
@@ -308,8 +310,8 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     /**
      * Here node means "non partition node".
      */
-    fun getNode(nodeID: String): KNode {
-        val lwNode = lionWebClient.retrieve(nodeID)
+    fun getNode(nodeID: String, withProxyParent: Boolean = false): KNode {
+        val lwNode = lionWebClient.retrieve(nodeID, withProxyParent)
         val result = nodeConverter.importModelFromLionWeb(lwNode) as KNode
 
         fun adjustSource(
@@ -380,6 +382,14 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             }
         }
         adjustSource(result, lwNode)
+
+        if (withProxyParent && lwNode.parent != null) {
+            result.parent = if (partitionExist(lwNode.parent.id)) {
+                PartitionProxyNode(lwNode.parent.id)
+            } else {
+                NonPartitionProxyNode(lwNode.parent.id)
+            }
+        }
 
         require(nodeID == idFor(result)) {
             "We were expecting the node $result to have ID $nodeID while it has ID ${idFor(result)}"
@@ -518,5 +528,18 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         text: () -> String,
     ) {
         debugFileHelper(debug, relativePath, text)
+    }
+}
+
+data class NonPartitionProxyNode(val nodeId: String) : Node(), IDLogic {
+    override fun calculatedID(coordinates: Coordinates): String {
+        return nodeId
+    }
+}
+
+@LionWebPartition
+data class PartitionProxyNode(val nodeId: String) : Node(), IDLogic {
+    override fun calculatedID(coordinates: Coordinates): String {
+        return nodeId
     }
 }

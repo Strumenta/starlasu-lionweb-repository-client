@@ -221,4 +221,34 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
         assertTrue(todoProject2.todos[2].prerequisite!!.referred == null)
         assertTrue(todoProject2.todos[2].prerequisite!!.identifier == "synthetic_Project1_root_projects_0_todos_1")
     }
+
+    @Test
+    fun getNodesWithProxyParent() {
+        val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort, debug = true)
+        kolasuClient.registerLanguage(todoLanguage)
+        kolasuClient.sourceBasedNodeTypes.add(TodoProject::class)
+
+        // We create an empty partition
+        val todoAccount = TodoAccount(mutableListOf())
+        todoAccount.source = SyntheticSource("my-wonderful-partition")
+        val todoAccountId = kolasuClient.createPartition(todoAccount)
+
+        val todoProject1 =
+            TodoProject(
+                "My errands list",
+                mutableListOf(
+                    Todo("Buy milk"),
+                    Todo("garbage-out", "Take the garbage out"),
+                    Todo("Go for a walk"),
+                ),
+            )
+        todoProject1.assignParents()
+        todoProject1.source = SyntheticSource("Project1")
+        val todoProject1ID = kolasuClient.createNode(todoProject1, todoAccount, containment = TodoAccount::projects)
+
+        val todoProject1RetrievedWithoutProxyParent = kolasuClient.getNode(todoProject1ID, withProxyParent = false)
+        assertEquals(null, todoProject1RetrievedWithoutProxyParent.parent)
+        val todoProject1RetrievedWithProxyParent = kolasuClient.getNode(todoProject1ID, withProxyParent = true)
+        assertEquals(todoAccountId, kolasuClient.idFor(todoProject1RetrievedWithProxyParent.parent!!))
+    }
 }
