@@ -305,6 +305,10 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return lwNode.id!!
     }
 
+    fun getLionWebNode(nodeID: String, withProxyParent: Boolean = false) : LWNode {
+        return lionWebClient.retrieve(nodeID, withProxyParent)
+    }
+
     /**
      * Here node means "non partition node".
      */
