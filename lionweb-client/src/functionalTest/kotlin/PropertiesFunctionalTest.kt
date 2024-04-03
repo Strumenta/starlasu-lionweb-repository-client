@@ -3,6 +3,7 @@ import com.strumenta.lwrepoclient.base.FunctionalTestBuildConfig
 import com.strumenta.lwrepoclient.base.LionWebClient
 import com.strumenta.lwrepoclient.base.UnexistingNodeException
 import com.strumenta.lwrepoclient.base.dynamicNode
+import org.junit.jupiter.api.assertThrows
 import org.testcontainers.Testcontainers.exposeHostPorts
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
@@ -15,7 +16,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import org.junit.jupiter.api.assertThrows
 
 private const val DB_CONTAINER_PORT = 5432
 
@@ -229,6 +229,6 @@ class PropertiesFunctionalTest {
     @Test
     fun gettingParentIdOfUnexistingNode() {
         val client = LionWebClient(port = modelRepository!!.firstMappedPort)
-        assertThrows<UnexistingNodeException> {  client.getParentId("my-unexistingNode") }
+        assertThrows<UnexistingNodeException> { client.getParentId("my-unexistingNode") }
     }
 }

@@ -212,9 +212,11 @@ class LionWebClient(
                 return processChunkResponse(data) { chunk ->
                     val nodes = chunk.asJsonObject.get("nodes").asJsonArray
                     if (nodes.size() != 1) {
-                        throw UnexistingNodeException(nodeID,
+                        throw UnexistingNodeException(
+                            nodeID,
                             "When asking for the parent Id of $nodeID we were expecting to get one node back. " +
-                            "We got ${nodes.size()}")
+                                "We got ${nodes.size()}",
+                        )
                     }
                     val node = nodes.get(0).asJsonObject
                     require(nodeID == node.get("id").asString)
@@ -375,5 +377,5 @@ fun debugFileHelper(
     }
 }
 
-class UnexistingNodeException(val nodeID: String, message: String = "Unexisting node $nodeID", cause: Throwable? = null)
-    : RuntimeException(message, cause)
+class UnexistingNodeException(val nodeID: String, message: String = "Unexisting node $nodeID", cause: Throwable? = null) :
+    RuntimeException(message, cause)
