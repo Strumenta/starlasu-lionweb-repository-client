@@ -119,12 +119,21 @@ class LionWebClient(
         }
     }
 
-    fun retrieve(rootId: String, withProxyParent: Boolean = false): Node {
+    fun retrieve(
+        rootId: String,
+        withProxyParent: Boolean = false,
+        retrievalMode: RetrievalMode = RetrievalMode.ENTIRE_SUBTREE,
+    ): Node {
         require(rootId.isNotBlank())
         val body: RequestBody = "{\"ids\":[\"$rootId\"] }".toRequestBody(JSON)
         val url = "http://$hostname:$port/bulk/retrieve"
         val urlBuilder = url.toHttpUrlOrNull()!!.newBuilder()
-        urlBuilder.addQueryParameter("depthLimit", "99")
+        val limit =
+            when (retrievalMode) {
+                RetrievalMode.ENTIRE_SUBTREE -> "99"
+                RetrievalMode.SINGLE_NODE -> "0"
+            }
+        urlBuilder.addQueryParameter("depthLimit", limit)
         val request: Request =
             Request.Builder()
                 .url(urlBuilder.build())
@@ -138,9 +147,18 @@ class LionWebClient(
 
                 return processChunkResponse(data) {
                     val js = jsonSerialization
-                    js.unavailableParentPolicy = if (withProxyParent) UnavailableNodePolicy.PROXY_NODES
-                    else UnavailableNodePolicy.NULL_REFERENCES
+                    js.unavailableParentPolicy =
+                        if (withProxyParent) {
+                            UnavailableNodePolicy.PROXY_NODES
+                        } else {
+                            UnavailableNodePolicy.NULL_REFERENCES
+                        }
                     js.unavailableReferenceTargetPolicy = UnavailableNodePolicy.PROXY_NODES
+                    js.unavailableChildrenPolicy =
+                        when (retrievalMode) {
+                            RetrievalMode.ENTIRE_SUBTREE -> UnavailableNodePolicy.THROW_ERROR
+                            RetrievalMode.SINGLE_NODE -> UnavailableNodePolicy.PROXY_NODES
+                        }
                     val nodes = js.deserializeToNodes(it)
                     nodes.find { it.id == rootId } ?: throw IllegalArgumentException(
                         "When requesting a subtree with rootId=$rootId we got back an answer without such ID. " +
@@ -270,14 +288,15 @@ class LionWebClient(
     ) {
         // TODO avoid retrieving the whole parent (just do level 1)
         // 1. Retrieve the parent
-        val parent = retrieve(containerId)
+
+        val parent = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE)
 
         // 2. Add the tree to the parent
         val containment =
             parent.concept.getContainmentByName(containmentName)
                 ?: throw IllegalArgumentException("The container has not containment named $containmentName")
-        if (!containment.isMultiple) {
-            throw IllegalArgumentException("The indicated containment is not multiple")
+        if (!containment.isMultiple && parent.getChildrenByContainmentName(containmentName).isNotEmpty()) {
+            throw IllegalArgumentException("The indicated containment is not multiple and a child is already present")
         }
         parent.addChild(containment, treeToAppend)
         (treeToAppend as DynamicNode).parent = parent
@@ -323,11 +342,9 @@ class LionWebClient(
             }
         }
         val json = jsonSerialization.serializeTreesToJsonString(node)
-        println("  JSON of ${json!!.encodeToByteArray().size} bytes")
         debugFile("sent.json") { json }
 
         val body: RequestBody = json.compress()
-        println("  ${body.contentLength()} bytes sent")
 
         // TODO control with flag http or https
         val url = "http://$hostname:$port/bulk/$operation"
@@ -381,3 +398,8 @@ fun debugFileHelper(
 
 class UnexistingNodeException(val nodeID: String, message: String = "Unexisting node $nodeID", cause: Throwable? = null) :
     RuntimeException(message, cause)
+
+enum class RetrievalMode {
+    ENTIRE_SUBTREE,
+    SINGLE_NODE,
+}

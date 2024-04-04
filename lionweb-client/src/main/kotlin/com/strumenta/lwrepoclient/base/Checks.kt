@@ -1,6 +1,7 @@
 package com.strumenta.lwrepoclient.base
 
 import io.lionweb.lioncore.java.model.Node
+import io.lionweb.lioncore.java.model.impl.ProxyNode
 import io.lionweb.lioncore.java.serialization.JsonSerialization
 import java.io.File
 
@@ -13,6 +14,9 @@ fun treeSanityChecks(
     parents: MutableMap<String, String?> = mutableMapOf(),
     jsonSerialization: JsonSerialization,
 ) {
+    if (node is ProxyNode) {
+        return
+    }
     try {
         if (parents.containsKey(node.id!!)) {
             throw IllegalStateException("Node with ID ${node.id} has already a parent")
@@ -24,7 +28,9 @@ fun treeSanityChecks(
             require(childrenInContainment.distinct() == childrenInContainment)
         }
         node.children.forEach {
-            treeSanityChecks(it, parents, jsonSerialization)
+            if (node !is ProxyNode) {
+                treeSanityChecks(it, parents, jsonSerialization)
+            }
         }
     } catch (t: Throwable) {
         // This method is called when in debug mode, so let's save this file to help debugging

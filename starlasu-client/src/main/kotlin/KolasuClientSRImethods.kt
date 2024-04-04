@@ -29,7 +29,7 @@ fun KolasuClient.populateSRI(
 }
 
 // TODO: move this to code-insight-studio
-private fun KolasuClient.storeSRI(
+fun KolasuClient.storeSRI(
     partitionID: String,
     sri: SRI,
 ) {

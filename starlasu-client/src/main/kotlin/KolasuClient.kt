@@ -1,5 +1,6 @@
 package com.strumenta.lwrepoclient.kolasu
 
+import com.strumenta.kolasu.ids.Coordinates
 import com.strumenta.kolasu.ids.IDLogic
 import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.ids.NonRootCoordinates
@@ -15,6 +16,7 @@ import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.model.children
 import com.strumenta.kolasu.traversing.walkDescendants
 import com.strumenta.lwrepoclient.base.LionWebClient
+import com.strumenta.lwrepoclient.base.RetrievalMode
 import com.strumenta.lwrepoclient.base.debugFileHelper
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.serialization.JsonSerialization
@@ -305,8 +307,18 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return lwNode.id!!
     }
 
-    fun getLionWebNode(nodeID: String, withProxyParent: Boolean = false) : LWNode {
+    fun getLionWebNode(
+        nodeID: String,
+        withProxyParent: Boolean = false,
+    ): LWNode {
         return lionWebClient.retrieve(nodeID, withProxyParent)
+    }
+
+    fun getShallowLionWebNode(
+        nodeID: String,
+        withProxyParent: Boolean = false,
+    ): LWNode {
+        return lionWebClient.retrieve(nodeID, withProxyParent, retrievalMode = RetrievalMode.SINGLE_NODE)
     }
 
     /**
@@ -412,8 +424,11 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      * _where_ in the repository you will insert it, therefore the ID you will get would be the one for the
      * Node as "dangling in the void". The Node ID obtained after the insertion could be different!
      */
-    fun idFor(kNode: KNode): String {
-        return idProvider.id(kNode)
+    fun idFor(
+        kNode: KNode,
+        overriddenCoordinates: Coordinates? = null,
+    ): String {
+        return idProvider.id(kNode, overriddenCoordinates)
     }
 
     fun nodesByConcept(): Map<KClass<*>, Set<String>> {
