@@ -3,7 +3,7 @@ import net.researchgate.release.ReleaseExtension
 plugins {
     id("net.researchgate.release") version "3.0.2"
     id("org.jetbrains.dokka") version "1.9.10" apply(false)
-    id("org.jetbrains.kotlin.jvm") version "1.9.22" apply(false)
+    id("org.jetbrains.kotlin.jvm") version "1.9.23" apply(false)
     alias(libs.plugins.superPublish)
     alias(libs.plugins.ktlint)
 }
