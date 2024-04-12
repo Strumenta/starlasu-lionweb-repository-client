@@ -11,9 +11,6 @@ plugins {
     alias(libs.plugins.buildConfig)
 }
 
-val rpgParserVersion = extra["rpgParserVersion"]
-val javaModuleVersion = extra["javaModuleVersion"]
-val eglParserVersion = extra["eglParserVersion"]
 val kotestVersion = extra["kotestVersion"]
 val kotlinVersion = extra["kotlinVersion"]
 
@@ -67,7 +64,7 @@ testing {
                 implementation(libs.kolasusemantics)
                 implementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
                 implementation("io.kotest:kotest-runner-junit5-jvm:5.8.0")
-                implementation("com.strumenta.langmodules.kolasu-java-langmodule:ast:$javaModuleVersion")
+                implementation(libs.javaast)
                 implementation("io.kotest.extensions:kotest-extensions-testcontainers:$kotestVersion")
                 implementation("io.kotest:kotest-assertions-core:5.8.0")
                 implementation("io.kotest:kotest-property:5.8.0")
@@ -95,10 +92,10 @@ dependencies {
     implementation(project(":lionweb-client"))
 
     testImplementation(kotlin("test-junit5"))
-    testImplementation("com.strumenta.langmodules.kolasu-java-langmodule:ast:$javaModuleVersion")
-    testImplementation("com.strumenta:rpg-parser:$rpgParserVersion")
+    testImplementation(libs.javaast)
+    testImplementation(libs.rpgast)
+    testImplementation(libs.rpgsemantics)
     testImplementation(libs.eglast)
-    testImplementation("com.strumenta:rpg-parser-symbol-resolution:$rpgParserVersion")
     testImplementation("commons-io:commons-io:2.7")
     testImplementation("org.slf4j:slf4j-simple:1.7.30")
 }

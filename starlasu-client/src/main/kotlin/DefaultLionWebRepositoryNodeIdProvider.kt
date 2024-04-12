@@ -1,13 +1,11 @@
 package com.strumenta.lwrepoclient.kolasu
 
 import com.strumenta.kolasu.ids.Coordinates
-import com.strumenta.kolasu.ids.IDLogic
 import com.strumenta.kolasu.ids.NodeIdProvider
-import com.strumenta.kolasu.ids.RootCoordinates
+import com.strumenta.kolasu.ids.SemanticIDProvider
 import com.strumenta.kolasu.ids.SimpleSourceIdProvider
 import com.strumenta.kolasu.ids.SourceIdProvider
 import com.strumenta.kolasu.lionweb.KNode
-import com.strumenta.kolasu.lionweb.isPartition
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.model.containingProperty
 import com.strumenta.kolasu.model.indexInContainingProperty
@@ -26,8 +24,8 @@ class DefaultLionWebRepositoryNodeIdProvider(
     protected open fun partitionId(kNode: Node): String {
         require(kNode.parent == null)
 
-        if (kNode is IDLogic) {
-            return "$PARTITION_PREFIX${(kNode as IDLogic).calculatedID(RootCoordinates)}"
+        if (kNode is SemanticIDProvider) {
+            return "$PARTITION_PREFIX${(kNode as SemanticIDProvider).calculatedID()}"
         } else {
             require(kNode.source != null) {
                 "When calculating the partitionId we either need a not with IDLogic or with a source: $kNode"
@@ -42,8 +40,7 @@ class DefaultLionWebRepositoryNodeIdProvider(
     ): String {
         val id =
             when {
-                kNode.isPartition -> partitionId(kNode)
-                kNode is IDLogic -> kNode.calculatedID(coordinates)
+                kNode is SemanticIDProvider -> kNode.calculatedID()
                 sourceBasedNodeTypes.contains(kNode::class) -> SOURCE_PREFIX + sourceIdProvider.sourceId(kNode.source)
                 else -> {
                     require(kNode.source != null) {
@@ -53,7 +50,7 @@ class DefaultLionWebRepositoryNodeIdProvider(
                     "${sourceIdProvider.sourceId(kNode.source)}_${kNode.positionalID}"
                 }
             }
-        if (!kNode.isPartition && id.startsWith(PARTITION_PREFIX)) {
+        if (id.startsWith(PARTITION_PREFIX)) {
             throw IllegalStateException("The node is not a partition but its ID has the prefix used for partitions")
         }
         if (!sourceBasedNodeTypes.contains(kNode::class) && id.startsWith(SOURCE_PREFIX)) {

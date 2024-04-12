@@ -1,16 +1,15 @@
 package com.strumenta.lwrepoclient.kolasu
 
 import com.strumenta.kolasu.ids.Coordinates
-import com.strumenta.kolasu.ids.IDLogic
 import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.ids.NonRootCoordinates
+import com.strumenta.kolasu.ids.SemanticIDProvider
 import com.strumenta.kolasu.language.KolasuLanguage
 import com.strumenta.kolasu.lionweb.KNode
 import com.strumenta.kolasu.lionweb.LWNode
 import com.strumenta.kolasu.lionweb.LionWebModelConverter
 import com.strumenta.kolasu.lionweb.LionWebRootSource
 import com.strumenta.kolasu.lionweb.PrimitiveValueSerialization
-import com.strumenta.kolasu.lionweb.isPartition
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.model.children
@@ -113,11 +112,11 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return lionWebClient.getPartitionIDs()
     }
 
+    /**
+     * Always return false, as Kolasu Nodes cannot be mapped to partitions
+     */
     fun partitionExist(kPartition: Node): Boolean {
-        require(kPartition.isPartition) {
-            "The given Node is not of partition type"
-        }
-        return partitionExist(idFor(kPartition))
+        return false
     }
 
     fun partitionExist(partitionID: String): Boolean {
@@ -138,39 +137,29 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      *
      * The partition should not already exist.
      */
-    fun createPartition(kPartition: Node): String {
-        require(kPartition.isPartition) {
-            "The given Node is not of partition type"
-        }
-        require(partitionNotExist(kPartition)) {
-            "Partition already exist, cannot be created again"
-        }
-        if (kPartition.children.isNotEmpty()) {
-            throw IllegalArgumentException("When creating a partition, please specify a single node")
-        }
-        val lwPartition = toLionWeb(kPartition)
-        lionWebClient.createPartition(lwPartition)
-        return lwPartition.id!!
+    fun createPartition(partition: LWNode): String {
+        lionWebClient.createPartition(partition)
+        return partition.id!!
     }
 
-    /**
-     * We update the partition and returns its ID.
-     *
-     * The node specified should be of partition type.
-     *
-     * The partition should already exist.
-     */
-    fun updatePartition(kPartition: Node): String {
-        require(kPartition.isPartition) {
-            "The given Node is not of partition type"
-        }
-        require(partitionNotExist(kPartition)) {
-            "Partition does not exist, cannot be updated"
-        }
-        val lwPartition = toLionWeb(kPartition)
-        lionWebClient.storeTree(lwPartition)
-        return lwPartition.id!!
-    }
+//    /**
+//     * We update the partition and returns its ID.
+//     *
+//     * The node specified should be of partition type.
+//     *
+//     * The partition should already exist.
+//     */
+//    fun updatePartition(kPartition: Node): String {
+//        require(kPartition.isPartition) {
+//            "The given Node is not of partition type"
+//        }
+//        require(partitionNotExist(kPartition)) {
+//            "Partition does not exist, cannot be updated"
+//        }
+//        val lwPartition = toLionWeb(kPartition)
+//        lionWebClient.storeTree(lwPartition)
+//        return lwPartition.id!!
+//    }
 
     /**
      * Consider this will retrieve the partition and all the roots it contains.
@@ -181,15 +170,15 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return nodeConverter.importModelFromLionWeb(lwNode) as KNode
     }
 
-    fun deletePartition(kPartition: Node) {
-        require(kPartition.isPartition) {
-            "The given Node is not of partition type"
-        }
-        require(partitionExist(kPartition)) {
-            "Partition already exist, cannot be created again"
-        }
-        deletePartition(idFor(kPartition))
-    }
+//    fun deletePartition(kPartition: Node) {
+//        require(kPartition.isPartition) {
+//            "The given Node is not of partition type"
+//        }
+//        require(partitionExist(kPartition)) {
+//            "Partition already exist, cannot be created again"
+//        }
+//        deletePartition(idFor(kPartition))
+//    }
 
     fun deletePartition(partitionId: String) {
         require(partitionExist(partitionId)) {
@@ -251,8 +240,9 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         kNode: Node,
         kContainer: Node,
         containment: KProperty1<*, *>,
+        containmentIndex: Int,
     ): String {
-        return createNode(kNode, idFor(kContainer), containment)
+        return createNode(kNode, idFor(kContainer), containment, containmentIndex)
     }
 
     /**
@@ -264,11 +254,12 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         kNode: Node,
         containerID: String,
         containment: KProperty1<*, *>,
+        containmentIndex: Int,
     ): String {
         when {
             isIIN(kNode) -> {
                 requireIINode(kNode, "createNode")
-                val lwTreeToAppend = toLionWeb(kNode, containerID, containment.name)
+                val lwTreeToAppend = toLionWeb(kNode, containerID, containment.name, containmentIndex)
                 debugFile("createNode-${lwTreeToAppend.id}.json") {
                     nodeConverter.prepareJsonSerialization().serializeTreesToJsonString(lwTreeToAppend)
                 }
@@ -288,9 +279,6 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
      * Here node means "non partition node".
      */
     fun updateNode(kNode: KNode): String {
-        require(!kNode.isPartition) {
-            "The given Node is of partition type"
-        }
         val msg = nodeExistWithExplanation(idFor(kNode))
         require(msg == null) {
             "We can only update existing nodes. While this is not a valid node because: $msg"
@@ -333,7 +321,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             lwNode: LWNode,
         ) {
             val nodeID = lwNode.id!!
-            if (result !is IDLogic) {
+            if (result !is SemanticIDProvider) {
                 val ancestorsIds = lionWebClient.getAncestorsId(nodeID)
                 val sourceId =
                     when (ancestorsIds.size) {
@@ -472,16 +460,14 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     //
 
     private fun toLionWeb(kNode: Node): LWNode {
-        require(kNode.isPartition || kNode.source != null || kNode is IDLogic) {
+        require(kNode.source != null || kNode is SemanticIDProvider) {
             "When exporting to LionWeb, if the Node is not a partition and it does not implement IDLogic, then we " +
                 "consider the source of the node to determine its Node ID, so it should have one"
         }
         kNode.assignParents()
-        if (!kNode.isPartition) {
-            kNode.walkDescendants().forEach { descendant ->
-                if (descendant.source == null) {
-                    descendant.source = kNode.source
-                }
+        kNode.walkDescendants().forEach { descendant ->
+            if (descendant.source == null) {
+                descendant.source = kNode.source
             }
         }
         nodeConverter.clearNodesMapping()
@@ -492,17 +478,16 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         kNode: Node,
         containerID: String,
         containmentName: String,
+        containmentIndex: Int,
     ): LWNode {
-        require(kNode.isPartition || kNode.source != null || kNode is IDLogic) {
+        require(kNode.source != null || kNode is SemanticIDProvider) {
             "When exporting to LionWeb, if the Node is not a partition and it does not implement IDLogic, then we " +
                 "consider the source of the node to determine its Node ID, so it should have one"
         }
         kNode.assignParents()
-        if (!kNode.isPartition) {
-            kNode.walkDescendants().forEach { descendant ->
-                if (descendant.source == null) {
-                    descendant.source = kNode.source
-                }
+        kNode.walkDescendants().forEach { descendant ->
+            if (descendant.source == null) {
+                descendant.source = kNode.source
             }
         }
         nodeConverter.clearNodesMapping()
@@ -510,16 +495,16 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             kNode,
             idProvider,
             considerParent = true,
-            NonRootCoordinates(containerID, containmentName),
+            NonRootCoordinates(containerID, containmentName, containmentIndex),
         )
     }
 
     private fun isIDBasedOnSource(node: KNode): Boolean {
-        return node !is IDLogic && (node.isPartition || sourceBasedNodeTypes.contains(node::class))
+        return node !is SemanticIDProvider && (sourceBasedNodeTypes.contains(node::class))
     }
 
     private fun isIIN(node: KNode): Boolean {
-        return isIDBasedOnSource(node) || node is IDLogic
+        return isIDBasedOnSource(node) || node is SemanticIDProvider
     }
 
     private fun requireIINode(

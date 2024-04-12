@@ -1,6 +1,8 @@
 [versions]
 egl = "0.0.14-SNAPSHOT"
-kolasu = "1.5.52"
+kolasu = "1.5.53-SNAPSHOT"
+rpg = "2.1.51-SNAPSHOT"
+javamodule = "0.9.19-SNAPSHOT"
 
 [plugins]
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.0" }
@@ -18,3 +20,6 @@ gson = { group = "com.google.code.gson", name="gson", version="2.10.1" }
 kolasucore = { group="com.strumenta.kolasu", name="kolasu-core", version.ref="kolasu" }
 kolasulionweb = { group="com.strumenta.kolasu", name="kolasu-lionweb", version.ref="kolasu" }
 kolasusemantics = { group="com.strumenta.kolasu", name="kolasu-semantics", version.ref="kolasu" }
+rpgast = { group = "com.strumenta", name="rpg-parser", version.ref="rpg" }
+rpgsemantics = { group = "com.strumenta", name="rpg-parser-symbol-resolution", version.ref="rpg" }
+javaast = { group = "com.strumenta.langmodules.kolasu-java-langmodule", name="ast", version.ref="javamodule" }
