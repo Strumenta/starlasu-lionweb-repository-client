@@ -1,6 +1,13 @@
+[versions]
+egl = "0.0.14-SNAPSHOT"
+
 [plugins]
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.0" }
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version = "1.9.23" }
 dokka = { id = "org.jetbrains.dokka", version = "1.9.10" }
 superPublish = { id = "com.vanniktech.maven.publish", version = "0.27.0" }
 buildConfig = { id = "com.github.gmazzo.buildconfig", version = "5.3.5" }
+
+[libraries]
+eglast = { group = "com.strumenta.langmodules.kolasu-egl-langmodule", name="ast", version.ref="egl" }
+eglsemantics = { group = "com.strumenta.langmodules.kolasu-egl-langmodule", name="semantics", version.ref="egl" }

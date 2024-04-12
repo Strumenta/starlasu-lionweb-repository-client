@@ -1,5 +1,5 @@
 FROM node
-ARG lionwebRepositoryCommitId=a966193
+ARG lionwebRepositoryCommitId=xxxxxx
 RUN git clone https://github.com/LionWeb-io/lionweb-repository.git
 WORKDIR lionweb-repository
 RUN git checkout ${lionwebRepositoryCommitId}
