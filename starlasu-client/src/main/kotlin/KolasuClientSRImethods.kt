@@ -2,25 +2,46 @@ package com.strumenta.lwrepoclient.kolasu
 
 import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.lionweb.KNode
+import com.strumenta.kolasu.lionweb.LWNode
+import com.strumenta.kolasu.lionweb.StarLasuLWLanguage
 import com.strumenta.kolasu.model.Node
-import com.strumenta.kolasu.model.children
 import com.strumenta.kolasu.semantics.scope.provider.ScopeProvider
 import com.strumenta.kolasu.semantics.symbol.provider.SymbolProvider
 import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
 import com.strumenta.kolasu.semantics.symbol.resolver.SymbolResolver
 import com.strumenta.kolasu.traversing.walk
+import io.lionweb.lioncore.java.language.Concept
+
+fun KolasuClient.getASTRoots(aLWNode: LWNode): Sequence<KNode> {
+    val res = mutableListOf<KNode>()
+
+    fun exploreForASTs(aLWNode: LWNode) {
+        val isKNode: Boolean = isKolasuConcept(aLWNode.concept)
+        if (isKNode) {
+            res.add(toKolasuNode(aLWNode))
+        } else {
+            aLWNode.children.forEach { exploreForASTs(it) }
+        }
+    }
+
+    exploreForASTs(aLWNode)
+    return res.asSequence()
+}
 
 // TODO: move this to code-insight-studio
+
+/**
+ * @param partitionID this is the partition containing AST nodes
+ */
 fun KolasuClient.populateSRI(
     partitionID: String,
     symbolProviderFactory: (nodeIdProvider: NodeIdProvider) -> SymbolProvider,
 ): SRI {
     val symbolProvider = symbolProviderFactory.invoke(this.idProvider)
-
     val sri = loadSRI(partitionID)
-    val partition = getNode(partitionID) as KNode
+    val partition = getLionWebNode(partitionID)
 
-    partition.children.forEach { ast ->
+    getASTRoots(partition).forEach { ast ->
         populateSRI(sri, ast, symbolProvider)
     }
 
@@ -68,11 +89,15 @@ fun KolasuClient.performSymbolResolutionOnPartition(
     scopeProviderProvider: (sri: SymbolRepository, nodeIdProvider: NodeIdProvider) -> ScopeProvider,
 ) {
     val sri = loadSRI(partitionID)
-    val partition = getNode(partitionID)
+    val partition = getLionWebNode(partitionID)
     val scopeProvider = scopeProviderProvider.invoke(sri, idProvider)
 
-    partition.children.forEach { ast ->
+    getASTRoots(partition).forEach { ast ->
         performSymbolResolutionOnAST(ast, scopeProvider)
-        this.updateNode(ast)
+        this.updateAST(ast)
     }
+}
+
+fun isKolasuConcept(concept: Concept): Boolean {
+    return concept.allAncestors().contains(StarLasuLWLanguage.ASTNode)
 }

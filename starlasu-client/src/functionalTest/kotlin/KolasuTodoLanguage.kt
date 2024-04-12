@@ -1,6 +1,10 @@
 import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.language.KolasuLanguage
-import com.strumenta.kolasu.lionweb.LionWebPartition
+import com.strumenta.kolasu.lionweb.addConcept
+import com.strumenta.kolasu.lionweb.addContainment
+import com.strumenta.kolasu.lionweb.lwLanguage
+import com.strumenta.kolasu.model.ASTRoot
+import com.strumenta.kolasu.model.Multiplicity
 import com.strumenta.kolasu.model.Named
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.model.ReferenceByName
@@ -9,10 +13,23 @@ import com.strumenta.kolasu.semantics.scope.provider.declarative.scopeFor
 import com.strumenta.kolasu.semantics.symbol.provider.declarative.DeclarativeSymbolProvider
 import com.strumenta.kolasu.semantics.symbol.provider.declarative.symbolFor
 import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
+import io.lionweb.lioncore.java.language.LionCoreBuiltins
+import io.lionweb.lioncore.java.model.impl.DynamicNode
 
-@LionWebPartition
-data class TodoAccount(val projects: MutableList<TodoProject>) : Node()
+val todoAccountLanguage =
+    lwLanguage("todoAccountLanguage").apply {
+        addConcept("TodoAccount").apply {
+            addContainment("projects", LionCoreBuiltins.getNode(), Multiplicity.MANY)
+        }
+    }
 
+val todoAccountConcept by lazy {
+    todoAccountLanguage.getConceptByName("TodoAccount")
+}
+
+class TodoAccount(id: String) : DynamicNode(id, todoAccountConcept)
+
+@ASTRoot
 data class TodoProject(override var name: String, val todos: MutableList<Todo> = mutableListOf()) : Node(), Named
 
 data class Todo(
@@ -25,7 +42,6 @@ data class Todo(
 
 val todoLanguage =
     KolasuLanguage("TodoLanguage").apply {
-        addClass(TodoAccount::class)
         addClass(TodoProject::class)
     }
 

@@ -2,7 +2,6 @@ import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.model.ReferenceByName
 import com.strumenta.kolasu.model.SyntheticSource
 import com.strumenta.kolasu.model.assignParents
-import com.strumenta.kolasu.model.children
 import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
 import com.strumenta.lwrepoclient.kolasu.performSymbolResolutionOnPartition
@@ -24,21 +23,19 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
     fun storePartitionAndGetItBack() {
         val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort, debug = true)
         kolasuClient.registerLanguage(todoLanguage)
-        kolasuClient.sourceBasedNodeTypes.add(TodoProject::class)
+        kolasuClient.registerLanguage(todoAccountLanguage)
 
         assertEquals(emptyList(), kolasuClient.getPartitionIDs())
 
         // We create an empty partition
-        val todoAccount = TodoAccount(mutableListOf())
+        val todoAccount = TodoAccount("my-wonderful-partition")
+        val expectedPartitionId = todoAccount.id!!
         // By default the partition IDs are derived from the source
-        todoAccount.source = SyntheticSource("my-wonderful-partition")
+        // todoAccount.source = SyntheticSource("my-wonderful-partition")
         kolasuClient.createPartition(todoAccount)
 
-        val expectedPartitionId = kolasuClient.idFor(todoAccount)
-        assertEquals("partition_synthetic_my-wonderful-partition", expectedPartitionId)
-
         val partitionIDs = kolasuClient.getPartitionIDs()
-        assertEquals(listOf(expectedPartitionId), partitionIDs)
+        assertEquals(listOf(todoAccount.id), partitionIDs)
 
         // Now we want to attach a tree to the existing partition
         val todoProject =
@@ -53,19 +50,20 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
         // todoProject.assignParents()
 
         todoProject.source = SyntheticSource("TODO Project A")
-        kolasuClient.createNode(todoProject, containerID = expectedPartitionId, containment = TodoAccount::projects)
+        val todoProjectID = kolasuClient.attachAST(todoProject, containerID = expectedPartitionId, containmentName = "projects")
 
         // I can retrieve the entire partition
-        todoAccount.projects.add(todoProject)
+        // todoAccount.projects.add(todoProject)
         // todoAccount.assignParents()
-        val retrievedTodoAccount = kolasuClient.getNode(expectedPartitionId)
-        assertEquals(todoAccount, retrievedTodoAccount)
+        val retrievedTodoAccount = kolasuClient.getLionWebNode(expectedPartitionId)
+        assertEquals(1, retrievedTodoAccount.getChildrenByContainmentName("projects").size)
+        assertEquals(listOf(todoProjectID), retrievedTodoAccount.getChildrenByContainmentName("projects").map { it.id })
 
         // I can retrieve just a portion of that partition. In that case the parent of the root of the
         // subtree will appear null
         val expectedProjectId = kolasuClient.idFor(todoProject)
-        assertEquals("source_synthetic_TODO_Project_A", expectedProjectId)
-        val retrievedTodoProject = kolasuClient.getNode(expectedProjectId)
+        assertEquals("synthetic_TODO_Project_A", expectedProjectId)
+        val retrievedTodoProject = kolasuClient.getAST(expectedProjectId)
         assertEquals(
             TodoProject(
                 "My errands list",
@@ -84,14 +82,14 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
     fun checkNodeIDs() {
         val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort, debug = true)
         kolasuClient.registerLanguage(todoLanguage)
-        kolasuClient.sourceBasedNodeTypes.add(TodoProject::class)
+        kolasuClient.registerLanguage(todoAccountLanguage)
 
         assertEquals(emptyList(), kolasuClient.getPartitionIDs())
 
         // We create an empty partition
-        val todoAccount = TodoAccount(mutableListOf())
+        val todoAccount = TodoAccount("my-wonderful-partition")
         // By default the partition IDs are derived from the source
-        todoAccount.source = SyntheticSource("my-wonderful-partition")
+        // todoAccount.source = SyntheticSource("my-wonderful-partition")
         kolasuClient.createPartition(todoAccount)
 
         // Now we want to attach a tree to the existing partition
@@ -106,24 +104,24 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
             )
         todoProject.assignParents()
         todoProject.source = SyntheticSource("MyProject")
-        kolasuClient.createNode(todoProject, todoAccount, containment = TodoAccount::projects)
+        kolasuClient.attachAST(todoProject, todoAccount, containmentName = "projects")
 
-        assertEquals("partition_synthetic_my-wonderful-partition", kolasuClient.idFor(todoAccount))
-        assertEquals("source_synthetic_MyProject", kolasuClient.idFor(todoProject))
-        assertEquals("synthetic_MyProject_root_todos_0", kolasuClient.idFor(todoProject.todos[0]))
-        assertEquals("synthetic_MyProject_root_todos_1", kolasuClient.idFor(todoProject.todos[1]))
-        assertEquals("synthetic_MyProject_root_todos_2", kolasuClient.idFor(todoProject.todos[2]))
+        // assertEquals("partition_synthetic_my-wonderful-partition", kolasuClient.idFor(todoAccount))
+        assertEquals("synthetic_MyProject", kolasuClient.idFor(todoProject))
+        assertEquals("synthetic_MyProject_todos", kolasuClient.idFor(todoProject.todos[0]))
+        assertEquals("synthetic_MyProject_todos_1", kolasuClient.idFor(todoProject.todos[1]))
+        assertEquals("synthetic_MyProject_todos_2", kolasuClient.idFor(todoProject.todos[2]))
     }
 
     @Test
     fun sourceIsRetrievedCorrectly() {
         val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort, debug = true)
         kolasuClient.registerLanguage(todoLanguage)
-        kolasuClient.sourceBasedNodeTypes.add(TodoProject::class)
+        kolasuClient.registerLanguage(todoAccountLanguage)
 
         // We create an empty partition
-        val todoAccount = TodoAccount(mutableListOf())
-        todoAccount.source = SyntheticSource("my-wonderful-partition")
+        val todoAccount = TodoAccount("my-wonderful-partition")
+        // todoAccount.source = SyntheticSource("my-wonderful-partition")
         val todoAccountId = kolasuClient.createPartition(todoAccount)
 
         val todoProject1 =
@@ -137,7 +135,7 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
             )
         todoProject1.assignParents()
         todoProject1.source = SyntheticSource("Project1")
-        val todoProject1ID = kolasuClient.createNode(todoProject1, todoAccount, containment = TodoAccount::projects)
+        val todoProject1ID = kolasuClient.attachAST(todoProject1, todoAccount, containmentName = "projects")
 
         val todoProject2 =
             TodoProject(
@@ -150,24 +148,24 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
             )
         todoProject2.assignParents()
         todoProject2.source = SyntheticSource("Project2")
-        val todoProject2ID = kolasuClient.createNode(todoProject2, todoAccount, containment = TodoAccount::projects)
+        val todoProject2ID = kolasuClient.attachAST(todoProject2, todoAccount, containmentName = "projects")
 
-        val retrievedPartition = kolasuClient.getNode(todoAccountId)
+        val retrievedPartition = kolasuClient.getLionWebNode(todoAccountId)
 
         // When retrieving the entire partition, the source should be set correctly, producing the right node id
-        assertEquals(todoProject1ID, kolasuClient.idFor(retrievedPartition.children[0]))
-        assertEquals(todoProject2ID, kolasuClient.idFor(retrievedPartition.children[1]))
+        assertEquals(todoProject1ID, retrievedPartition.getChildrenByContainmentName("projects")[0].id)
+        assertEquals(todoProject2ID, retrievedPartition.getChildrenByContainmentName("projects")[1].id)
     }
 
     @Test
     fun symbolResolution() {
         val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort, debug = true)
         kolasuClient.registerLanguage(todoLanguage)
-        kolasuClient.sourceBasedNodeTypes.add(TodoProject::class)
+        kolasuClient.registerLanguage(todoAccountLanguage)
 
         // We create an empty partition
-        val todoAccount = TodoAccount(mutableListOf())
-        todoAccount.source = SyntheticSource("my-wonderful-partition")
+        val todoAccount = TodoAccount("my-wonderful-partition")
+        // todoAccount.source = SyntheticSource("my-wonderful-partition")
         val partitionID = kolasuClient.createPartition(todoAccount)
 
         // Now we want to attach a tree to the existing partition
@@ -182,7 +180,7 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
             )
         todoProject1.assignParents()
         todoProject1.source = SyntheticSource("Project1")
-        kolasuClient.createNode(todoProject1, todoAccount, containment = TodoAccount::projects)
+        kolasuClient.attachAST(todoProject1, todoAccount, containmentName = "projects")
 
         var todoProject2 =
             TodoProject(
@@ -195,7 +193,7 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
             )
         todoProject2.assignParents()
         todoProject2.source = SyntheticSource("Project2")
-        val todoProject2ID = kolasuClient.createNode(todoProject2, todoAccount, containment = TodoAccount::projects)
+        val todoProject2ID = kolasuClient.attachAST(todoProject2, todoAccount, containmentName = "projects")
 
         var sri = kolasuClient.loadSRI(partitionID)
         var todosInSri = sri.find(Todo::class).toList()
@@ -213,12 +211,12 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
         kolasuClient.performSymbolResolutionOnPartition(partitionID) { sri: SymbolRepository, nodeIdProvider: NodeIdProvider ->
             TodoScopeProvider(sri)
         }
-        todoProject2 = kolasuClient.getNode(todoProject2ID) as TodoProject
+        todoProject2 = kolasuClient.getAST(todoProject2ID) as TodoProject
         assertTrue(todoProject2.todos[1].prerequisite!!.referred != null)
         assertEquals("BD", todoProject2.todos[1].prerequisite!!.referred!!.name)
         assertEquals("Buy diary", todoProject2.todos[1].prerequisite!!.referred!!.description)
 
-        assertTrue(todoProject2.todos[2].prerequisite!!.referred == null)
-        assertTrue(todoProject2.todos[2].prerequisite!!.identifier == "synthetic_Project1_root_projects_0_todos_1")
+        assertEquals(null, todoProject2.todos[2].prerequisite!!.referred)
+        assertEquals("synthetic_Project1_todos_1", todoProject2.todos[2].prerequisite!!.identifier)
     }
 }

@@ -1,4 +1,6 @@
+import com.strumenta.kolasu.lionweb.LWNode
 import com.strumenta.lwrepoclient.base.FunctionalTestBuildConfig
+import io.lionweb.lioncore.java.utils.ModelComparator
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
 import org.testcontainers.containers.PostgreSQLContainer
@@ -70,5 +72,15 @@ abstract class AbstractFunctionalTest {
     @AfterTest
     fun teardown() {
         modelRepository!!.stop()
+    }
+
+    fun assertLWTreesAreEqual(
+        a: LWNode,
+        b: LWNode,
+    ) {
+        val comparison = ModelComparator().compare(a, b)
+        assert(comparison.areEquivalent()) {
+            "Differences between $a and $b: $comparison"
+        }
     }
 }

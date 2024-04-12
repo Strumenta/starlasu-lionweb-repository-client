@@ -26,6 +26,7 @@ class LionWebClient(
     val jsonSerializationProvider: (() -> JsonSerialization)? = null,
 ) {
     private var httpClient: OkHttpClient = OkHttpClient()
+    private val languages = mutableListOf<Language>()
 
     private fun log(message: String) {
         if (debug) {
@@ -43,11 +44,15 @@ class LionWebClient(
 
     val jsonSerialization: JsonSerialization
         get() {
-            return jsonSerializationProvider?.invoke() ?: defaultJsonSerialization
+            val jsonSerialization = jsonSerializationProvider?.invoke() ?: defaultJsonSerialization
+            languages.forEach {
+                jsonSerialization.registerLanguage(it)
+            }
+            return jsonSerialization
         }
 
     fun registerLanguage(language: Language) {
-        jsonSerialization.registerLanguage(language)
+        languages.add(language)
     }
 
     fun createPartition(node: Node) {
@@ -131,7 +136,7 @@ class LionWebClient(
         val limit =
             when (retrievalMode) {
                 RetrievalMode.ENTIRE_SUBTREE -> "99"
-                RetrievalMode.SINGLE_NODE -> "0"
+                RetrievalMode.SINGLE_NODE -> "1"
             }
         urlBuilder.addQueryParameter("depthLimit", limit)
         val request: Request =
@@ -285,6 +290,46 @@ class LionWebClient(
         treeToAppend: Node,
         containerId: String,
         containmentName: String,
+        containmentIndex: Int,
+    ) {
+        // 1. Retrieve the parent
+        val parent = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE)
+
+        // 2. Add the tree to the parent
+        val containment =
+            parent.concept.getContainmentByName(containmentName)
+                ?: throw IllegalArgumentException("The container has not containment named $containmentName")
+        if (!containment.isMultiple && parent.getChildrenByContainmentName(containmentName).isNotEmpty()) {
+            throw IllegalArgumentException("The indicated containment ${containment.name} is not multiple and a child is already present")
+        }
+        require(parent.getChildren(containment).size == containmentIndex) {
+            "We are trying to add element in containment ${containment.name} at index $containmentIndex, " +
+                "however the number of children is ${containment.children.size}"
+        }
+        parent.addChild(containment, treeToAppend)
+        require(parent.getChildren(containment).size == (containmentIndex + 1))
+        (treeToAppend as DynamicNode).parent = parent
+
+        (parent as DynamicNode).parent = getParentId(parent.id!!)?.let { ProxyNode(it) }
+
+        // 3. Store the parent
+        storeTree(parent)
+
+        // This is just to double-check everything is working correctly
+        val retrievedParent = retrieve(parent.id!!, retrievalMode = RetrievalMode.SINGLE_NODE)
+        require(retrievedParent.getChildren(containment).size == (containmentIndex + 1)) {
+            "Actual retrieved parent: $retrievedParent"
+        }
+    }
+
+    /**
+     * This operation is not atomic. We hope that no one is changing the parent at the very
+     * same time.
+     */
+    fun appendTree(
+        treeToAppend: Node,
+        containerId: String,
+        containmentName: String,
     ) {
         // TODO avoid retrieving the whole parent (just do level 1)
         // 1. Retrieve the parent
@@ -371,6 +416,15 @@ class LionWebClient(
         text: () -> String,
     ) {
         debugFileHelper(debug, relativePath, text)
+    }
+
+    fun childrenInContainment(
+        containerId: String,
+        containmentName: String,
+    ): List<String> {
+        val lwNode = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE)
+        val containment = lwNode.concept.getContainmentByName(containmentName) ?: throw java.lang.IllegalStateException()
+        return lwNode.getChildren(containment).map { it.id!! }
     }
 }
 
