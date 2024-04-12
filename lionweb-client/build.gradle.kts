@@ -11,18 +11,14 @@ plugins {
     alias(libs.plugins.buildConfig)
 }
 
-val ktorVersion = extra["ktorVersion"]
-val lionwebVersion = extra["lionwebVersion"]
-val kolasuVersion = extra["kolasuVersion"]
-val okhttpVersion = extra["okhttpVersion"]
 val jvmVersion = extra["jvmVersion"] as String
 val kotestVersion = extra["kotestVersion"]
 val kotlinVersion = extra["kotlinVersion"]
 
 dependencies {
-    implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
-    implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation(libs.okhttp)
+    implementation(libs.lwjava)
+    implementation(libs.gson)
 }
 
 testing {
@@ -34,7 +30,7 @@ testing {
         register<JvmTestSuite>("functionalTest") {
             dependencies {
                 implementation(project())
-                implementation("com.strumenta.kolasu:kolasu-core:$kolasuVersion")
+                implementation(libs.kolasucore)
                 implementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
                 implementation("io.kotest:kotest-runner-junit5-jvm:5.8.0")
                 implementation("io.kotest.extensions:kotest-extensions-testcontainers:$kotestVersion")
@@ -43,7 +39,7 @@ testing {
                 implementation("org.testcontainers:testcontainers:1.19.5")
                 implementation("org.testcontainers:junit-jupiter:1.19.5")
                 implementation("org.testcontainers:postgresql:1.19.5")
-                implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
+                implementation(libs.lwjava)
             }
 
             targets {

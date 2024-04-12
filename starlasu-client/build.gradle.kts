@@ -11,9 +11,6 @@ plugins {
     alias(libs.plugins.buildConfig)
 }
 
-val ktorVersion = extra["ktorVersion"]
-val lionwebVersion = extra["lionwebVersion"]
-val kolasuVersion = extra["kolasuVersion"]
 val rpgParserVersion = extra["rpgParserVersion"]
 val javaModuleVersion = extra["javaModuleVersion"]
 val eglParserVersion = extra["eglParserVersion"]
@@ -65,9 +62,9 @@ testing {
         register<JvmTestSuite>("functionalTest") {
             dependencies {
                 implementation(project())
-                implementation("com.strumenta.kolasu:kolasu-core:$kolasuVersion")
-                implementation("com.strumenta.kolasu:kolasu-lionweb:$kolasuVersion")
-                implementation("com.strumenta.kolasu:kolasu-semantics:$kolasuVersion")
+                implementation(libs.kolasucore)
+                implementation(libs.kolasulionweb)
+                implementation(libs.kolasusemantics)
                 implementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
                 implementation("io.kotest:kotest-runner-junit5-jvm:5.8.0")
                 implementation("com.strumenta.langmodules.kolasu-java-langmodule:ast:$javaModuleVersion")
@@ -91,12 +88,10 @@ testing {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation("io.lionweb.lionweb-java:lionweb-java-2023.1-core:$lionwebVersion")
-    implementation("com.strumenta.kolasu:kolasu-core:$kolasuVersion")
-    implementation("com.strumenta.kolasu:kolasu-lionweb:$kolasuVersion")
-    implementation("com.strumenta.kolasu:kolasu-semantics:$kolasuVersion")
+    implementation(libs.lwjava)
+    implementation(libs.kolasucore)
+    implementation(libs.kolasulionweb)
+    implementation(libs.kolasusemantics)
     implementation(project(":lionweb-client"))
 
     testImplementation(kotlin("test-junit5"))
