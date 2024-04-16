@@ -2,7 +2,7 @@ import com.strumenta.lwrepoclient.base.ClassifierKey
 import com.strumenta.lwrepoclient.base.FunctionalTestBuildConfig
 import com.strumenta.lwrepoclient.base.LionWebClient
 import com.strumenta.lwrepoclient.base.UnexistingNodeException
-import com.strumenta.lwrepoclient.base.dynamicNode
+import com.strumenta.lwkotlin.dynamicNode
 import org.junit.jupiter.api.assertThrows
 import org.testcontainers.Testcontainers.exposeHostPorts
 import org.testcontainers.containers.GenericContainer

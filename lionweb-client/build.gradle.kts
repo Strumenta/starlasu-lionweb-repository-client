@@ -19,6 +19,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.lwjava)
     implementation(libs.gson)
+    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    testImplementation(kotlin("test"))
 }
 
 testing {

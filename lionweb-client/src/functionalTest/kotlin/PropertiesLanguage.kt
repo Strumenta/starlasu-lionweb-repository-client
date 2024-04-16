@@ -1,7 +1,7 @@
-import com.strumenta.lwrepoclient.base.Multiplicity
-import com.strumenta.lwrepoclient.base.addConcept
-import com.strumenta.lwrepoclient.base.addContainment
-import com.strumenta.lwrepoclient.base.lwLanguage
+import com.strumenta.lwkotlin.Multiplicity
+import com.strumenta.lwkotlin.addConcept
+import com.strumenta.lwkotlin.addContainment
+import com.strumenta.lwkotlin.lwLanguage
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.language.LionCoreBuiltins
 
