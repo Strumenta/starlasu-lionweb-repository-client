@@ -295,6 +295,13 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return lionWebClient.retrieve(nodeID, withProxyParent)
     }
 
+
+    fun updateLionWebNode(
+        lwNode: LWNode
+    ) {
+        return lionWebClient.storeTree(lwNode)
+    }
+
     fun getShallowLionWebNode(
         nodeID: String,
         withProxyParent: Boolean = false,
