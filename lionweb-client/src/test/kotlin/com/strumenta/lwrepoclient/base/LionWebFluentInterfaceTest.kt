@@ -2,28 +2,30 @@ package com.strumenta.lwrepoclient.base
 
 import com.strumenta.lwkotlin.lwLanguage
 import io.lionweb.lioncore.java.language.LionCoreBuiltins
-import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 
 class LionWebFluentInterfaceTest {
-
     @Test
     fun addClass() {
-        val language = lwLanguage("fsLanguage",
-            Root::class,
-            Tenant::class,
-            FSUser::class,
-            File::class,
-            Directory::class,
-            TextFile::class,
-            FSParsingResult::class,
-            FSIssue::class,
-            FSStatistics::class,
-            FSStatisticsCategory::class,
-            FSStatisticEntry::class,
-            FSStatisticInstance::class,
-            FSAttribute::class,
-            FSPosition::class)
+        val language =
+            lwLanguage(
+                "fsLanguage",
+                Root::class,
+                Tenant::class,
+                FSUser::class,
+                File::class,
+                Directory::class,
+                TextFile::class,
+                FSParsingResult::class,
+                FSIssue::class,
+                FSStatistics::class,
+                FSStatisticsCategory::class,
+                FSStatisticEntry::class,
+                FSStatisticInstance::class,
+                FSAttribute::class,
+                FSPosition::class,
+            )
         assertEquals(14, language.elements.size)
 
         val root = language.getConceptByName("Root")!!
@@ -82,5 +84,31 @@ class LionWebFluentInterfaceTest {
         assertEquals(fsParsingResult, textFileParsingResult.type)
         val textFileContents = textFile.getPropertyByName("contents")!!
         assertEquals(LionCoreBuiltins.getString(), textFileContents.type)
+    }
+
+    @Test
+    fun getConcept() {
+        val language =
+            lwLanguage(
+                "fsLanguage",
+                Root::class,
+                Tenant::class,
+                FSUser::class,
+                File::class,
+                Directory::class,
+                TextFile::class,
+                FSParsingResult::class,
+                FSIssue::class,
+                FSStatistics::class,
+                FSStatisticsCategory::class,
+                FSStatisticEntry::class,
+                FSStatisticInstance::class,
+                FSAttribute::class,
+                FSPosition::class,
+            )
+        val root = Root()
+        val rootConcept = language.getConceptByName("Root")!!
+
+        assertEquals(rootConcept, root.concept)
     }
 }

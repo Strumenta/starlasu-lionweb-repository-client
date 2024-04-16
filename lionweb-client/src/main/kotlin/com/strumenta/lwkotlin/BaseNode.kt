@@ -1,56 +1,87 @@
 package com.strumenta.lwkotlin
 
+import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.language.Containment
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.impl.DynamicNode
+import java.lang.IllegalStateException
 import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Implementation
 
-abstract class BaseNode : DynamicNode(null, null) {
+object ConceptsRegistry {
+    private val classToConcept = mutableMapOf<KClass<out Node>, Concept>()
 
-    open fun calculateID() : String? = null
+    fun registerMapping(
+        kClass: KClass<out Node>,
+        concept: Concept,
+    ) {
+        classToConcept[kClass] = concept
+    }
+
+    fun getConcept(kClass: KClass<out Node>): Concept? = classToConcept[kClass]
+}
+
+abstract class BaseNode : DynamicNode(null, null) {
+    override fun getConcept(): Concept? {
+        return super.getConcept() ?: ConceptsRegistry.getConcept(this.javaClass.kotlin)
+    }
+
+    open fun calculateID(): String? = null
 
     override fun getID(): String? {
         return calculateID() ?: super.getID()
     }
 
-    fun <C: Node>multipleContainment(name: String) : MutableList<C> {
-        return ContainmentList(this, concept.requireContainmentByName(name))
+    fun <C : Node> multipleContainment(name: String): MutableList<C> {
+        return ContainmentList(this, (concept ?: throw IllegalStateException("Concept should not be null")).requireContainmentByName(name))
     }
 
-    protected fun <P: BaseNode, C: Node> singleContainment(containmentName: String): ReadWriteProperty<P, C?> {
+    protected fun <P : BaseNode, C : Node> singleContainment(containmentName: String): ReadWriteProperty<P, C?> {
         return object : ReadWriteProperty<P, C?> {
-            override fun getValue(thisRef: P, property: KProperty<*>): C? {
+            override fun getValue(
+                thisRef: P,
+                property: KProperty<*>,
+            ): C? {
                 return thisRef.getOnlyChildByContainmentName(containmentName) as C?
             }
 
-            override fun setValue(thisRef: P, property: KProperty<*>, value: C?) {
-                val containment = thisRef.concept.requireContainmentByName(containmentName)
+            override fun setValue(
+                thisRef: P,
+                property: KProperty<*>,
+                value: C?,
+            ) {
+                val containment = thisRef.concept!!.requireContainmentByName(containmentName)
                 thisRef.addChild(containment, value)
             }
-
         }
     }
 
-    protected fun <P: BaseNode, V: Any> property(propertyName: String): ReadWriteProperty<P, V?> {
+    protected fun <P : BaseNode, V : Any> property(propertyName: String): ReadWriteProperty<P, V?> {
         return object : ReadWriteProperty<P, V?> {
-            override fun getValue(thisRef: P, property: KProperty<*>): V? {
+            override fun getValue(
+                thisRef: P,
+                property: KProperty<*>,
+            ): V? {
                 return thisRef.getPropertyValueByName(propertyName) as V?
             }
 
-            override fun setValue(thisRef: P, property: KProperty<*>, value: V?) {
+            override fun setValue(
+                thisRef: P,
+                property: KProperty<*>,
+                value: V?,
+            ) {
                 thisRef.setPropertyValueByName(propertyName, value)
             }
-
         }
     }
 }
 
-private class ContainmentList<E: Node>(private val node: DynamicNode, private val containment: Containment) : MutableList<E>{
+private class ContainmentList<E : Node>(private val node: DynamicNode, private val containment: Containment) : MutableList<E> {
     override val size: Int
         get() = node.getChildren(containment).size
 
@@ -82,11 +113,17 @@ private class ContainmentList<E: Node>(private val node: DynamicNode, private va
         TODO("Not yet implemented")
     }
 
-    override fun subList(fromIndex: Int, toIndex: Int): MutableList<E> {
+    override fun subList(
+        fromIndex: Int,
+        toIndex: Int,
+    ): MutableList<E> {
         TODO("Not yet implemented")
     }
 
-    override fun set(index: Int, element: E): E {
+    override fun set(
+        index: Int,
+        element: E,
+    ): E {
         TODO("Not yet implemented")
     }
 
@@ -122,16 +159,21 @@ private class ContainmentList<E: Node>(private val node: DynamicNode, private va
         TODO("Not yet implemented")
     }
 
-    override fun addAll(index: Int, elements: Collection<E>): Boolean {
+    override fun addAll(
+        index: Int,
+        elements: Collection<E>,
+    ): Boolean {
         TODO("Not yet implemented")
     }
 
-    override fun add(index: Int, element: E) {
+    override fun add(
+        index: Int,
+        element: E,
+    ) {
         TODO("Not yet implemented")
     }
 
     override fun add(element: E): Boolean {
         TODO("Not yet implemented")
     }
-
 }

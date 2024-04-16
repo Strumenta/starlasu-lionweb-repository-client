@@ -2,9 +2,30 @@ package com.strumenta.lwrepoclient.base
 
 import com.strumenta.lwkotlin.BaseNode
 import com.strumenta.lwkotlin.Implementation
+import com.strumenta.lwkotlin.lwLanguage
+
+val fsLanguage =
+    lwLanguage(
+        "fsLanguage",
+        Root::class,
+        Tenant::class,
+        FSUser::class,
+        File::class,
+        Directory::class,
+        TextFile::class,
+        FSParsingResult::class,
+        FSIssue::class,
+        FSStatistics::class,
+        FSStatisticsCategory::class,
+        FSStatisticEntry::class,
+        FSStatisticInstance::class,
+        FSAttribute::class,
+        FSPosition::class,
+    )
 
 class Root : BaseNode() {
     val tenants = multipleContainment<Tenant>("tenants")
+
     override fun calculateID(): String? = "the-code-insight-studio-root"
 }
 
@@ -15,7 +36,9 @@ interface Named {
 class Tenant : BaseNode(), Named {
     override var name: String? by property("name")
     val users = multipleContainment<FSUser>("users")
-    val directories= multipleContainment<Directory>("directories")
+    val directories = multipleContainment<Directory>("directories")
+
+    override fun calculateID(): String? = "tenant-${name!!}"
 }
 
 class FSUser : BaseNode(), Named {
@@ -27,9 +50,7 @@ class FSUser : BaseNode(), Named {
     var password: String? by property("password")
 }
 
-
-abstract class File: BaseNode(), Named {
-
+abstract class File : BaseNode(), Named {
     override var name: String? by property("name")
 
     override fun calculateID(): String {
@@ -47,12 +68,11 @@ abstract class File: BaseNode(), Named {
         }
 }
 
-class Directory: File() {
+class Directory : File() {
     val files = multipleContainment<File>("files")
 }
 
-class TextFile: File() {
-
+class TextFile : File() {
     var parsingResult: FSParsingResult? by singleContainment("parsingResult")
 
     var contents: String? by property("contents")
@@ -62,44 +82,43 @@ class TextFile: File() {
         get() = parsingResult != null
 }
 
-class FSParsingResult(): BaseNode() {
+class FSParsingResult() : BaseNode() {
     val issues = multipleContainment<FSIssue>("issues")
     var statistics: FSStatistics? by singleContainment("statistics")
 }
 
-class FSIssue(): BaseNode() {
+class FSIssue() : BaseNode() {
     var message: String? by property("message")
     var severity: String? by property("severity")
     var fsPosition: FSPosition? by singleContainment("fsPosition")
-
 }
 
-class FSStatistics(): BaseNode() {
+class FSStatistics() : BaseNode() {
     val categories = multipleContainment<FSStatisticsCategory>("categories")
 }
 
-class FSStatisticsCategory(): BaseNode(), Named {
+class FSStatisticsCategory() : BaseNode(), Named {
     override var name: String? by property("name")
     val entries = multipleContainment<FSStatisticEntry>("entries")
 }
 
-class FSStatisticEntry: BaseNode(), Named {
+class FSStatisticEntry : BaseNode(), Named {
     override var name: String? by property("name")
     val instances = multipleContainment<FSStatisticInstance>("instances")
 }
 
-class FSStatisticInstance(): BaseNode() {
+class FSStatisticInstance() : BaseNode() {
     val fsPosition: FSPosition? by singleContainment("fsPosition")
     val attributes = multipleContainment<FSAttribute>("attributes")
 }
 
-class FSAttribute(): BaseNode(), Named {
+class FSAttribute() : BaseNode(), Named {
     override var name: String? by property("name")
 
-    val value: String?  by property("value")
+    val value: String? by property("value")
 }
 
-class FSPosition: BaseNode() {
+class FSPosition : BaseNode() {
     val startLine: Int? by property("startLine")
     val startColumn: Int? by property("startColumn")
     val endLine: Int? by property("endLine")

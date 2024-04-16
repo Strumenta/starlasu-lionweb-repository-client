@@ -295,10 +295,34 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return lionWebClient.retrieve(nodeID, withProxyParent)
     }
 
+    fun attachLionWebChild(
+        child: LWNode,
+        parent: LWNode,
+        property: KProperty1<*, *>,
+    ): String {
+        return attachLionWebChild(child, parent.id!!, property.name!!)
+    }
 
-    fun updateLionWebNode(
-        lwNode: LWNode
-    ) {
+    fun attachLionWebChild(
+        child: LWNode,
+        parentID: String,
+        property: KProperty1<*, *>,
+    ): String {
+        return attachLionWebChild(child, parentID, property.name!!)
+    }
+
+    fun attachLionWebChild(
+        child: LWNode,
+        parentID: String,
+        propertyName: String,
+    ): String {
+        val updatedParent = lionWebClient.retrieve(parentID)
+        updatedParent.addChild(updatedParent.concept.requireContainmentByName(propertyName), child)
+        lionWebClient.storeTree(updatedParent)
+        return child.id!!
+    }
+
+    fun updateLionWebNode(lwNode: LWNode) {
         return lionWebClient.storeTree(lwNode)
     }
 

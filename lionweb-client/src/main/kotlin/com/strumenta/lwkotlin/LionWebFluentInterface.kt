@@ -6,6 +6,7 @@ import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.language.LionCoreBuiltins
 import io.lionweb.lioncore.java.language.PrimitiveType
 import io.lionweb.lioncore.java.language.Property
+import io.lionweb.lioncore.java.model.HasSettableParent
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.impl.DynamicNode
 import java.lang.IllegalStateException
@@ -17,7 +18,10 @@ import kotlin.reflect.full.superclasses
 /**
  * Create a LionWeb Language with the given name.
  */
-fun lwLanguage(name: String, vararg classes: KClass<out Node>): Language {
+fun lwLanguage(
+    name: String,
+    vararg classes: KClass<out Node>,
+): Language {
     val cleanedName = name.lowercase().replace('.', '_')
     val language = Language(name, "language-$cleanedName-id", "language-$cleanedName-key", "1")
     language.addConcepts(*classes)
@@ -40,13 +44,17 @@ fun Language.addConcepts(vararg conceptClasses: KClass<out Node>) {
     // First we create them all
     val conceptsByClasses = mutableMapOf<KClass<out Node>, Concept>()
     conceptClasses.forEach { conceptClass ->
-        val concept = addConcept(conceptClass.simpleName
-            ?: throw IllegalArgumentException("Given conceptClass has no name"))
+        val concept =
+            addConcept(
+                conceptClass.simpleName
+                    ?: throw IllegalArgumentException("Given conceptClass has no name"),
+            )
         concept.isAbstract = conceptClass.isAbstract
         conceptsByClasses[conceptClass] = concept
+        ConceptsRegistry.registerMapping(conceptClass, concept)
     }
 
-    fun searchConcept(conceptName: String) : Concept {
+    fun searchConcept(conceptName: String): Concept {
         return getConceptByName(conceptName) ?: throw IllegalArgumentException("Cannot find Concept $conceptName")
     }
 
@@ -152,4 +160,9 @@ fun Concept.addProperty(
  */
 fun Concept.dynamicNode(nodeId: String = "node-id-rand-${Random.nextInt()}"): DynamicNode {
     return DynamicNode(nodeId, this)
+}
+
+fun <N> N.withParent(parent: Node?): N where N : Node, N : HasSettableParent  {
+    this.setParent(parent)
+    return this
 }
