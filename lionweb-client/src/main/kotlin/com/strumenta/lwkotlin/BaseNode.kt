@@ -106,7 +106,8 @@ private class ContainmentList<E : Node>(private val node: DynamicNode, private v
     }
 
     override fun get(index: Int): E {
-        TODO("Not yet implemented")
+        val children = node.getChildren(containment)
+        return children[index] as E
     }
 
     override fun isEmpty(): Boolean {
@@ -114,15 +115,18 @@ private class ContainmentList<E : Node>(private val node: DynamicNode, private v
     }
 
     override fun iterator(): MutableIterator<E> {
-        TODO("Not yet implemented")
+        val children = node.getChildren(containment)
+        return children.iterator() as MutableIterator<E>
     }
 
     override fun listIterator(): MutableListIterator<E> {
-        TODO("Not yet implemented")
+        val children = node.getChildren(containment)
+        return children.listIterator() as MutableListIterator<E>
     }
 
     override fun listIterator(index: Int): MutableListIterator<E> {
-        TODO("Not yet implemented")
+        val children = node.getChildren(containment)
+        return children.listIterator(index) as MutableListIterator<E>
     }
 
     override fun removeAt(index: Int): E {

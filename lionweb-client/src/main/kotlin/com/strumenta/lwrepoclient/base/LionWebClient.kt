@@ -388,6 +388,13 @@ class LionWebClient(
                 throw RuntimeException("Failed to store tree $node", e)
             }
         }
+        fun verifyNode(node: Node) {
+            require(node.id != null) { "Node $node should have a null ID" }
+            node.children.forEach { verifyNode(it) }
+        }
+
+        verifyNode(node)
+
         val json = jsonSerialization.serializeTreesToJsonString(node)
         debugFile("sent.json") { json }
 

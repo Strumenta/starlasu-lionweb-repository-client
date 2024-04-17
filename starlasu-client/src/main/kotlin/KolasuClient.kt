@@ -316,7 +316,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         parentID: String,
         propertyName: String,
     ): String {
-        val updatedParent = lionWebClient.retrieve(parentID)
+        val updatedParent = lionWebClient.retrieve(parentID, withProxyParent = true)
         updatedParent.addChild(updatedParent.concept.requireContainmentByName(propertyName), child)
         lionWebClient.storeTree(updatedParent)
         return child.id!!
