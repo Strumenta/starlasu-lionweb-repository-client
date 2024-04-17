@@ -39,21 +39,27 @@ object ConceptsRegistry {
                     nodes: MutableMap<String, ClassifierInstance<*>>,
                     propertyValues: MutableMap<Property, Any>,
                 ->
-                kClass.primaryConstructor!!.callBy(emptyMap()) as Node
+                val result = kClass.primaryConstructor!!.callBy(emptyMap()) as Node
+                if (result is BaseNode) {
+                    result.id = serializedClassifierInstance.id
+                }
+                result
             }
         }
     }
 }
 
-abstract class BaseNode : DynamicNode(null, null) {
+abstract class BaseNode : DynamicNode() {
+
     override fun getConcept(): Concept? {
         return super.getConcept() ?: ConceptsRegistry.getConcept(this.javaClass.kotlin)
     }
 
     open fun calculateID(): String? = null
 
+
     override fun getID(): String? {
-        return calculateID() ?: super.getID()
+        return calculateID() ?: this.id
     }
 
     fun <C : Node> multipleContainment(name: String): MutableList<C> {

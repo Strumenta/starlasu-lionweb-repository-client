@@ -390,9 +390,14 @@ class LionWebClient(
         }
 
         fun verifyNode(node: Node) {
-            require(node.id != null) { "Node $node should have a null ID" }
+            require(node.id != null) { "Node $node should not have a null ID" }
             if (node !is ProxyNode) {
-                node.children.forEach { verifyNode(it) }
+                if (node.children.any { it == null }) {
+                    throw java.lang.IllegalStateException("Node $node has a null child")
+                }
+                node.children.forEach {
+                    verifyNode(it)
+                }
             }
         }
 
