@@ -1,5 +1,5 @@
 [versions]
-egl = "0.0.14-SNAPSHOT"
+egl = "0.9.1-SNAPSHOT"
 kolasu = "1.5.53-SNAPSHOT"
 rpg = "2.1.51-SNAPSHOT"
 javamodule = "0.9.19-SNAPSHOT"
