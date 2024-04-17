@@ -391,7 +391,9 @@ class LionWebClient(
 
         fun verifyNode(node: Node) {
             require(node.id != null) { "Node $node should have a null ID" }
-            node.children.forEach { verifyNode(it) }
+            if (node !is ProxyNode) {
+                node.children.forEach { verifyNode(it) }
+            }
         }
 
         verifyNode(node)
