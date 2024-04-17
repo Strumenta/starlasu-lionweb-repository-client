@@ -1,13 +1,19 @@
 package com.strumenta.lwkotlin
 
+import io.lionweb.lioncore.java.language.Classifier
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.language.Containment
+import io.lionweb.lioncore.java.language.Property
+import io.lionweb.lioncore.java.model.ClassifierInstance
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.impl.DynamicNode
+import io.lionweb.lioncore.java.serialization.JsonSerialization
+import io.lionweb.lioncore.java.serialization.data.SerializedClassifierInstance
 import java.lang.IllegalStateException
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+import kotlin.reflect.full.primaryConstructor
 
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
@@ -24,6 +30,16 @@ object ConceptsRegistry {
     }
 
     fun getConcept(kClass: KClass<out Node>): Concept? = classToConcept[kClass]
+    fun prepareJsonSerialization(jsonSerialization: JsonSerialization) {
+        classToConcept.forEach { (kClass, concept) ->
+            jsonSerialization.instantiator.registerCustomDeserializer(concept.id!!) { classifier: Classifier<*>,
+                                                                                      serializedClassifierInstance: SerializedClassifierInstance,
+                                                                                      nodes: MutableMap<String, ClassifierInstance<*>>,
+                                                                                      propertyValues: MutableMap<Property, Any> ->
+                kClass.primaryConstructor!!.callBy(emptyMap()) as Node
+            }
+        }
+    }
 }
 
 abstract class BaseNode : DynamicNode(null, null) {
@@ -94,7 +110,7 @@ private class ContainmentList<E : Node>(private val node: DynamicNode, private v
     }
 
     override fun isEmpty(): Boolean {
-        TODO("Not yet implemented")
+        return size == 0
     }
 
     override fun iterator(): MutableIterator<E> {
@@ -156,7 +172,9 @@ private class ContainmentList<E : Node>(private val node: DynamicNode, private v
     }
 
     override fun addAll(elements: Collection<E>): Boolean {
-        TODO("Not yet implemented")
+        var changed = false
+        elements.forEach { changed = add(it) || changed }
+        return changed
     }
 
     override fun addAll(
@@ -174,6 +192,9 @@ private class ContainmentList<E : Node>(private val node: DynamicNode, private v
     }
 
     override fun add(element: E): Boolean {
-        TODO("Not yet implemented")
+        val preSize = size
+        node.addChild(containment, element)
+        val postSize = size
+        return preSize != postSize
     }
 }

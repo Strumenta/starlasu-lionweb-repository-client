@@ -3,6 +3,7 @@ package com.strumenta.lwrepoclient.base
 import com.strumenta.lwkotlin.BaseNode
 import com.strumenta.lwkotlin.Implementation
 import com.strumenta.lwkotlin.lwLanguage
+import java.lang.IllegalStateException
 
 val fsLanguage =
     lwLanguage(
@@ -54,7 +55,12 @@ abstract class File : BaseNode(), Named {
     override var name: String? by property("name")
 
     override fun calculateID(): String {
-        return "${parent!!.id!!}___${name!!.replace('.', '_')}"
+        val base = if (parent == null) {
+            "ROOT_"
+        } else {
+            parent.id!!
+        }
+        return "${base}___${(name ?: throw IllegalStateException("Cannot calculate ID if name is not set")).replace('.', '_')}"
     }
 
     @Implementation
@@ -68,11 +74,14 @@ abstract class File : BaseNode(), Named {
         }
 }
 
-class Directory : File() {
+class Directory(id: String? = null) : File() {
+    init {
+        this.id = id
+    }
     val files = multipleContainment<File>("files")
 }
 
-class TextFile : File() {
+class TextFile() : File() {
     var parsingResult: FSParsingResult? by singleContainment("parsingResult")
 
     var contents: String? by property("contents")
@@ -80,6 +89,8 @@ class TextFile : File() {
     @Implementation
     val isParsed: Boolean
         get() = parsingResult != null
+
+
 }
 
 class FSParsingResult() : BaseNode() {

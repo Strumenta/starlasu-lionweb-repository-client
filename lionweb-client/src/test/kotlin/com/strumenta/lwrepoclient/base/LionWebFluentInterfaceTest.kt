@@ -1,7 +1,11 @@
 package com.strumenta.lwrepoclient.base
 
+import com.strumenta.lwkotlin.ConceptsRegistry
 import com.strumenta.lwkotlin.lwLanguage
 import io.lionweb.lioncore.java.language.LionCoreBuiltins
+import io.lionweb.lioncore.java.model.impl.ProxyNode
+import io.lionweb.lioncore.java.serialization.JsonSerialization
+import io.lionweb.lioncore.java.serialization.UnavailableNodePolicy
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
@@ -110,5 +114,81 @@ class LionWebFluentInterfaceTest {
         val rootConcept = language.getConceptByName("Root")!!
 
         assertEquals(rootConcept, root.concept)
+    }
+
+    @Test
+    fun serializeAndDeserializeRoot() {
+        val language =
+            lwLanguage(
+                "fsLanguage",
+                Root::class,
+                Tenant::class,
+                FSUser::class,
+                File::class,
+                Directory::class,
+                TextFile::class,
+                FSParsingResult::class,
+                FSIssue::class,
+                FSStatistics::class,
+                FSStatisticsCategory::class,
+                FSStatisticEntry::class,
+                FSStatisticInstance::class,
+                FSAttribute::class,
+                FSPosition::class,
+            )
+        val root = Root()
+
+        val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
+            ConceptsRegistry.prepareJsonSerialization(this)
+        }
+
+        val serializedRoot = jsonSerialization.serializeNodesToJsonString(root)
+        val deserializedRoot = jsonSerialization.deserializeToNodes(serializedRoot).single()
+        assert(deserializedRoot is Root)
+    }
+
+    @Test
+    fun serializeAndDeserializeTextFile() {
+        val language =
+            lwLanguage(
+                "fsLanguage",
+                Root::class,
+                Tenant::class,
+                FSUser::class,
+                File::class,
+                Directory::class,
+                TextFile::class,
+                FSParsingResult::class,
+                FSIssue::class,
+                FSStatistics::class,
+                FSStatisticsCategory::class,
+                FSStatisticEntry::class,
+                FSStatisticInstance::class,
+                FSAttribute::class,
+                FSPosition::class,
+            )
+        val dir = Directory("foo_dir_id").apply {
+            this.name = "foo"
+        }
+        val textFile = TextFile().apply {
+            this.name = "MyFile"
+            this.contents = "My contents"
+        }
+        dir.files.add(textFile)
+        assertEquals("ROOT____foo", dir.id)
+        assertEquals("ROOT____foo___MyFile", textFile.id)
+
+        val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
+            ConceptsRegistry.prepareJsonSerialization(this)
+            unavailableParentPolicy = UnavailableNodePolicy.PROXY_NODES
+        }
+
+        val serializedTextFile = jsonSerialization.serializeNodesToJsonString(textFile)
+        val deserializedTextFile = jsonSerialization.deserializeToNodes(serializedTextFile).first() as TextFile
+        assertEquals("ROOT____foo___MyFile", deserializedTextFile.id)
+        assertEquals("MyFile", deserializedTextFile.name)
+        assertEquals("My contents", deserializedTextFile.contents)
+        assert(deserializedTextFile.parent is ProxyNode)
+        assertEquals("ROOT____foo", deserializedTextFile.parent.id)
     }
 }

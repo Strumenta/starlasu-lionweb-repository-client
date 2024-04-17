@@ -2,6 +2,7 @@ package com.strumenta.lwrepoclient.base
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
+import com.strumenta.lwkotlin.ConceptsRegistry
 import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.impl.DynamicNode
@@ -48,6 +49,7 @@ class LionWebClient(
             languages.forEach {
                 jsonSerialization.registerLanguage(it)
             }
+            ConceptsRegistry.prepareJsonSerialization(jsonSerialization)
             return jsonSerialization
         }
 
