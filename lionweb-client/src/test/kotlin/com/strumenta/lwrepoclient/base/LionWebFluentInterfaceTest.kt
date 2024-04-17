@@ -138,9 +138,10 @@ class LionWebFluentInterfaceTest {
             )
         val root = Root()
 
-        val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
-            ConceptsRegistry.prepareJsonSerialization(this)
-        }
+        val jsonSerialization =
+            JsonSerialization.getStandardSerialization().apply {
+                ConceptsRegistry.prepareJsonSerialization(this)
+            }
 
         val serializedRoot = jsonSerialization.serializeNodesToJsonString(root)
         val deserializedRoot = jsonSerialization.deserializeToNodes(serializedRoot).single()
@@ -167,21 +168,24 @@ class LionWebFluentInterfaceTest {
                 FSAttribute::class,
                 FSPosition::class,
             )
-        val dir = Directory("foo_dir_id").apply {
-            this.name = "foo"
-        }
-        val textFile = TextFile().apply {
-            this.name = "MyFile"
-            this.contents = "My contents"
-        }
+        val dir =
+            Directory("foo_dir_id").apply {
+                this.name = "foo"
+            }
+        val textFile =
+            TextFile().apply {
+                this.name = "MyFile"
+                this.contents = "My contents"
+            }
         dir.files.add(textFile)
         assertEquals("ROOT____foo", dir.id)
         assertEquals("ROOT____foo___MyFile", textFile.id)
 
-        val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
-            ConceptsRegistry.prepareJsonSerialization(this)
-            unavailableParentPolicy = UnavailableNodePolicy.PROXY_NODES
-        }
+        val jsonSerialization =
+            JsonSerialization.getStandardSerialization().apply {
+                ConceptsRegistry.prepareJsonSerialization(this)
+                unavailableParentPolicy = UnavailableNodePolicy.PROXY_NODES
+            }
 
         val serializedTextFile = jsonSerialization.serializeNodesToJsonString(textFile)
         val deserializedTextFile = jsonSerialization.deserializeToNodes(serializedTextFile).first() as TextFile
@@ -212,21 +216,24 @@ class LionWebFluentInterfaceTest {
                 FSAttribute::class,
                 FSPosition::class,
             )
-        val dir = Directory("foo_dir_id").apply {
-            this.name = "foo"
-        }
-        val textFile = TextFile().apply {
-            this.name = "MyFile"
-            this.contents = "My contents"
-        }
+        val dir =
+            Directory("foo_dir_id").apply {
+                this.name = "foo"
+            }
+        val textFile =
+            TextFile().apply {
+                this.name = "MyFile"
+                this.contents = "My contents"
+            }
         dir.files.add(textFile)
         assertEquals("ROOT____foo", dir.id)
         assertEquals("ROOT____foo___MyFile", textFile.id)
 
-        val jsonSerialization = JsonSerialization.getStandardSerialization().apply {
-            ConceptsRegistry.prepareJsonSerialization(this)
-            unavailableParentPolicy = UnavailableNodePolicy.PROXY_NODES
-        }
+        val jsonSerialization =
+            JsonSerialization.getStandardSerialization().apply {
+                ConceptsRegistry.prepareJsonSerialization(this)
+                unavailableParentPolicy = UnavailableNodePolicy.PROXY_NODES
+            }
 
         val serializedTextFile = jsonSerialization.serializeNodesToJsonString(textFile)
         val deserializedTextFile = jsonSerialization.deserializeToNodes(serializedTextFile).first() as TextFile

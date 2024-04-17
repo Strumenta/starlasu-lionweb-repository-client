@@ -55,11 +55,12 @@ abstract class File : BaseNode(), Named {
     override var name: String? by property("name")
 
     override fun calculateID(): String {
-        val base = if (parent == null) {
-            "ROOT_"
-        } else {
-            parent.id!!
-        }
+        val base =
+            if (parent == null) {
+                "ROOT_"
+            } else {
+                parent.id!!
+            }
         return "${base}___${(name ?: throw IllegalStateException("Cannot calculate ID if name is not set")).replace('.', '_')}"
     }
 
@@ -78,6 +79,7 @@ class Directory(id: String? = null) : File() {
     init {
         this.id = id
     }
+
     val files = multipleContainment<File>("files")
 }
 
@@ -89,8 +91,6 @@ class TextFile() : File() {
     @Implementation
     val isParsed: Boolean
         get() = parsingResult != null
-
-
 }
 
 class FSParsingResult() : BaseNode() {

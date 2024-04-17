@@ -162,7 +162,7 @@ fun Concept.dynamicNode(nodeId: String = "node-id-rand-${Random.nextInt()}"): Dy
     return DynamicNode(nodeId, this)
 }
 
-fun <N> N.withParent(parent: Node?): N where N : Node, N : HasSettableParent  {
+fun <N> N.withParent(parent: Node?): N where N : Node, N : HasSettableParent {
     this.setParent(parent)
     return this
 }

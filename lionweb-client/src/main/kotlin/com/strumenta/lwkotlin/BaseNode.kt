@@ -30,12 +30,15 @@ object ConceptsRegistry {
     }
 
     fun getConcept(kClass: KClass<out Node>): Concept? = classToConcept[kClass]
+
     fun prepareJsonSerialization(jsonSerialization: JsonSerialization) {
         classToConcept.forEach { (kClass, concept) ->
             jsonSerialization.instantiator.registerCustomDeserializer(concept.id!!) { classifier: Classifier<*>,
-                                                                                      serializedClassifierInstance: SerializedClassifierInstance,
+                                                                                      serializedClassifierInstance:
+                                                                                          SerializedClassifierInstance,
                                                                                       nodes: MutableMap<String, ClassifierInstance<*>>,
-                                                                                      propertyValues: MutableMap<Property, Any> ->
+                                                                                      propertyValues: MutableMap<Property, Any>,
+                ->
                 kClass.primaryConstructor!!.callBy(emptyMap()) as Node
             }
         }
