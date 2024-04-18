@@ -50,13 +50,11 @@ object ConceptsRegistry {
 }
 
 abstract class BaseNode : DynamicNode() {
-
     override fun getConcept(): Concept? {
         return super.getConcept() ?: ConceptsRegistry.getConcept(this.javaClass.kotlin)
     }
 
     open fun calculateID(): String? = null
-
 
     override fun getID(): String? {
         return calculateID() ?: this.id

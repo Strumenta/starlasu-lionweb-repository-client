@@ -167,7 +167,7 @@ fun <N> N.withParent(parent: Node?): N where N : Node, N : HasSettableParent {
     return this
 }
 
-fun <N:Node>Node.walkDescendants(kClass: KClass<N>): Sequence<N> {
+fun <N : Node> Node.walkDescendants(kClass: KClass<N>): Sequence<N> {
     val results = mutableListOf<N>()
     this.children.forEach { child ->
         if (kClass.isInstance(child)) {
