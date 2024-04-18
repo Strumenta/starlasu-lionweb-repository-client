@@ -7,7 +7,7 @@ import io.lionweb.lioncore.java.serialization.UnavailableNodePolicy
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
-class LionWebFluentInterfaceTest {
+class MetamodelDefinitionTest {
     @Test
     fun addClass() {
         val language =
