@@ -1,54 +1,20 @@
-package com.strumenta.lwkotlin
+package com.strumenta.lionweb.kotlin
 
-import io.lionweb.lioncore.java.language.Classifier
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.language.Containment
-import io.lionweb.lioncore.java.language.Property
-import io.lionweb.lioncore.java.model.ClassifierInstance
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.impl.DynamicNode
-import io.lionweb.lioncore.java.serialization.JsonSerialization
-import io.lionweb.lioncore.java.serialization.data.SerializedClassifierInstance
-import java.lang.IllegalStateException
 import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.full.primaryConstructor
 
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Implementation
 
-object ConceptsRegistry {
-    private val classToConcept = mutableMapOf<KClass<out Node>, Concept>()
-
-    fun registerMapping(
-        kClass: KClass<out Node>,
-        concept: Concept,
-    ) {
-        classToConcept[kClass] = concept
-    }
-
-    fun getConcept(kClass: KClass<out Node>): Concept? = classToConcept[kClass]
-
-    fun prepareJsonSerialization(jsonSerialization: JsonSerialization) {
-        classToConcept.forEach { (kClass, concept) ->
-            jsonSerialization.instantiator.registerCustomDeserializer(concept.id!!) {
-                    classifier: Classifier<*>,
-                    serializedClassifierInstance: SerializedClassifierInstance,
-                    nodes: MutableMap<String, ClassifierInstance<*>>,
-                    propertyValues: MutableMap<Property, Any>,
-                ->
-                val result = kClass.primaryConstructor!!.callBy(emptyMap()) as Node
-                if (result is BaseNode) {
-                    result.id = serializedClassifierInstance.id
-                }
-                result
-            }
-        }
-    }
-}
-
+/**
+ * This is intended to be used as the base classes of classes representing LionWeb nodes,
+ * when defined in Kotlin.
+ */
 abstract class BaseNode : DynamicNode() {
     override fun getConcept(): Concept? {
         return super.getConcept() ?: ConceptsRegistry.getConcept(this.javaClass.kotlin)

@@ -4,14 +4,14 @@ import com.strumenta.kolasu.lionweb.LWNode
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.semantics.symbol.description.SymbolDescription
 import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
-import com.strumenta.lwkotlin.addConcept
-import com.strumenta.lwkotlin.addContainment
-import com.strumenta.lwkotlin.addProperty
-import com.strumenta.lwkotlin.lwLanguage
+import com.strumenta.lionweb.kotlin.addConcept
+import com.strumenta.lionweb.kotlin.addContainment
+import com.strumenta.lionweb.kotlin.addProperty
+import com.strumenta.lionweb.kotlin.lwLanguage
 import io.lionweb.lioncore.java.language.LionCoreBuiltins
 import io.lionweb.lioncore.java.model.impl.DynamicNode
 import kotlin.reflect.KClass
-import com.strumenta.lwkotlin.Multiplicity as LWMultiplicity
+import com.strumenta.lionweb.kotlin.Multiplicity as LWMultiplicity
 
 // TODO: move this to code-insight-studio
 class SRI(private val kolasuClient: KolasuClient, val partitionID: String) : SymbolRepository {

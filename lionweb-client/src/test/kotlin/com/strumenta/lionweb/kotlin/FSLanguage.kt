@@ -1,8 +1,5 @@
-package com.strumenta.lwrepoclient.base
+package com.strumenta.lionweb.kotlin
 
-import com.strumenta.lwkotlin.BaseNode
-import com.strumenta.lwkotlin.Implementation
-import com.strumenta.lwkotlin.lwLanguage
 import java.lang.IllegalStateException
 
 val fsLanguage =

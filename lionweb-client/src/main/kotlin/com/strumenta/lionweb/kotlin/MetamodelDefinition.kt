@@ -1,4 +1,4 @@
-package com.strumenta.lwkotlin
+package com.strumenta.lionweb.kotlin
 
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.language.Containment
@@ -153,27 +153,4 @@ fun Concept.addProperty(
         }
     this.addFeature(property)
     return property
-}
-
-/**
- * Create a Dynamic Node with the given Concept and a random node ID.
- */
-fun Concept.dynamicNode(nodeId: String = "node-id-rand-${Random.nextInt()}"): DynamicNode {
-    return DynamicNode(nodeId, this)
-}
-
-fun <N> N.withParent(parent: Node?): N where N : Node, N : HasSettableParent {
-    this.setParent(parent)
-    return this
-}
-
-fun <N : Node> Node.walkDescendants(kClass: KClass<N>): Sequence<N> {
-    val results = mutableListOf<N>()
-    this.children.forEach { child ->
-        if (kClass.isInstance(child)) {
-            results.add(child as N)
-        }
-        results.addAll(child.walkDescendants(kClass))
-    }
-    return results.asSequence()
 }

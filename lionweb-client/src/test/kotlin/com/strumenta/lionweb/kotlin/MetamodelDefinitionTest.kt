@@ -1,7 +1,5 @@
-package com.strumenta.lwrepoclient.base
+package com.strumenta.lionweb.kotlin
 
-import com.strumenta.lwkotlin.ConceptsRegistry
-import com.strumenta.lwkotlin.lwLanguage
 import io.lionweb.lioncore.java.language.LionCoreBuiltins
 import io.lionweb.lioncore.java.model.impl.ProxyNode
 import io.lionweb.lioncore.java.serialization.JsonSerialization
