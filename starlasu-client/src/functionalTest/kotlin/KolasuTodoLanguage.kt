@@ -27,7 +27,7 @@ val todoAccountConcept by lazy {
     todoAccountLanguage.getConceptByName("TodoAccount")
 }
 
-class TodoAccount(id: String) : DynamicNode(id, todoAccountConcept)
+class TodoAccount(id: String) : DynamicNode(id, todoAccountConcept!!)
 
 @ASTRoot
 data class TodoProject(override var name: String, val todos: MutableList<Todo> = mutableListOf()) : Node(), Named

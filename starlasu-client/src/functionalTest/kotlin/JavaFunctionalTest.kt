@@ -72,7 +72,7 @@ val simplePartitionConcept by lazy {
 data class SimplePartition(
     val name: String,
     val stuff: MutableList<LWNode> = mutableListOf(),
-) : DynamicNode("partition_SimplePartition_$name", simplePartitionConcept) {
+) : DynamicNode("partition_SimplePartition_$name", simplePartitionConcept!!) {
     override fun getChildren(containment: Containment): MutableList<io.lionweb.lioncore.java.model.Node> {
         if (containment.name == "stuff") {
             return stuff
