@@ -175,7 +175,9 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         containmentName: String,
         containmentIndex: Int,
     ): String {
-        require(kNode::class.annotations.any { it is ASTRoot })
+        require(kNode::class.annotations.any { it is ASTRoot }) {
+            "The class of root of the passed is not marked as ASTRoot (root: $kNode)"
+        }
         val lwTreeToAppend = toLionWeb(kNode, containerID, containmentName, containmentIndex)
         debugFile("createNode-${lwTreeToAppend.id}.json") {
             nodeConverter.prepareJsonSerialization().serializeTreesToJsonString(lwTreeToAppend)
