@@ -2,6 +2,7 @@ import com.strumenta.egl.ast.EglCompilationUnit
 import com.strumenta.egl.ast.kLanguage
 import com.strumenta.egl.parser.EGLKolasuParser
 import com.strumenta.kolasu.parsing.ParsingResult
+import com.strumenta.lwrepoclient.kolasu.KolasuClient
 import java.io.InputStream
 import kotlin.test.Test
 
@@ -21,6 +22,16 @@ class EGLLionWebConversion : AbstractLionWebConversion<EglCompilationUnit>(kLang
     fun sqlBatch() {
         val inputStream = this.javaClass.getResourceAsStream("/egl/SQLBatch.egl") ?: throw IllegalStateException()
         checkSerializationAndDeserialization(inputStream)
+    }
+
+    @Test
+    fun recordConcept() {
+        val client = KolasuClient()
+        client.registerLanguage(kolasuLanguage)
+        initializeClient(client)
+        val recordConcept = client.nodeConverter.correspondingLanguage(kolasuLanguage).getConceptByName("Record")!!
+        recordConcept.implemented.size
+        recordConcept.getFeatureByName("name")!!
     }
 
     @Test

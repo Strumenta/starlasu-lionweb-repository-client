@@ -387,6 +387,8 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         } else {
             // If it does not exist then it is empty
             SRI(this, partitionID)
+        }.apply {
+            allowShadowing = true
         }
     }
 
@@ -406,7 +408,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return nodeConverter.exportModelToLionWeb(kNode, idProvider, considerParent = true)
     }
 
-    private fun toLionWeb(
+    fun toLionWeb(
         kNode: Node,
         containerID: String,
         containmentName: String,

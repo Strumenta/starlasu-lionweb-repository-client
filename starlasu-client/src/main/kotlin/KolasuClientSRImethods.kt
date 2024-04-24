@@ -11,6 +11,8 @@ import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
 import com.strumenta.kolasu.semantics.symbol.resolver.SymbolResolver
 import com.strumenta.kolasu.traversing.walk
 import io.lionweb.lioncore.java.language.Concept
+import io.lionweb.lioncore.java.utils.CommonChecks
+import java.lang.IllegalStateException
 
 fun KolasuClient.getASTRoots(aLWNode: LWNode): Sequence<KNode> {
     val res = mutableListOf<KNode>()
@@ -71,7 +73,10 @@ private fun KolasuClient.populateSRI(
     ast.walk().forEach { node ->
         val symbol = symbolProvider.symbolFor(node)
         if (symbol != null) {
-            sri.symbols.add(symbol)
+            if (!CommonChecks.isValidID(symbol.identifier)) {
+                throw IllegalStateException("Invalid ID produced for symbol $symbol")
+            }
+            sri.addSymbol(symbol)
         }
     }
 }

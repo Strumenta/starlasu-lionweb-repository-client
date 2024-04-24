@@ -2,6 +2,7 @@ package com.strumenta.lionweb.kotlin
 
 import io.lionweb.lioncore.java.language.Classifier
 import io.lionweb.lioncore.java.language.Concept
+import io.lionweb.lioncore.java.language.LionCoreBuiltins
 import io.lionweb.lioncore.java.language.Property
 import io.lionweb.lioncore.java.model.ClassifierInstance
 import io.lionweb.lioncore.java.model.Node
@@ -15,7 +16,11 @@ import kotlin.reflect.full.primaryConstructor
  * This object knows about the association between Concepts and Kotlin classes.
  */
 object ConceptsRegistry {
-    private val classToConcept = mutableMapOf<KClass<out Node>, Concept>()
+    private val classToConcept = mutableMapOf<KClass<*>, Concept>()
+
+    init {
+        classToConcept[Node::class] = LionCoreBuiltins.getNode()
+    }
 
     fun registerMapping(
         kClass: KClass<out Node>,

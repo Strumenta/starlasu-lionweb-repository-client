@@ -52,7 +52,11 @@ fun Language.addConcepts(vararg conceptClasses: KClass<out Node>) {
     }
 
     fun searchConcept(conceptName: String): Concept {
-        return getConceptByName(conceptName) ?: throw IllegalArgumentException("Cannot find Concept $conceptName")
+        val base = getConceptByName(conceptName)
+        if (base != null) {
+            return base
+        }
+        throw IllegalArgumentException("Cannot find Concept $conceptName")
     }
 
     // Then we populate them all
@@ -76,7 +80,7 @@ fun Language.addConcepts(vararg conceptClasses: KClass<out Node>) {
             when (property.returnType.classifier) {
                 List::class -> {
                     val baseClassifier = property.returnType.arguments[0].type!!.classifier!! as KClass<out Node>
-                    val containmentType = searchConcept(baseClassifier.simpleName!!)
+                    val containmentType = ConceptsRegistry.getConcept(baseClassifier) ?: throw IllegalStateException()
                     concept.addContainment(property.name, containmentType, Multiplicity.ZERO_TO_MANY)
                 }
                 String::class -> {
@@ -89,7 +93,13 @@ fun Language.addConcepts(vararg conceptClasses: KClass<out Node>) {
                     concept.addProperty(property.name, LionCoreBuiltins.getBoolean(), Multiplicity.SINGLE)
                 }
                 else -> {
-                    val containmentType = searchConcept((property.returnType.classifier as KClass<out Node>).simpleName!!)
+                    val kClass =
+                        property.returnType.classifier
+                            as KClass<out Node>
+                    val containmentType =
+                        ConceptsRegistry.getConcept(
+                            kClass,
+                        ) ?: throw IllegalStateException("Cannot find concept for $kClass")
                     concept.addContainment(property.name, containmentType, Multiplicity.SINGLE)
                 }
             }
