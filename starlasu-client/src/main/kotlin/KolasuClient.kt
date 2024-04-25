@@ -14,6 +14,7 @@ import com.strumenta.kolasu.model.ASTRoot
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.traversing.walkDescendants
+import com.strumenta.lwrepoclient.base.ClassifierResult
 import com.strumenta.lwrepoclient.base.LionWebClient
 import com.strumenta.lwrepoclient.base.RetrievalMode
 import com.strumenta.lwrepoclient.base.debugFileHelper
@@ -364,7 +365,7 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return idProvider.id(kNode)
     }
 
-    fun nodesByConcept(): Map<KClass<*>, Set<String>> {
+    fun nodesByConcept(): Map<KClass<*>, ClassifierResult> {
         val lionwebResult = lionWebClient.nodesByClassifier()
         val kolasuResult =
             lionwebResult.map { entry ->

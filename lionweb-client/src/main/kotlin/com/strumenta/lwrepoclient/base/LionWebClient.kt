@@ -418,7 +418,7 @@ class LionWebClient(
         storeTree(parent)
     }
 
-    fun nodesByClassifier(): Map<ClassifierKey, Set<String>> {
+    fun nodesByClassifier(): Map<ClassifierKey, ClassifierResult> {
         val url = "http://$hostname:$port/inspection/nodesByClassifier"
         val request: Request =
             Request.Builder()
@@ -431,11 +431,11 @@ class LionWebClient(
                 throw RuntimeException("DB initialization failed, HTTP ${response.code}: $body")
             }
             val data = JsonParser.parseString(body)
-            val result = mutableMapOf<ClassifierKey, Set<String>>()
+            val result = mutableMapOf<ClassifierKey, ClassifierResult>()
             data.asJsonArray.map { it.asJsonObject }.forEach { entry ->
                 val classifierKey = ClassifierKey(entry["language"].asString, entry["classifier"].asString)
-                val ids: Set<String> = entry["ids"].asJsonArray.map { it.asString }.toSet()
-                result[classifierKey] = ids
+                val ids: Set<String>? = entry["ids"]?.asJsonArray?.map { it.asString }?.toSet()
+                result[classifierKey] = ClassifierResult(ids, entry["size"].asInt)
             }
             return result
         }
@@ -538,3 +538,6 @@ enum class RetrievalMode {
     ENTIRE_SUBTREE,
     SINGLE_NODE,
 }
+
+
+data class ClassifierResult(val ids: Set<String>?, val size: Int)
