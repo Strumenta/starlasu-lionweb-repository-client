@@ -17,6 +17,7 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.net.HttpURLConnection
+import java.util.concurrent.TimeUnit
 
 data class ClassifierKey(val languageKey: String, val classifierKey: String)
 
@@ -26,7 +27,7 @@ class LionWebClient(
     val debug: Boolean = false,
     val jsonSerializationProvider: (() -> JsonSerialization)? = null,
 ) {
-    private var httpClient: OkHttpClient = OkHttpClient()
+    private var httpClient: OkHttpClient = OkHttpClient.Builder().connectTimeout(180, TimeUnit.SECONDS).build()
     private val languages = mutableListOf<Language>()
 
     private fun log(message: String) {
