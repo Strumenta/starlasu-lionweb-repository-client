@@ -27,7 +27,11 @@ class LionWebClient(
     val debug: Boolean = false,
     val jsonSerializationProvider: (() -> JsonSerialization)? = null,
 ) {
-    private var httpClient: OkHttpClient = OkHttpClient.Builder().callTimeout(120, TimeUnit.SECONDS).connectTimeout(20, TimeUnit.SECONDS).build()
+    private var httpClient: OkHttpClient =
+        OkHttpClient.Builder().callTimeout(
+            120,
+            TimeUnit.SECONDS,
+        ).connectTimeout(20, TimeUnit.SECONDS).build()
     private val languages = mutableListOf<Language>()
 
     private fun log(message: String) {
@@ -106,7 +110,7 @@ class LionWebClient(
     }
 
     fun getPartitionIDs(): List<String> {
-        val url = "http://$hostname:$port/bulk/partitions"
+        val url = "http://$hostname:$port/bulk/listPartitions"
         val request: Request =
             Request.Builder()
                 .url(url)
@@ -223,10 +227,12 @@ class LionWebClient(
                             RetrievalMode.SINGLE_NODE -> UnavailableNodePolicy.PROXY_NODES
                         }
                     val nodes = js.deserializeToNodes(it)
-                    rootIds.map { rootId -> nodes.find { node -> node.id == rootId } ?: throw IllegalArgumentException(
-                        "When requesting a subtree with rootId=$rootId we got back an answer without such ID. " +
+                    rootIds.map { rootId ->
+                        nodes.find { node -> node.id == rootId } ?: throw IllegalArgumentException(
+                            "When requesting a subtree with rootId=$rootId we got back an answer without such ID. " +
                                 "IDs we got back: ${nodes.map { node -> node.id }.joinToString(", ")}",
-                    )}
+                        )
+                    }
                 }
             } else {
                 throw RuntimeException(
