@@ -180,6 +180,61 @@ class LionWebClient(
         }
     }
 
+    fun retrieve(
+        rootIds: List<String>,
+        withProxyParent: Boolean = false,
+        retrievalMode: RetrievalMode = RetrievalMode.ENTIRE_SUBTREE,
+    ): List<Node> {
+        require(rootIds.isNotEmpty())
+        require(rootIds.all { it.isNotBlank() })
+        val body: RequestBody = "{\"ids\":[${rootIds.joinToString(", "){"\"$it\""}}] }".toRequestBody(JSON)
+        val url = "http://$hostname:$port/bulk/retrieve"
+        val urlBuilder = url.toHttpUrlOrNull()!!.newBuilder()
+        val limit =
+            when (retrievalMode) {
+                RetrievalMode.ENTIRE_SUBTREE -> "99"
+                RetrievalMode.SINGLE_NODE -> "1"
+            }
+        urlBuilder.addQueryParameter("depthLimit", limit)
+        val request: Request =
+            Request.Builder()
+                .url(urlBuilder.build())
+                .post(body)
+                .build()
+        httpClient.newCall(request).execute().use { response ->
+            if (response.code == HttpURLConnection.HTTP_OK) {
+                val data =
+                    (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
+                debugFile("retrieved-$rootIds.json") { data }
+
+                return processChunkResponse(data) {
+                    val js = jsonSerialization
+                    js.unavailableParentPolicy =
+                        if (withProxyParent) {
+                            UnavailableNodePolicy.PROXY_NODES
+                        } else {
+                            UnavailableNodePolicy.NULL_REFERENCES
+                        }
+                    js.unavailableReferenceTargetPolicy = UnavailableNodePolicy.PROXY_NODES
+                    js.unavailableChildrenPolicy =
+                        when (retrievalMode) {
+                            RetrievalMode.ENTIRE_SUBTREE -> UnavailableNodePolicy.THROW_ERROR
+                            RetrievalMode.SINGLE_NODE -> UnavailableNodePolicy.PROXY_NODES
+                        }
+                    val nodes = js.deserializeToNodes(it)
+                    rootIds.map { rootId -> nodes.find { node -> node.id == rootId } ?: throw IllegalArgumentException(
+                        "When requesting a subtree with rootId=$rootId we got back an answer without such ID. " +
+                                "IDs we got back: ${nodes.map { node -> node.id }.joinToString(", ")}",
+                    )}
+                }
+            } else {
+                throw RuntimeException(
+                    "Something went wrong while querying $url: http code ${response.code}, body: ${response.body?.string()}",
+                )
+            }
+        }
+    }
+
     fun getAncestorsId(nodeID: String): List<String> {
         val result = mutableListOf<String>()
         var currentNodeID: String? = nodeID

@@ -340,6 +340,13 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
         return lionWebClient.retrieve(nodeID, withProxyParent, retrievalMode = RetrievalMode.SINGLE_NODE)
     }
 
+    fun getShallowLionWebNodes(
+        nodeIDs: List<String>,
+        withProxyParent: Boolean = false,
+    ): List<LWNode> {
+        return lionWebClient.retrieve(nodeIDs, withProxyParent, retrievalMode = RetrievalMode.SINGLE_NODE)
+    }
+
     //
     // Other operations
     //
