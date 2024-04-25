@@ -27,7 +27,7 @@ class LionWebClient(
     val debug: Boolean = false,
     val jsonSerializationProvider: (() -> JsonSerialization)? = null,
 ) {
-    private var httpClient: OkHttpClient = OkHttpClient.Builder().connectTimeout(180, TimeUnit.SECONDS).build()
+    private var httpClient: OkHttpClient = OkHttpClient.Builder().callTimeout(120, TimeUnit.SECONDS).connectTimeout(20, TimeUnit.SECONDS).build()
     private val languages = mutableListOf<Language>()
 
     private fun log(message: String) {
