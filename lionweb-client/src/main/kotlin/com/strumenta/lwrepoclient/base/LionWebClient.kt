@@ -190,7 +190,9 @@ class LionWebClient(
         withProxyParent: Boolean = false,
         retrievalMode: RetrievalMode = RetrievalMode.ENTIRE_SUBTREE,
     ): List<Node> {
-        require(rootIds.isNotEmpty())
+        if (rootIds.isEmpty()) {
+            return emptyList()
+        }
         require(rootIds.all { it.isNotBlank() })
         val body: RequestBody = "{\"ids\":[${rootIds.joinToString(", "){"\"$it\""}}] }".toRequestBody(JSON)
         val url = "http://$hostname:$port/bulk/retrieve"
