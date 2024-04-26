@@ -59,6 +59,7 @@ testing {
         register<JvmTestSuite>("functionalTest") {
             dependencies {
                 implementation(project())
+                implementation(project(":lionweb-client"))
                 implementation(libs.kolasucore)
                 implementation(libs.kolasulionweb)
                 implementation(libs.kolasusemantics)

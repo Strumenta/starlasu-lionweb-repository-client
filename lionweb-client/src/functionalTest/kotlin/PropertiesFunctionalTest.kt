@@ -222,7 +222,7 @@ class PropertiesFunctionalTest {
                 ClassifierKey("language-properties-key", "properties-PropertiesPartition-key") to setOf("pp1"),
                 ClassifierKey("language-properties-key", "properties-PropertiesFile-key") to setOf("pf1"),
             ),
-            nodesByClassifier,
+            nodesByClassifier.map { it.key to it.value.ids }.toMap(),
         )
     }
 

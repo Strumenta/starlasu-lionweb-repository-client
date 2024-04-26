@@ -354,7 +354,7 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
 
         assertEquals(
             setOf("codebase_My_codebase_relpath_foo-A-java_declarations_members_1_body_statements_value_right"),
-            result[JIntegerLiteralExpr::class],
+            result[JIntegerLiteralExpr::class]!!.ids,
         )
         assertEquals(
             setOf(
@@ -362,7 +362,7 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
                 "codebase_My_codebase_relpath_foo-B-java",
                 "codebase_My_codebase_relpath_foo-C-java",
             ),
-            result[JCompilationUnit::class],
+            result[JCompilationUnit::class]!!.ids,
         )
     }
 }
