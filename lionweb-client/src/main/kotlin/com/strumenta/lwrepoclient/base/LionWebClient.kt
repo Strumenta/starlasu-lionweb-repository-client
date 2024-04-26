@@ -28,7 +28,7 @@ class LionWebClient(
     val debug: Boolean = false,
     val jsonSerializationProvider: (() -> JsonSerialization)? = null,
     val connectTimeOutInSeconds: Long = 60,
-    val callTimeoutInSeconds: Long = 60
+    val callTimeoutInSeconds: Long = 60,
 ) {
     private var httpClient: OkHttpClient =
         OkHttpClient.Builder().callTimeout(
@@ -503,7 +503,12 @@ class LionWebClient(
                 }
             }
         } catch (e: ConnectException) {
-            val jsonExcept = if (json.length > 10000) { json.substring(0, 1000)+"..." } else json
+            val jsonExcept =
+                if (json.length > 10000) {
+                    json.substring(0, 1000) + "..."
+                } else {
+                    json
+                }
             throw RuntimeException("Cannot get answer from the client when contacting at URL $url. Body: $jsonExcept", e)
         }
     }
