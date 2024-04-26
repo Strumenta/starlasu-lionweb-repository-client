@@ -212,7 +212,11 @@ class LionWebClient(
             if (response.code == HttpURLConnection.HTTP_OK) {
                 val data =
                     (response.body ?: throw IllegalStateException("Response without body when querying $url")).string()
-                debugFile("retrieved-$rootIds.json") { data }
+                var ids = rootIds.toString()
+                if (ids.length > 100) {
+                    ids = ids.substring(0, 100)
+                }
+                debugFile("retrieved-${ids}.json") { data }
 
                 return processChunkResponse(data) {
                     val js = jsonSerialization
@@ -418,11 +422,15 @@ class LionWebClient(
         storeTree(parent)
     }
 
-    fun nodesByClassifier(): Map<ClassifierKey, ClassifierResult> {
+    fun nodesByClassifier(limit: Int? = null): Map<ClassifierKey, ClassifierResult> {
         val url = "http://$hostname:$port/inspection/nodesByClassifier"
+        val urlBuilder = url.toHttpUrlOrNull()!!.newBuilder()
+        if (limit != null) {
+            urlBuilder.addQueryParameter("limit", limit.toString())
+        }
         val request: Request =
             Request.Builder()
-                .url(url)
+                .url(urlBuilder.build())
                 .get()
                 .build()
         OkHttpClient().newCall(request).execute().use { response ->
@@ -434,7 +442,7 @@ class LionWebClient(
             val result = mutableMapOf<ClassifierKey, ClassifierResult>()
             data.asJsonArray.map { it.asJsonObject }.forEach { entry ->
                 val classifierKey = ClassifierKey(entry["language"].asString, entry["classifier"].asString)
-                val ids: Set<String>? = entry["ids"]?.asJsonArray?.map { it.asString }?.toSet()
+                val ids: Set<String> = entry["ids"].asJsonArray.map { it.asString }.toSet()
                 result[classifierKey] = ClassifierResult(ids, entry["size"].asInt)
             }
             return result
@@ -527,6 +535,7 @@ fun debugFileHelper(
             debugDir.mkdir()
         }
         val file = File(debugDir, relativePath)
+        println("SAVING FILE ${file.absolutePath}")
         file.writeText(text.invoke())
     }
 }
@@ -540,4 +549,4 @@ enum class RetrievalMode {
 }
 
 
-data class ClassifierResult(val ids: Set<String>?, val size: Int)
+data class ClassifierResult(val ids: Set<String>, val size: Int)
