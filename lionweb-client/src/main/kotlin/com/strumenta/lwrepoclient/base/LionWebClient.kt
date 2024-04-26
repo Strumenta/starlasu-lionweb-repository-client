@@ -16,6 +16,7 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
+import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 
@@ -490,15 +491,20 @@ class LionWebClient(
                 .addHeader("Content-Encoding", "gzip")
                 .post(body)
                 .build()
-        httpClient.newCall(request).execute().use { response ->
-            if (response.code != HttpURLConnection.HTTP_OK) {
-                val body = response.body?.string()
-                if (debug) {
-                    println("  Response: ${response.code}")
-                    println("  Response: $body")
+        try {
+            httpClient.newCall(request).execute().use { response ->
+                if (response.code != HttpURLConnection.HTTP_OK) {
+                    val body = response.body?.string()
+                    if (debug) {
+                        println("  Response: ${response.code}")
+                        println("  Response: $body")
+                    }
+                    throw RequestFailureException(url, json, response.code, body)
                 }
-                throw RequestFailureException(url, json, response.code, body)
             }
+        } catch (e: ConnectException) {
+            val jsonExcept = if (json.length > 10000) { json.substring(0, 1000)+"..." } else json
+            throw RuntimeException("Cannot get answer from the client when contacting at URL $url. Body: $jsonExcept", e)
         }
     }
 
