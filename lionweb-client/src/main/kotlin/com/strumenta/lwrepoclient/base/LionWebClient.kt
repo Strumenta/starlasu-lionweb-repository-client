@@ -216,7 +216,7 @@ class LionWebClient(
                 if (ids.length > 100) {
                     ids = ids.substring(0, 100)
                 }
-                debugFile("retrieved-${ids}.json") { data }
+                debugFile("retrieved-$ids.json") { data }
 
                 return processChunkResponse(data) {
                     val js = jsonSerialization
@@ -547,6 +547,5 @@ enum class RetrievalMode {
     ENTIRE_SUBTREE,
     SINGLE_NODE,
 }
-
 
 data class ClassifierResult(val ids: Set<String>, val size: Int)
