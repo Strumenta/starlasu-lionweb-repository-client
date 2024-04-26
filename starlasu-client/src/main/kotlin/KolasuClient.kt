@@ -47,7 +47,9 @@ import kotlin.reflect.KProperty1
  * For a node to be IIN it should either (i) be a partition, (ii) being reported as being a source base node type,
  * or (iii) implement IDLogic.
  */
-class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val debug: Boolean = false) {
+class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val debug: Boolean = false,
+                   val connectTimeOutInSeconds: Long = 60,
+                   val callTimeoutInSeconds: Long = 60) {
     /**
      * Exposed for testing purposes
      */
@@ -66,6 +68,8 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
             port,
             debug = debug,
             jsonSerializationProvider = { this.jsonSerialization },
+            connectTimeOutInSeconds = connectTimeOutInSeconds,
+            callTimeoutInSeconds = callTimeoutInSeconds
         )
 
     init {
@@ -431,11 +435,6 @@ class KolasuClient(val hostname: String = "localhost", val port: Int = 3005, val
     ): LWNode {
         require(kNode.javaClass.annotations.any { it is ASTRoot })
         kNode.assignParents()
-        kNode.walkDescendants().forEach { descendant ->
-            if (descendant.source == null) {
-                descendant.source = kNode.source
-            }
-        }
         nodeConverter.clearNodesMapping()
         return nodeConverter.exportModelToLionWeb(
             kNode,
