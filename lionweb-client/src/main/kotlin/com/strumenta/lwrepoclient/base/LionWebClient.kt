@@ -468,7 +468,9 @@ class LionWebClient(
         val nodesToBeLaterSentIDs = nodesToBeLaterSent.map { it.id }.toSet()
         val nodesToActuallySendPrepared = if (nodesToBeLaterSentIDs.isEmpty()) nodesToActuallySend else
             nodesToActuallySend.subList(0, nodesLimitPerRequest).map {
-                val clone = DynamicNode.clone(it)
+                val clone = DynamicNode.shallowClone(it)
+
+                MA QUESTO CAMBIA ANCHE IL PARENT, NO?
                 clone.removeChildren(nodesToBeLaterSentIDs)
                 clone
             }
