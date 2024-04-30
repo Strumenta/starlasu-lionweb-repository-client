@@ -470,9 +470,9 @@ class LionWebClient(
             nodesToActuallySend.subList(0, nodesLimitPerRequest).map {
                 val clone = DynamicNode.shallowClone(it)
 
-                MA QUESTO CAMBIA ANCHE IL PARENT, NO?
-                clone.removeChildren(nodesToBeLaterSentIDs)
-                clone
+                //MA QUESTO CAMBIA ANCHE IL PARENT, NO?
+                //clone.removeChildren(nodesToBeLaterSentIDs)
+                //clone
             }
 
         val json = jsonSerialization.serializeTreesToJsonString(nodesToActuallySendPrepared)
