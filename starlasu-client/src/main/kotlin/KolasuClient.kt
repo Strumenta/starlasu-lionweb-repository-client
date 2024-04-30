@@ -333,8 +333,16 @@ class KolasuClient(
                 withProxyParent = true,
                 retrievalMode = RetrievalMode.SINGLE_NODE,
             )
-        updatedParent.addChild(updatedParent.concept.requireContainmentByName(propertyName), child)
-        lionWebClient.storeTree(updatedParent)
+        return attachLionWebChild(child, updatedParent, propertyName)
+    }
+
+    fun attachLionWebChild(
+        child: LWNode,
+        parent: LWNode,
+        propertyName: String,
+    ): String {
+        parent.addChild(parent.concept.requireContainmentByName(propertyName), child)
+        lionWebClient.storeTree(parent)
         return child.id!!
     }
 
