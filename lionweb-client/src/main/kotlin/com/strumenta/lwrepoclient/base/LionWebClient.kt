@@ -31,10 +31,13 @@ class LionWebClient(
     val callTimeoutInSeconds: Long = 60,
 ) {
     private var httpClient: OkHttpClient =
-        OkHttpClient.Builder().callTimeout(
+        OkHttpClient.Builder()
+            .callTimeout(
             callTimeoutInSeconds,
             TimeUnit.SECONDS,
-        ).connectTimeout(connectTimeOutInSeconds, TimeUnit.SECONDS).build()
+        ).readTimeout(callTimeoutInSeconds, TimeUnit.SECONDS)
+            .writeTimeout(callTimeoutInSeconds, TimeUnit.SECONDS)
+            .connectTimeout(connectTimeOutInSeconds, TimeUnit.SECONDS).build()
     private val languages = mutableListOf<Language>()
 
     private fun log(message: String) {
