@@ -20,8 +20,6 @@ import com.strumenta.javalangmodule.parser.JavaKolasuParser
 import com.strumenta.kolasu.lionweb.LWNode
 import com.strumenta.kolasu.model.CodeBaseSource
 import com.strumenta.kolasu.model.Node
-import com.strumenta.kolasu.model.Point
-import com.strumenta.kolasu.model.Position
 import com.strumenta.kolasu.testing.assertASTsAreEqual
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
 import com.strumenta.lwrepoclient.kolasu.withSource
@@ -346,8 +344,6 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
                 JSumExpr::class,
                 JEntityType::class,
                 JReturnStatement::class,
-                Position::class,
-                Point::class,
             ),
             result.keys,
         )

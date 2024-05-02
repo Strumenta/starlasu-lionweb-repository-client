@@ -33,9 +33,9 @@ class LionWebClient(
     private var httpClient: OkHttpClient =
         OkHttpClient.Builder()
             .callTimeout(
-            callTimeoutInSeconds,
-            TimeUnit.SECONDS,
-        ).readTimeout(callTimeoutInSeconds, TimeUnit.SECONDS)
+                callTimeoutInSeconds,
+                TimeUnit.SECONDS,
+            ).readTimeout(callTimeoutInSeconds, TimeUnit.SECONDS)
             .writeTimeout(callTimeoutInSeconds, TimeUnit.SECONDS)
             .connectTimeout(connectTimeOutInSeconds, TimeUnit.SECONDS).build()
     private val languages = mutableListOf<Language>()

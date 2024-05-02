@@ -1,6 +1,6 @@
 [versions]
-egl = "0.9.4"
-kolasu = "1.5.56"
+egl = "0.9.7"
+kolasu = "1.5.57"
 rpg = "2.1.52"
 javamodule = "0.9.19"
 

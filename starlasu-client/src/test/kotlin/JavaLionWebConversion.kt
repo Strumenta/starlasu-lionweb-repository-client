@@ -24,13 +24,13 @@ class JavaLionWebConversion : AbstractLionWebConversion<JCompilationUnit>(kLangu
             inputStream,
             lwASTChecker = { lwAST: Node ->
                 val import = lwAST.getChildrenByContainmentName("imports").first()
-                assertEquals(listOf("static"), `import`.concept.allProperties().map { it.name })
+                assertEquals(listOf("static", "position"), `import`.concept.allProperties().map { it.name })
                 assertEquals(false, import.getPropertyValueByName("static"))
             },
             jsonChecker = { json: String ->
                 val chunk = LowLevelJsonSerialization().deserializeSerializationBlock(json)
                 val classifierInstance = chunk.classifierInstancesByID["foo_imports"]!!
-                assertEquals(1, classifierInstance.properties.size)
+                assertEquals(2, classifierInstance.properties.size)
                 assertEquals("false", classifierInstance.properties.first().value)
             },
         )
