@@ -27,8 +27,9 @@ class MetamodelDefinitionTest {
                 FSStatisticInstance::class,
                 FSAttribute::class,
                 FSPosition::class,
+                MyPosition::class,
             )
-        assertEquals(14, language.elements.size)
+        assertEquals(15, language.elements.size)
 
         val root = language.getConceptByName("Root")!!
         val tenant = language.getConceptByName("Tenant")!!
@@ -36,7 +37,9 @@ class MetamodelDefinitionTest {
         val file = language.getConceptByName("File")!!
         val directory = language.getConceptByName("Directory")!!
         val textFile = language.getConceptByName("TextFile")!!
-        val fsParsingResult = language.getConceptByName("FSParsingResult")
+        val fsParsingResult = language.getConceptByName("FSParsingResult")!!
+        val fsIssue = language.getConceptByName("FSIssue")!!
+        val fsPosition = language.getPrimitiveTypeByName("MyPosition")!!
 
         assertEquals(false, root.isAbstract)
         assertEquals(null, root.extendedConcept)
@@ -86,6 +89,13 @@ class MetamodelDefinitionTest {
         assertEquals(fsParsingResult, textFileParsingResult.type)
         val textFileContents = textFile.getPropertyByName("contents")!!
         assertEquals(LionCoreBuiltins.getString(), textFileContents.type)
+
+        assertEquals(false, fsIssue.isAbstract)
+        assertEquals(null, fsIssue.extendedConcept)
+        assertEquals(4, fsIssue.features.size)
+        val fsIssueFsPosition = fsIssue.getContainmentByName("fsPosition")!!
+        val fsIssuePosition = fsIssue.getPropertyByName("position")!!
+        assertEquals(fsPosition, fsIssuePosition.type)
     }
 
     @Test
@@ -138,7 +148,7 @@ class MetamodelDefinitionTest {
 
         val jsonSerialization =
             JsonSerialization.getStandardSerialization().apply {
-                ConceptsRegistry.prepareJsonSerialization(this)
+                MetamodelRegistry.prepareJsonSerialization(this)
             }
 
         val serializedRoot = jsonSerialization.serializeNodesToJsonString(root)
@@ -181,7 +191,7 @@ class MetamodelDefinitionTest {
 
         val jsonSerialization =
             JsonSerialization.getStandardSerialization().apply {
-                ConceptsRegistry.prepareJsonSerialization(this)
+                MetamodelRegistry.prepareJsonSerialization(this)
                 unavailableParentPolicy = UnavailableNodePolicy.PROXY_NODES
             }
 
@@ -229,7 +239,7 @@ class MetamodelDefinitionTest {
 
         val jsonSerialization =
             JsonSerialization.getStandardSerialization().apply {
-                ConceptsRegistry.prepareJsonSerialization(this)
+                MetamodelRegistry.prepareJsonSerialization(this)
                 unavailableParentPolicy = UnavailableNodePolicy.PROXY_NODES
             }
 

@@ -95,10 +95,21 @@ class FSParsingResult() : BaseNode() {
     var statistics: FSStatistics? by singleContainment("statistics")
 }
 
-class FSIssue() : BaseNode() {
+/**
+ * This emulates Kolasu's Position, which is not visible here
+ */
+data class MyPosition(val start: MyPoint, val end: MyPoint)
+
+data class MyPoint(
+    val line: Int = 0,
+    val column: Int = 0,
+)
+
+class FSIssue : BaseNode() {
     var message: String? by property("message")
     var severity: String? by property("severity")
     var fsPosition: FSPosition? by singleContainment("fsPosition")
+    var position: MyPosition? by property("position")
 }
 
 class FSStatistics() : BaseNode() {

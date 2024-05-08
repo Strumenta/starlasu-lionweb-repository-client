@@ -3,13 +3,13 @@ package com.strumenta.lionweb.kotlin
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.language.Containment
 import io.lionweb.lioncore.java.language.Language
-import io.lionweb.lioncore.java.language.LionCoreBuiltins
 import io.lionweb.lioncore.java.language.PrimitiveType
 import io.lionweb.lioncore.java.language.Property
 import io.lionweb.lioncore.java.model.Node
 import java.lang.IllegalStateException
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.superclasses
 
 /**
@@ -17,11 +17,13 @@ import kotlin.reflect.full.superclasses
  */
 fun lwLanguage(
     name: String,
-    vararg classes: KClass<out Node>,
+    vararg classes: KClass<*>,
 ): Language {
     val cleanedName = name.lowercase().replace('.', '_')
     val language = Language(name, "language-$cleanedName-id", "language-$cleanedName-key", "1")
-    language.addConcepts(*classes)
+    // We register first the primitive types, as concepts could use them
+    language.addPrimitiveTypes(*classes.filter { !it.isSubclassOf(Node::class) }.toTypedArray())
+    language.addConcepts(*classes.filter { it.isSubclassOf(Node::class) }.map { it as KClass<out Node> }.toTypedArray())
     return language
 }
 
@@ -37,6 +39,20 @@ fun Language.addConcept(name: String): Concept {
     return concept
 }
 
+fun Language.addPrimitiveType(name: String): PrimitiveType {
+    val primitiveType =
+        PrimitiveType(
+            this,
+            name,
+            "${this.id!!.removePrefix("language-").removeSuffix("-id")}-$name-id",
+        ).apply {
+            key = "${this@addPrimitiveType.key!!.removePrefix("language-").removeSuffix("-key")}-$name-key"
+        }
+
+    this.addElement(primitiveType)
+    return primitiveType
+}
+
 fun Language.addConcepts(vararg conceptClasses: KClass<out Node>) {
     // First we create them all
     val conceptsByClasses = mutableMapOf<KClass<out Node>, Concept>()
@@ -48,15 +64,7 @@ fun Language.addConcepts(vararg conceptClasses: KClass<out Node>) {
             )
         concept.isAbstract = conceptClass.isAbstract
         conceptsByClasses[conceptClass] = concept
-        ConceptsRegistry.registerMapping(conceptClass, concept)
-    }
-
-    fun searchConcept(conceptName: String): Concept {
-        val base = getConceptByName(conceptName)
-        if (base != null) {
-            return base
-        }
-        throw IllegalArgumentException("Cannot find Concept $conceptName")
+        MetamodelRegistry.registerMapping(conceptClass, concept)
     }
 
     // Then we populate them all
@@ -80,30 +88,40 @@ fun Language.addConcepts(vararg conceptClasses: KClass<out Node>) {
             when (property.returnType.classifier) {
                 List::class -> {
                     val baseClassifier = property.returnType.arguments[0].type!!.classifier!! as KClass<out Node>
-                    val containmentType = ConceptsRegistry.getConcept(baseClassifier) ?: throw IllegalStateException()
+                    val containmentType = MetamodelRegistry.getConcept(baseClassifier) ?: throw IllegalStateException()
                     concept.addContainment(property.name, containmentType, Multiplicity.ZERO_TO_MANY)
-                }
-                String::class -> {
-                    concept.addProperty(property.name, LionCoreBuiltins.getString(), Multiplicity.SINGLE)
-                }
-                Int::class -> {
-                    concept.addProperty(property.name, LionCoreBuiltins.getInteger(), Multiplicity.SINGLE)
-                }
-                Boolean::class -> {
-                    concept.addProperty(property.name, LionCoreBuiltins.getBoolean(), Multiplicity.SINGLE)
                 }
                 else -> {
                     val kClass =
                         property.returnType.classifier
                             as KClass<out Node>
-                    val containmentType =
-                        ConceptsRegistry.getConcept(
-                            kClass,
-                        ) ?: throw IllegalStateException("Cannot find concept for $kClass")
-                    concept.addContainment(property.name, containmentType, Multiplicity.SINGLE)
+                    if (kClass.isSubclassOf(BaseNode::class)) {
+                        val containmentType =
+                            MetamodelRegistry.getConcept(
+                                kClass,
+                            ) ?: throw IllegalStateException("Cannot find concept for $kClass")
+                        concept.addContainment(property.name, containmentType, Multiplicity.SINGLE)
+                    } else {
+                        val primitiveType =
+                            MetamodelRegistry.getPrimitiveType(kClass)
+                                ?: throw IllegalStateException("Cannot find primitive type for $kClass")
+                        concept.addProperty(property.name, primitiveType, Multiplicity.SINGLE)
+                    }
                 }
             }
         }
+    }
+}
+
+fun Language.addPrimitiveTypes(vararg primitiveTypeClasses: KClass<*>) {
+    primitiveTypeClasses.forEach { primitiveTypeClass ->
+        require(!primitiveTypeClass.isSubclassOf(Node::class))
+        val primitiveType =
+            addPrimitiveType(
+                primitiveTypeClass.simpleName
+                    ?: throw IllegalArgumentException("Given primitiveTypeClass has no name"),
+            )
+        MetamodelRegistry.registerMapping(primitiveTypeClass, primitiveType)
     }
 }
 
