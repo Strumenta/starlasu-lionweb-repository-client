@@ -95,7 +95,7 @@ fun Language.addConcepts(vararg conceptClasses: KClass<out Node>) {
                     val kClass =
                         property.returnType.classifier
                             as KClass<out Node>
-                    if (kClass.isSubclassOf(BaseNode::class)) {
+                    if (kClass.isSubclassOf(Node::class)) {
                         val containmentType =
                             MetamodelRegistry.getConcept(
                                 kClass,
