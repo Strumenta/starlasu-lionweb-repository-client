@@ -20,12 +20,12 @@ fun <N> N.withParent(parent: Node?): N where N : Node, N : HasSettableParent {
 }
 
 fun <N : Node> Node.walkDescendants(kClass: KClass<N>): Sequence<N> {
-    val results = mutableListOf<N>()
-    this.children.forEach { child ->
-        if (kClass.isInstance(child)) {
-            results.add(child as N)
+    return sequence {
+        this@walkDescendants.children.forEach { child ->
+            if (kClass.isInstance(child)) {
+                yield(child as N)
+            }
+            yieldAll(child.walkDescendants(kClass))
         }
-        results.addAll(child.walkDescendants(kClass))
     }
-    return results.asSequence()
 }
