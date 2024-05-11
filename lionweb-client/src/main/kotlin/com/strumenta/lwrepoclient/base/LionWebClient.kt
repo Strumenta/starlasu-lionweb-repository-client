@@ -453,29 +453,33 @@ class LionWebClient(
         }
     }
 
-    /**
-     * We expect to be able to change the nodes received.
-     */
-    private fun actualStoringRequest(
+    private fun treeStoringOperation(
         node: Node,
         operation: String,
-        nodesToActuallySend: List<Node>,
-        nodesToBeLaterSent: List<Node>
     ) {
-        // TODO: when we send the children, we may also need to update the parent, as we may have misrepresented it,
-        // making it show less children that it had
-
-        val nodesToBeLaterSentIDs = nodesToBeLaterSent.map { it.id }.toSet()
-        val nodesToActuallySendPrepared = if (nodesToBeLaterSentIDs.isEmpty()) nodesToActuallySend else
-            nodesToActuallySend.subList(0, nodesLimitPerRequest).map {
-                val clone = DynamicNode.shallowClone(it)
-
-                //MA QUESTO CAMBIA ANCHE IL PARENT, NO?
-                //clone.removeChildren(nodesToBeLaterSentIDs)
-                //clone
+        if (debug) {
+            try {
+                treeSanityChecks(node, jsonSerialization = jsonSerialization)
+            } catch (e: RuntimeException) {
+                throw RuntimeException("Failed to store tree $node", e)
             }
+        }
 
-        val json = jsonSerialization.serializeTreesToJsonString(nodesToActuallySendPrepared)
+        fun verifyNode(node: Node) {
+            require(node.id != null) { "Node $node should not have a null ID" }
+            if (node !is ProxyNode) {
+                if (node.children.any { it == null }) {
+                    throw java.lang.IllegalStateException("Node $node has a null child")
+                }
+                node.children.forEach {
+                    verifyNode(it)
+                }
+            }
+        }
+
+        verifyNode(node)
+
+        val json = jsonSerialization.serializeTreesToJsonString(node)
         debugFile("sent.json") { json }
 
         val body: RequestBody = json.compress()
@@ -506,57 +510,7 @@ class LionWebClient(
                 } else {
                     json
                 }
-            throw RuntimeException("Cannot get answer from the client when contacting at URL $url. " +
-                    "Body: $jsonExcept (JSON length ${json.length}, compressed to ${body.contentLength()})", e)
-        }
-        if (nodesToBeLaterSent.isNotEmpty()) {
-            if (nodesToBeLaterSent.size > nodesLimitPerRequest) {
-                val newNodesToActuallySend = nodesToBeLaterSent.subList(0, nodesLimitPerRequest)
-                val newNodesToBeLaterSent = nodesToBeLaterSent.subList(nodesLimitPerRequest, nodesToBeLaterSent.size)
-                actualStoringRequest(node, operation, newNodesToActuallySend, newNodesToBeLaterSent)
-            } else {
-                actualStoringRequest(node, operation, nodesToBeLaterSent, emptyList())
-            }
-        }
-    }
-
-    private fun treeStoringOperation(
-        node: Node,
-        operation: String,
-    ) {
-        if (debug) {
-            try {
-                treeSanityChecks(node, jsonSerialization = jsonSerialization)
-            } catch (e: RuntimeException) {
-                throw RuntimeException("Failed to store tree $node", e)
-            }
-        }
-
-        fun verifyNode(node: Node) {
-            require(node.id != null) { "Node $node should not have a null ID" }
-            if (node !is ProxyNode) {
-                if (node.children.any { it == null }) {
-                    throw java.lang.IllegalStateException("Node $node has a null child")
-                }
-                node.children.forEach {
-                    verifyNode(it)
-                }
-            }
-        }
-
-        verifyNode(node)
-
-        // TODO introduce method in LionWeb Java to do this calculation
-        val nodesToBeSent = node.thisAndAllDescendants()
-        if (nodesToBeSent.size > nodesLimitPerRequest) {
-            println("Storing request for ${nodesToBeSent.size} nodes, when the limit is $nodesLimitPerRequest. " +
-                    "Splitting the request")
-            val nodesToBeLaterSent = nodesToBeSent.subList(nodesLimitPerRequest, nodesToBeSent.size)
-            val nodesToActuallySend = nodesToBeSent.subList(0, nodesLimitPerRequest)
-            actualStoringRequest(node, operation, nodesToActuallySend, nodesToBeLaterSent)
-            throw RuntimeException("Trying to send too many nodes at once, we need to split the request")
-        } else {
-            actualStoringRequest(node, operation, nodesToBeSent, emptyList())
+            throw RuntimeException("Cannot get answer from the client when contacting at URL $url. Body: $jsonExcept", e)
         }
     }
 
