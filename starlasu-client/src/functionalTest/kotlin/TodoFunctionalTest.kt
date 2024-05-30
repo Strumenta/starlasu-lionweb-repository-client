@@ -1,10 +1,7 @@
-import com.strumenta.kolasu.ids.NodeIdProvider
 import com.strumenta.kolasu.model.ReferenceByName
 import com.strumenta.kolasu.model.SyntheticSource
 import com.strumenta.kolasu.model.assignParents
-import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
-import junit.framework.TestCase.assertTrue
 import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -154,5 +151,4 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
         assertEquals(todoProject1ID, retrievedPartition.getChildrenByContainmentName("projects")[0].id)
         assertEquals(todoProject2ID, retrievedPartition.getChildrenByContainmentName("projects")[1].id)
     }
-
 }
