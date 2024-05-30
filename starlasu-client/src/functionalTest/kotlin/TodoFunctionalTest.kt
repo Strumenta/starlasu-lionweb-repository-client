@@ -4,8 +4,6 @@ import com.strumenta.kolasu.model.SyntheticSource
 import com.strumenta.kolasu.model.assignParents
 import com.strumenta.kolasu.semantics.symbol.repository.SymbolRepository
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
-import com.strumenta.lwrepoclient.kolasu.performSymbolResolutionOnPartition
-import com.strumenta.lwrepoclient.kolasu.populateSRI
 import junit.framework.TestCase.assertTrue
 import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.Test
@@ -157,66 +155,4 @@ class TodoFunctionalTest : AbstractFunctionalTest() {
         assertEquals(todoProject2ID, retrievedPartition.getChildrenByContainmentName("projects")[1].id)
     }
 
-    @Test
-    fun symbolResolution() {
-        val kolasuClient = KolasuClient(port = modelRepository!!.firstMappedPort, debug = true)
-        kolasuClient.registerLanguage(todoLanguage)
-        kolasuClient.registerLanguage(todoAccountLanguage)
-
-        // We create an empty partition
-        val todoAccount = TodoAccount("my-wonderful-partition")
-        // todoAccount.source = SyntheticSource("my-wonderful-partition")
-        val partitionID = kolasuClient.createPartition(todoAccount)
-
-        // Now we want to attach a tree to the existing partition
-        val todoProject1 =
-            TodoProject(
-                "My errands list",
-                mutableListOf(
-                    Todo("Buy milk"),
-                    Todo("garbage-out", "Take the garbage out"),
-                    Todo("Go for a walk"),
-                ),
-            )
-        todoProject1.assignParents()
-        todoProject1.source = SyntheticSource("Project1")
-        kolasuClient.attachAST(todoProject1, todoAccount, containmentName = "projects")
-
-        var todoProject2 =
-            TodoProject(
-                "My other errands list",
-                mutableListOf(
-                    Todo("BD", "Buy diary"),
-                    Todo("WD", "Write in diary", ReferenceByName("BD")),
-                    Todo("garbage-in", "Produce more garbage", ReferenceByName("garbage-out")),
-                ),
-            )
-        todoProject2.assignParents()
-        todoProject2.source = SyntheticSource("Project2")
-        val todoProject2ID = kolasuClient.attachAST(todoProject2, todoAccount, containmentName = "projects")
-
-        var sri = kolasuClient.loadSRI(partitionID)
-        var todosInSri = sri.find(Todo::class).toList()
-        assertEquals(0, todosInSri.size)
-
-        val storedSri = kolasuClient.populateSRI(partitionID) { TodoSymbolProvider(it) }
-        todosInSri = storedSri.find(Todo::class).toList()
-        assertEquals(6, todosInSri.size)
-
-        // we check that also retrieving it we get back the same value, so we test persistence here
-        sri = kolasuClient.loadSRI(partitionID)
-        todosInSri = sri.find(Todo::class).toList()
-        assertEquals(6, todosInSri.size)
-
-        kolasuClient.performSymbolResolutionOnPartition(partitionID) { sri: SymbolRepository, nodeIdProvider: NodeIdProvider ->
-            TodoScopeProvider(sri)
-        }
-        todoProject2 = kolasuClient.getAST(todoProject2ID) as TodoProject
-        assertTrue(todoProject2.todos[1].prerequisite!!.referred != null)
-        assertEquals("BD", todoProject2.todos[1].prerequisite!!.referred!!.name)
-        assertEquals("Buy diary", todoProject2.todos[1].prerequisite!!.referred!!.description)
-
-        assertEquals(null, todoProject2.todos[2].prerequisite!!.referred)
-        assertEquals("synthetic_Project1_todos_1", todoProject2.todos[2].prerequisite!!.identifier)
-    }
 }

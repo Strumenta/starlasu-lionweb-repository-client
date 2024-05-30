@@ -76,10 +76,6 @@ class KolasuClient(
             callTimeoutInSeconds = callTimeoutInSeconds,
         )
 
-    init {
-        lionWebClient.registerLanguage(sriLanguage)
-    }
-
     /**
      * Exposed for testing purposes
      */
@@ -90,7 +86,6 @@ class KolasuClient(
                     enableDynamicNodes()
                     unavailableParentPolicy = UnavailableNodePolicy.NULL_REFERENCES
                     unavailableReferenceTargetPolicy = UnavailableNodePolicy.PROXY_NODES
-                    registerLanguage(sriLanguage)
                 },
             )
         }
@@ -404,23 +399,6 @@ class KolasuClient(
                 }
             }.filterNotNull().toMap()
         return kolasuResult
-    }
-
-    // TODO: move this to Code Insight Studio
-
-    /**
-     * @param partitionID partition containing the ASTs, for which we want to calculate the ID
-     */
-    fun loadSRI(partitionID: String): SRI {
-        val sriNodeID = SRI.sriNodeID(partitionID)
-        return if (partitionExist(sriNodeID)) {
-            SRI.fromLionWeb(lionWebClient.retrieve(sriNodeID), this)
-        } else {
-            // If it does not exist then it is empty
-            SRI(this, partitionID)
-        }.apply {
-            allowShadowing = true
-        }
     }
 
     //
