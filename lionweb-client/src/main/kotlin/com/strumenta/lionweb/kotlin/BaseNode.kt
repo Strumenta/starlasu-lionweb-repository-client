@@ -27,7 +27,7 @@ abstract class BaseNode : DynamicNode() {
     }
 
     fun <C : Node> multipleContainment(name: String): MutableList<C> {
-        return ContainmentList(this, (concept ?: throw IllegalStateException("Concept should not be null")).requireContainmentByName(name))
+        return ContainmentList(this, (concept ?: throw IllegalStateException("Concept should not be null (base node $this, class: ${this.javaClass.canonicalName})")).requireContainmentByName(name))
     }
 
     protected fun <P : BaseNode, C : Node> singleContainment(containmentName: String): ReadWriteProperty<P, C?> {

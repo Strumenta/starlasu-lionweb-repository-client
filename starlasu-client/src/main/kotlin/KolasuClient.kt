@@ -66,7 +66,7 @@ class KolasuClient(
      */
     val idProvider: NodeIdProvider = CommonNodeIdProvider().caching()
 
-    internal val lionWebClient =
+    val lionWebClient =
         LionWebClient(
             hostname,
             port,
