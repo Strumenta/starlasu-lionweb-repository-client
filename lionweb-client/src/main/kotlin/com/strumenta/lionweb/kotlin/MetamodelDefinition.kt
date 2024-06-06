@@ -68,7 +68,7 @@ fun Language.addConcepts(vararg conceptClasses: KClass<out Node>) {
     }
 
     // Then we populate them all
-    conceptsByClasses.forEach { conceptClass, concept ->
+    conceptsByClasses.forEach { (conceptClass, concept) ->
         conceptClass.superclasses.forEach { superClass ->
             when {
                 superClass == BaseNode::class -> Unit // Nothing to do
