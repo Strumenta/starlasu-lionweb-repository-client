@@ -5,6 +5,7 @@ import com.google.gson.JsonParser
 import com.strumenta.lionweb.kotlin.MetamodelRegistry
 import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
+import io.lionweb.lioncore.java.model.ReferenceValue
 import io.lionweb.lioncore.java.model.impl.DynamicNode
 import io.lionweb.lioncore.java.model.impl.ProxyNode
 import io.lionweb.lioncore.java.serialization.JsonSerialization
@@ -19,6 +20,8 @@ import java.io.File
 import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
 
 data class ClassifierKey(val languageKey: String, val classifierKey: String)
 
@@ -266,6 +269,30 @@ class LionWebClient(
         return result
     }
 
+    fun <T : Node> retrieveAncestor(
+        node: Node,
+        ancestorClass: KClass<*>,
+        retrievalMode: RetrievalMode = RetrievalMode.ENTIRE_SUBTREE,
+    ): T? {
+        if (node.parent == null) {
+            return null
+        } else {
+            var parent = node.parent
+            if (node.parent is ProxyNode) {
+                parent = retrieve(node.parent.id!!, withProxyParent = false, retrievalMode = RetrievalMode.SINGLE_NODE)
+            }
+            return if (ancestorClass.isInstance(parent)) {
+                if (retrievalMode == RetrievalMode.SINGLE_NODE) {
+                    parent as T
+                } else {
+                    retrieve(node.parent.id!!, withProxyParent = false, retrievalMode = RetrievalMode.ENTIRE_SUBTREE) as T
+                }
+            } else {
+                retrieveAncestor(parent, ancestorClass, retrievalMode)
+            }
+        }
+    }
+
     fun isNodeExisting(nodeID: String): Boolean {
         require(nodeID.isNotBlank())
         val body: RequestBody = "{\"ids\":[\"$nodeID\"] }".toRequestBody(JSON)
@@ -426,6 +453,41 @@ class LionWebClient(
 
         // 3. Store the parent
         storeTree(parent)
+    }
+
+    fun setSingleReference(
+        target: Node,
+        container: Node,
+        reference: KProperty<*>,
+    ) {
+        setSingleReference(target.id!!, container.id!!, reference.name)
+    }
+
+    fun setSingleReference(
+        targetId: String?,
+        containerId: String,
+        referenceName: String,
+    ) {
+        // 1. Retrieve the referrer
+        val referrer = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE)
+
+        // 2. Add the reference to the referrer
+        val reference =
+            referrer.classifier.getReferenceByName(referenceName)
+                ?: throw IllegalArgumentException("The referrer has not containment named $referenceName")
+        if (reference.isMultiple) {
+            throw IllegalArgumentException("The indicated reference ${reference.name} is multiple")
+        }
+        val target =
+            if (targetId == null) {
+                null
+            } else {
+                ProxyNode(targetId)
+            }
+        referrer.setOnlyReferenceValue(reference, ReferenceValue(target, null))
+
+        // 3. Store the parent
+        storeTree(referrer)
     }
 
     fun nodesByClassifier(limit: Int? = null): Map<ClassifierKey, ClassifierResult> {
