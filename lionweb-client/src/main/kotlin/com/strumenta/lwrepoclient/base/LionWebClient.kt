@@ -437,7 +437,7 @@ class LionWebClient(
         // TODO avoid retrieving the whole parent (just do level 1)
         // 1. Retrieve the parent
 
-        val parent = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE)
+        val parent = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE, withProxyParent = true)
 
         // 2. Add the tree to the parent
         val containment =
