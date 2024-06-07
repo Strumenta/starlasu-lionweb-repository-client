@@ -279,13 +279,13 @@ class LionWebClient(
         } else {
             var parent = node.parent
             if (node.parent is ProxyNode) {
-                parent = retrieve(node.parent.id!!, withProxyParent = false, retrievalMode = RetrievalMode.SINGLE_NODE)
+                parent = retrieve(node.parent.id!!, withProxyParent = true, retrievalMode = RetrievalMode.SINGLE_NODE)
             }
             return if (ancestorClass.isInstance(parent)) {
                 if (retrievalMode == RetrievalMode.SINGLE_NODE) {
                     parent as T
                 } else {
-                    retrieve(node.parent.id!!, withProxyParent = false, retrievalMode = RetrievalMode.ENTIRE_SUBTREE) as T
+                    retrieve(node.parent.id!!, withProxyParent = true, retrievalMode = RetrievalMode.ENTIRE_SUBTREE) as T
                 }
             } else {
                 retrieveAncestor(parent, ancestorClass, retrievalMode)
@@ -469,7 +469,7 @@ class LionWebClient(
         referenceName: String,
     ) {
         // 1. Retrieve the referrer
-        val referrer = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE)
+        val referrer = retrieve(containerId, withProxyParent = true, retrievalMode = RetrievalMode.SINGLE_NODE)
 
         // 2. Add the reference to the referrer
         val reference =

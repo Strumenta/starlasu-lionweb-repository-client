@@ -13,7 +13,7 @@ class SpecificReferenceValue<T : Node>(val targetClass: KClass<T>) : ReferenceVa
             return SpecificReferenceValue(T::class).apply {
                 this.resolveInfo = resolveInfo
                 if (referred != null && !T::class.isInstance(referred)) {
-                    throw IllegalArgumentException("Incompatible target specified")
+                    throw IllegalArgumentException("Incompatible target specified: target $referred (class ${referred.javaClass.canonicalName}) while expected targets are ${targetClass.qualifiedName}")
                 }
                 this.referred = referred as T?
             }
