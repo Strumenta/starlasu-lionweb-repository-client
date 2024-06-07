@@ -336,7 +336,7 @@ class KolasuClient(
         parent: LWNode,
         propertyName: String,
     ): String {
-        parent.addChild(parent.concept.requireContainmentByName(propertyName), child)
+        parent.addChild(parent.classifier.requireContainmentByName(propertyName), child)
         lionWebClient.storeTree(parent)
         return child.id!!
     }

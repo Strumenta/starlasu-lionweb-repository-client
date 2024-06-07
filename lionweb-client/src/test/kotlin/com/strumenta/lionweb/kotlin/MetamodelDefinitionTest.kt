@@ -121,7 +121,7 @@ class MetamodelDefinitionTest {
         val root = Root()
         val rootConcept = language.getConceptByName("Root")!!
 
-        assertEquals(rootConcept, root.concept)
+        assertEquals(rootConcept, root.classifier)
     }
 
     @Test
@@ -250,5 +250,41 @@ class MetamodelDefinitionTest {
         assertEquals("My contents", deserializedTextFile.contents)
         assert(deserializedTextFile.parent is ProxyNode)
         assertEquals("ROOT____foo", deserializedTextFile.parent.id)
+    }
+
+    @Test
+    fun handleSingleReferences() {
+        val language =
+            lwLanguage(
+                "myLanguage",
+                MLSimpleNode::class,
+                MLNodeWithSimpleReference::class,
+            )
+        val simpleNode = language.getConceptByName("MLSimpleNode")!!
+        val nodeWithSimpleReference = language.getConceptByName("MLNodeWithSimpleReference")!!
+        val reference = nodeWithSimpleReference.getReferenceByName("simple")!!
+        assertEquals("simple", reference.name)
+        assertEquals(false, reference.isMultiple)
+        assertEquals(false, reference.isRequired)
+        assertEquals(simpleNode, reference.type)
+        assertEquals(1, nodeWithSimpleReference.features.size)
+    }
+
+    @Test
+    fun handleMultipleReferences() {
+        val language =
+            lwLanguage(
+                "myLanguage",
+                MLSimpleNode::class,
+                MLNodeWithMultipleReference::class,
+            )
+        val simpleNode = language.getConceptByName("MLSimpleNode")!!
+        val nodeWithMultipleReference = language.getConceptByName("MLNodeWithMultipleReference")!!
+        val reference = nodeWithMultipleReference.getReferenceByName("list")!!
+        assertEquals("list", reference.name)
+        assertEquals(true, reference.isMultiple)
+        assertEquals(false, reference.isRequired)
+        assertEquals(simpleNode, reference.type)
+        assertEquals(1, nodeWithMultipleReference.features.size)
     }
 }

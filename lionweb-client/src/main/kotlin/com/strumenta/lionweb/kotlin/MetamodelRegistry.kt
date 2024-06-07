@@ -19,7 +19,7 @@ import kotlin.reflect.full.primaryConstructor
  * and between PrimitiveTypes and Kotlin classes.
  */
 object MetamodelRegistry {
-    private val classToConcept = mutableMapOf<KClass<*>, Concept>()
+    private val classToClassifier = mutableMapOf<KClass<*>, Classifier<*>>()
     private val classToPrimitiveType = mutableMapOf<KClass<*>, PrimitiveType>()
 
     init {
@@ -31,9 +31,9 @@ object MetamodelRegistry {
 
     fun registerMapping(
         kClass: KClass<out Node>,
-        concept: Concept,
+        classifier: Classifier<*>,
     ) {
-        classToConcept[kClass] = concept
+        classToClassifier[kClass] = classifier
     }
 
     fun registerMapping(
@@ -44,12 +44,14 @@ object MetamodelRegistry {
         classToPrimitiveType[kClass] = primitiveType
     }
 
-    fun getConcept(kClass: KClass<out Node>): Concept? = classToConcept[kClass]
+    fun getConcept(kClass: KClass<out Node>): Concept? = getClassifier(kClass)?.let { it as Concept }
+
+    fun getClassifier(kClass: KClass<out Node>): Classifier<*>? = classToClassifier[kClass]
 
     fun getPrimitiveType(kClass: KClass<out Node>): PrimitiveType? = classToPrimitiveType[kClass]
 
     fun prepareJsonSerialization(jsonSerialization: JsonSerialization) {
-        classToConcept.forEach { (kClass, concept) ->
+        classToClassifier.forEach { (kClass, concept) ->
             jsonSerialization.instantiator.registerCustomDeserializer(concept.id!!) {
                     classifier: Classifier<*>,
                     serializedClassifierInstance: SerializedClassifierInstance,

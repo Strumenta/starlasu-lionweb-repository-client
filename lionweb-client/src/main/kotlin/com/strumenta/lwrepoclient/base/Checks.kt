@@ -22,7 +22,7 @@ fun treeSanityChecks(
             throw IllegalStateException("Node with ID ${node.id} has already a parent")
         }
         parents[node.id!!] = node.parent?.id
-        node.concept.allContainments().forEach { containment ->
+        node.classifier.allContainments().forEach { containment ->
             val childrenInContainment = containment.children.map { it.id }
             require(childrenInContainment.none { it !== null })
             require(childrenInContainment.distinct() == childrenInContainment)

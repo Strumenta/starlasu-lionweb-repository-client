@@ -24,7 +24,7 @@ class JavaLionWebConversion : AbstractLionWebConversion<JCompilationUnit>(kLangu
             inputStream,
             lwASTChecker = { lwAST: Node ->
                 val import = lwAST.getChildrenByContainmentName("imports").first()
-                assertEquals(listOf("static", "position"), `import`.concept.allProperties().map { it.name })
+                assertEquals(listOf("static", "position"), `import`.classifier.allProperties().map { it.name })
                 assertEquals(false, import.getPropertyValueByName("static"))
             },
             jsonChecker = { json: String ->

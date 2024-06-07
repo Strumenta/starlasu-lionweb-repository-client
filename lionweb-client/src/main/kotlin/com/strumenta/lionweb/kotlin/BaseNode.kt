@@ -16,8 +16,8 @@ annotation class Implementation
  * when defined in Kotlin.
  */
 abstract class BaseNode : DynamicNode() {
-    override fun getConcept(): Concept? {
-        return super.getConcept() ?: MetamodelRegistry.getConcept(this.javaClass.kotlin)
+    override fun getClassifier(): Concept? {
+        return super.getClassifier() ?: MetamodelRegistry.getConcept(this.javaClass.kotlin)
     }
 
     open fun calculateID(): String? = null
@@ -26,8 +26,86 @@ abstract class BaseNode : DynamicNode() {
         return calculateID() ?: this.id
     }
 
+    inline fun <P : BaseNode, reified T : Node> singleReference(referenceName: String): ReadWriteProperty<P, SpecificReferenceValue<T>?> {
+        return object : ReadWriteProperty<P, SpecificReferenceValue<T>?> {
+            override fun getValue(
+                thisRef: P,
+                property: KProperty<*>,
+            ): SpecificReferenceValue<T>? {
+                val reference =
+                    thisRef.classifier!!.getReferenceByName(referenceName)
+                        ?: throw IllegalStateException("No reference with name $referenceName found")
+                val referenceValues = thisRef.getReferenceValues(reference)
+                return when (referenceValues.size) {
+                    0 -> null
+                    1 -> {
+                        if (referenceValues[0] == null) {
+                            return null
+                        } else if (referenceValues is SpecificReferenceValue<*>) {
+                            return referenceValues[0] as SpecificReferenceValue<T>
+                        } else {
+                            SpecificReferenceValue(T::class)
+                            val res = SpecificReferenceValue.create<T>(referenceValues[0].resolveInfo, referenceValues[0].referred)
+                            return res
+                        }
+                    }
+                    else -> throw IllegalStateException("Multiple reference values for single reference")
+                }
+            }
+
+            override fun setValue(
+                thisRef: P,
+                property: KProperty<*>,
+                value: SpecificReferenceValue<T>?,
+            ) {
+                val reference =
+                    thisRef.classifier!!.getReferenceByName(referenceName)
+                        ?: throw IllegalStateException("No reference with name $referenceName fiund")
+                thisRef.setOnlyReferenceValue(reference, value)
+            }
+        }
+    }
+
+    inline fun <P : BaseNode, reified T : Node> multipleReference(
+        referenceName: String,
+    ): ReadWriteProperty<P, MutableList<SpecificReferenceValue<T>>> {
+        return object : ReadWriteProperty<P, MutableList<SpecificReferenceValue<T>>> {
+            override fun getValue(
+                thisRef: P,
+                property: KProperty<*>,
+            ): MutableList<SpecificReferenceValue<T>> {
+                val reference =
+                    thisRef.classifier!!.getReferenceByName(referenceName)
+                        ?: throw IllegalStateException("No reference with name $referenceName fiund")
+                val referenceValues = thisRef.getReferenceValues(reference)
+                return referenceValues as MutableList<SpecificReferenceValue<T>>
+            }
+
+            override fun setValue(
+                thisRef: P,
+                property: KProperty<*>,
+                value: MutableList<SpecificReferenceValue<T>>,
+            ) {
+                val reference =
+                    thisRef.classifier!!.getReferenceByName(referenceName)
+                        ?: throw IllegalStateException("No reference with name $referenceName fiund")
+                thisRef.setReferenceValues(reference, value)
+            }
+        }
+    }
+
     fun <C : Node> multipleContainment(name: String): MutableList<C> {
-        return ContainmentList(this, (concept ?: throw IllegalStateException("Concept should not be null (base node $this, class: ${this.javaClass.canonicalName})")).requireContainmentByName(name))
+        return ContainmentList(
+            this,
+            (
+                classifier ?: throw IllegalStateException(
+                    "Concept should not be null (base node $this, " +
+                        "class: ${this.javaClass.canonicalName})",
+                )
+            ).requireContainmentByName(
+                name,
+            ),
+        )
     }
 
     protected fun <P : BaseNode, C : Node> singleContainment(containmentName: String): ReadWriteProperty<P, C?> {
@@ -44,7 +122,7 @@ abstract class BaseNode : DynamicNode() {
                 property: KProperty<*>,
                 value: C?,
             ) {
-                val containment = thisRef.concept!!.requireContainmentByName(containmentName)
+                val containment = thisRef.classifier!!.requireContainmentByName(containmentName)
                 thisRef.addChild(containment, value)
             }
         }

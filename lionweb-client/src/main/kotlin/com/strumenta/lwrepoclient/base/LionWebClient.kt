@@ -373,7 +373,7 @@ class LionWebClient(
 
         // 2. Add the tree to the parent
         val containment =
-            parent.concept.getContainmentByName(containmentName)
+            parent.classifier.getContainmentByName(containmentName)
                 ?: throw IllegalArgumentException("The container has not containment named $containmentName")
         if (!containment.isMultiple && parent.getChildrenByContainmentName(containmentName).isNotEmpty()) {
             throw IllegalArgumentException("The indicated containment ${containment.name} is not multiple and a child is already present")
@@ -414,7 +414,7 @@ class LionWebClient(
 
         // 2. Add the tree to the parent
         val containment =
-            parent.concept.getContainmentByName(containmentName)
+            parent.classifier.getContainmentByName(containmentName)
                 ?: throw IllegalArgumentException("The container has not containment named $containmentName")
         if (!containment.isMultiple && parent.getChildrenByContainmentName(containmentName).isNotEmpty()) {
             throw IllegalArgumentException("The indicated containment is not multiple and a child is already present")
@@ -528,7 +528,7 @@ class LionWebClient(
         containmentName: String,
     ): List<String> {
         val lwNode = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE)
-        val containment = lwNode.concept.getContainmentByName(containmentName) ?: throw java.lang.IllegalStateException()
+        val containment = lwNode.classifier.getContainmentByName(containmentName) ?: throw java.lang.IllegalStateException()
         return lwNode.getChildren(containment).map { it.id!! }
     }
 }
