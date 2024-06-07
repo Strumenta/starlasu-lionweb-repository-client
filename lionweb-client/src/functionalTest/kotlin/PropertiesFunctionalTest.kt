@@ -111,17 +111,17 @@ class PropertiesFunctionalTest {
         val prop1 =
             property.dynamicNode("prop1").apply {
                 setPropertyValueByName("name", "Prop1")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         val prop2 =
             property.dynamicNode("prop2").apply {
                 setPropertyValueByName("name", "Prop2")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         val prop3 =
             property.dynamicNode("prop3").apply {
                 setPropertyValueByName("name", "Prop3")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         client.storeTree(pf)
 
@@ -166,24 +166,24 @@ class PropertiesFunctionalTest {
         val prop1 =
             property.dynamicNode("prop1").apply {
                 setPropertyValueByName("name", "Prop1")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         val prop2 =
             property.dynamicNode().apply {
                 setPropertyValueByName("name", "Prop2")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         val prop3 =
             property.dynamicNode().apply {
                 setPropertyValueByName("name", "Prop3")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         client.storeTree(pf)
 
         val retrieved = client.retrieve("pf1")
         assertEquals(null, retrieved.parent)
         assertEquals("pf1", retrieved.id)
-        assertEquals(propertiesFile, retrieved.concept)
+        assertEquals(propertiesFile, retrieved.classifier)
     }
 
     @Test
@@ -201,17 +201,17 @@ class PropertiesFunctionalTest {
         val prop1 =
             property.dynamicNode("prop1").apply {
                 setPropertyValueByName("name", "Prop1")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         val prop2 =
             property.dynamicNode("prop2").apply {
                 setPropertyValueByName("name", "Prop2")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         val prop3 =
             property.dynamicNode("prop3").apply {
                 setPropertyValueByName("name", "Prop3")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         client.storeTree(pf)
 
@@ -247,17 +247,17 @@ class PropertiesFunctionalTest {
         val prop1 =
             property.dynamicNode("prop1").apply {
                 setPropertyValueByName("name", "Prop1")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         val prop2 =
             property.dynamicNode("prop2").apply {
                 setPropertyValueByName("name", "Prop2")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         val prop3 =
             property.dynamicNode("prop3").apply {
                 setPropertyValueByName("name", "Prop3")
-                pf.addChild(pf.concept.getContainmentByName("properties")!!, this)
+                pf.addChild(pf.classifier.getContainmentByName("properties")!!, this)
             }
         client.storeTree(pf)
 
