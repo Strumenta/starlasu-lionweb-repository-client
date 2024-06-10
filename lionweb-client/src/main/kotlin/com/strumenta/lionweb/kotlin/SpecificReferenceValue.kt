@@ -2,7 +2,13 @@ package com.strumenta.lionweb.kotlin
 
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.ReferenceValue
+import io.lionweb.lioncore.java.model.impl.ProxyNode
 import kotlin.reflect.KClass
+
+
+interface Deproxifier {
+    fun <T>deproxify(node: ProxyNode) : T
+}
 
 class SpecificReferenceValue<T : Node>(val targetClass: KClass<T>) : ReferenceValue() {
     companion object {
@@ -12,10 +18,7 @@ class SpecificReferenceValue<T : Node>(val targetClass: KClass<T>) : ReferenceVa
         ): SpecificReferenceValue<T> {
             return SpecificReferenceValue(T::class).apply {
                 this.resolveInfo = resolveInfo
-                if (referred != null && !T::class.isInstance(referred)) {
-                    throw IllegalArgumentException("Incompatible target specified: target $referred (class ${referred.javaClass.canonicalName}) while expected targets are ${targetClass.qualifiedName}")
-                }
-                this.referred = referred as T?
+                this.referred = referred
             }
         }
 
@@ -24,17 +27,26 @@ class SpecificReferenceValue<T : Node>(val targetClass: KClass<T>) : ReferenceVa
         }
     }
 
-    override fun getReferred(): T? {
+    fun getReferred(deproxifier: Deproxifier): T? {
         val value = super.getReferred()
-        if (value == null || targetClass.isInstance(value)) {
-            return value as T?
-        } else {
-            throw IllegalStateException("Referred node has an expected type: $value")
+        return when {
+            value == null -> {
+                null
+            }
+            value is ProxyNode -> {
+                deproxifier.deproxify(value)
+            }
+            targetClass.isInstance(value) -> {
+                value as T
+            }
+            else -> {
+                throw IllegalStateException("Referred node has an expected type: $value")
+            }
         }
     }
 
     override fun setReferred(referred: Node?) {
-        if (referred == null || targetClass.isInstance(referred)) {
+        if (referred == null || targetClass.isInstance(referred) || referred is ProxyNode) {
             super.setReferred(referred)
         } else {
             throw IllegalArgumentException("Cannot set referred to $referred")
