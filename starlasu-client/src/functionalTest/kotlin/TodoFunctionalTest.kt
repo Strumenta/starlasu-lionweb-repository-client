@@ -1,6 +1,7 @@
 import com.strumenta.kolasu.model.ReferenceByName
 import com.strumenta.kolasu.model.SyntheticSource
 import com.strumenta.kolasu.model.assignParents
+import com.strumenta.lionweb.kotlin.getChildrenByContainmentName
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
 import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.Test

@@ -3,6 +3,9 @@ package com.strumenta.lwrepoclient.base
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
 import com.strumenta.lionweb.kotlin.MetamodelRegistry
+import com.strumenta.lionweb.kotlin.children
+import com.strumenta.lionweb.kotlin.getChildrenByContainmentName
+import com.strumenta.lionweb.kotlin.setOnlyReferenceValue
 import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.ReferenceValue

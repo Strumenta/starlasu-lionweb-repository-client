@@ -5,9 +5,8 @@ import io.lionweb.lioncore.java.model.ReferenceValue
 import io.lionweb.lioncore.java.model.impl.ProxyNode
 import kotlin.reflect.KClass
 
-
 interface Deproxifier {
-    fun <T>deproxify(node: ProxyNode) : T
+    fun <T> deproxify(node: ProxyNode): T
 }
 
 class SpecificReferenceValue<T : Node>(val targetClass: KClass<T>) : ReferenceValue() {

@@ -21,6 +21,7 @@ import com.strumenta.kolasu.lionweb.LWNode
 import com.strumenta.kolasu.model.CodeBaseSource
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.testing.assertASTsAreEqual
+import com.strumenta.lionweb.kotlin.getChildrenByContainmentName
 import com.strumenta.lwrepoclient.kolasu.KolasuClient
 import com.strumenta.lwrepoclient.kolasu.withSource
 import io.lionweb.lioncore.java.language.Concept

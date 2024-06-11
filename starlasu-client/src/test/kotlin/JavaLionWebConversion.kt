@@ -6,6 +6,8 @@ import com.strumenta.javalangmodule.ast.JMethodDeclaration
 import com.strumenta.javalangmodule.ast.kLanguage
 import com.strumenta.javalangmodule.parser.JavaKolasuParser
 import com.strumenta.kolasu.parsing.ParsingResult
+import com.strumenta.lionweb.kotlin.getChildrenByContainmentName
+import com.strumenta.lionweb.kotlin.getPropertyValueByName
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.serialization.LowLevelJsonSerialization
 import java.io.InputStream

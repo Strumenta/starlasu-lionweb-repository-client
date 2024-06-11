@@ -1,5 +1,6 @@
 package com.strumenta.lwrepoclient.base
 
+import com.strumenta.lionweb.kotlin.children
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.impl.ProxyNode
 import io.lionweb.lioncore.java.serialization.JsonSerialization

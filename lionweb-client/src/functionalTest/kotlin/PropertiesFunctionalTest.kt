@@ -1,4 +1,5 @@
 import com.strumenta.lionweb.kotlin.dynamicNode
+import com.strumenta.lionweb.kotlin.setPropertyValueByName
 import com.strumenta.lwrepoclient.base.ClassifierKey
 import com.strumenta.lwrepoclient.base.FunctionalTestBuildConfig
 import com.strumenta.lwrepoclient.base.LionWebClient

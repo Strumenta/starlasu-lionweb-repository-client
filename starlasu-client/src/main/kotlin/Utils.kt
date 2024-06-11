@@ -5,6 +5,7 @@ import com.strumenta.kolasu.lionweb.LWNode
 import com.strumenta.kolasu.lionweb.StarLasuLWLanguage
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.model.Source
+import com.strumenta.lionweb.kotlin.children
 import io.lionweb.lioncore.java.language.Concept
 import io.lionweb.lioncore.java.model.impl.DynamicNode
 import io.lionweb.lioncore.java.model.impl.ProxyNode
