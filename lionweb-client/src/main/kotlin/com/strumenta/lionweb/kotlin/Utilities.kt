@@ -40,6 +40,12 @@ fun <N : Node> Node.walkDescendants(kClass: KClass<N>): Sequence<N> {
     }
 }
 
+fun Node.getOnlyReferenceValueByReferenceName(referenceName: String) =
+    ClassifierInstanceUtils.getOnlyReferenceValueByReferenceName(
+        this,
+        referenceName,
+    )
+
 fun Node.setOnlyReferenceValue(
     reference: Reference,
     value: ReferenceValue?,
