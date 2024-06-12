@@ -5,6 +5,8 @@ import com.google.gson.JsonParser
 import com.strumenta.lionweb.kotlin.MetamodelRegistry
 import com.strumenta.lionweb.kotlin.children
 import com.strumenta.lionweb.kotlin.getChildrenByContainmentName
+import com.strumenta.lionweb.kotlin.getReferenceValueByName
+import com.strumenta.lionweb.kotlin.setReferenceValuesByName
 import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.ReferenceValue
@@ -474,6 +476,20 @@ class LionWebClient(
         referenceName: String,
     ) {
         setReferences(if (targetId == null) emptyList() else listOf(targetId), containerId, referenceName)
+    }
+
+    fun addReference(
+        target: Node,
+        container: Node,
+        reference: KProperty<*>,
+    ) {
+        val updatedContainer = retrieve(container.id!!, withProxyParent = true, RetrievalMode.SINGLE_NODE)
+        val currentReferenceValues = updatedContainer.getReferenceValueByName(reference.name)
+        val updateReferenceValues = currentReferenceValues.toMutableList().apply {
+            add(ReferenceValue(target, null))
+        }
+        updatedContainer.setReferenceValuesByName(reference.name, updateReferenceValues)
+        storeTree(updatedContainer)
     }
 
     fun nodesByClassifier(limit: Int? = null): Map<ClassifierKey, ClassifierResult> {

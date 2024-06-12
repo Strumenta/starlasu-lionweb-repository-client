@@ -60,7 +60,7 @@ abstract class BaseNode : DynamicNode() {
             ) {
                 val reference =
                     thisRef.classifier!!.getReferenceByName(referenceName)
-                        ?: throw IllegalStateException("No reference with name $referenceName fiund")
+                        ?: throw IllegalStateException("No reference with name $referenceName found")
                 thisRef.setOnlyReferenceValue(reference, value)
             }
         }
@@ -76,7 +76,7 @@ abstract class BaseNode : DynamicNode() {
             ): MutableList<SpecificReferenceValue<T>> {
                 val reference =
                     thisRef.classifier!!.getReferenceByName(referenceName)
-                        ?: throw IllegalStateException("No reference with name $referenceName fiund")
+                        ?: throw IllegalStateException("No reference with name $referenceName found")
                 val referenceValues = thisRef.getReferenceValues(reference)
                 return referenceValues as MutableList<SpecificReferenceValue<T>>
             }
@@ -88,7 +88,7 @@ abstract class BaseNode : DynamicNode() {
             ) {
                 val reference =
                     thisRef.classifier!!.getReferenceByName(referenceName)
-                        ?: throw IllegalStateException("No reference with name $referenceName fiund")
+                        ?: throw IllegalStateException("No reference with name $referenceName found")
                 thisRef.setReferenceValues(reference, value)
             }
         }
