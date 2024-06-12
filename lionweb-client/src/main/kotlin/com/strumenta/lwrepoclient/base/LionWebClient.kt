@@ -5,7 +5,6 @@ import com.google.gson.JsonParser
 import com.strumenta.lionweb.kotlin.MetamodelRegistry
 import com.strumenta.lionweb.kotlin.children
 import com.strumenta.lionweb.kotlin.getChildrenByContainmentName
-import com.strumenta.lionweb.kotlin.setOnlyReferenceValue
 import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
 import io.lionweb.lioncore.java.model.ReferenceValue
@@ -19,14 +18,11 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.File
 import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-
-data class ClassifierKey(val languageKey: String, val classifierKey: String)
 
 class LionWebClient(
     val hostname: String = "localhost",
@@ -36,21 +32,7 @@ class LionWebClient(
     val connectTimeOutInSeconds: Long = 60,
     val callTimeoutInSeconds: Long = 60,
 ) {
-    private var httpClient: OkHttpClient =
-        OkHttpClient.Builder()
-            .callTimeout(
-                callTimeoutInSeconds,
-                TimeUnit.SECONDS,
-            ).readTimeout(callTimeoutInSeconds, TimeUnit.SECONDS)
-            .writeTimeout(callTimeoutInSeconds, TimeUnit.SECONDS)
-            .connectTimeout(connectTimeOutInSeconds, TimeUnit.SECONDS).build()
-    private val languages = mutableListOf<Language>()
-
-    private fun log(message: String) {
-        if (debug) {
-            println(message)
-        }
-    }
+    // Fields
 
     /**
      * Exposed for testing purposes
@@ -70,9 +52,33 @@ class LionWebClient(
             return jsonSerialization
         }
 
+    // Configuration
+
     fun registerLanguage(language: Language) {
         languages.add(language)
     }
+
+    // Setup
+
+    /**
+     * To be called exactly once, to ensure the Model Repository is initialized.
+     * Note that it causes all content of the Model Repository to be lost!
+     */
+    fun modelRepositoryInit() {
+        val url = "http://$hostname:$port/init"
+        val request: Request =
+            Request.Builder()
+                .url(url)
+                .post("".toRequestBody())
+                .build()
+        OkHttpClient().newCall(request).execute().use { response ->
+            if (response.code != HttpURLConnection.HTTP_OK) {
+                throw RuntimeException("DB initialization failed, HTTP ${response.code}: ${response.body?.string()}")
+            }
+        }
+    }
+
+    // Partitions
 
     fun createPartition(node: Node) {
         if (node.children.isNotEmpty()) {
@@ -104,23 +110,6 @@ class LionWebClient(
         }
     }
 
-    private fun <T> processChunkResponse(
-        data: String,
-        chunkProcessor: (JsonElement) -> T,
-    ): T {
-        val json = JsonParser.parseString(data).asJsonObject
-        val success = json.get("success").asBoolean
-        val messages = json.get("messages").asJsonArray
-        if (!messages.isEmpty) {
-            log("Messages received: $messages")
-        }
-        if (!success) {
-            throw RuntimeException("Request failed. Messages: $messages")
-        }
-        val chunkJson = json.get("chunk")
-        return chunkProcessor.invoke(chunkJson)
-    }
-
     fun getPartitionIDs(): List<String> {
         val url = "http://$hostname:$port/bulk/listPartitions"
         val request: Request =
@@ -142,6 +131,8 @@ class LionWebClient(
             }
         }
     }
+
+    // Nodes
 
     fun retrieve(
         rootId: String,
@@ -371,24 +362,6 @@ class LionWebClient(
     }
 
     /**
-     * To be called exactly once, to ensure the Model Repository is initialized.
-     * Note that it causes all content of the Model Repository to be lost!
-     */
-    fun modelRepositoryInit() {
-        val url = "http://$hostname:$port/init"
-        val request: Request =
-            Request.Builder()
-                .url(url)
-                .post("".toRequestBody())
-                .build()
-        OkHttpClient().newCall(request).execute().use { response ->
-            if (response.code != HttpURLConnection.HTTP_OK) {
-                throw RuntimeException("DB initialization failed, HTTP ${response.code}: ${response.body?.string()}")
-            }
-        }
-    }
-
-    /**
      * This operation is not atomic. We hope that no one is changing the parent at the very
      * same time.
      */
@@ -458,6 +431,35 @@ class LionWebClient(
         storeTree(parent)
     }
 
+    fun setReferences(
+        targets: List<Node>,
+        container: Node,
+        reference: KProperty<*>,
+    ) {
+        setReferences(targets.map { it.id!! }, container.id!!, reference.name)
+    }
+
+    fun setReferences(
+        targetIDs: List<String>,
+        containerID: String,
+        referenceName: String,
+    ) {
+        // 1. Retrieve the referrer
+        val referrer = retrieve(containerID, withProxyParent = true, retrievalMode = RetrievalMode.SINGLE_NODE)
+
+        // 2. Add the reference to the referrer
+        val reference =
+            referrer.classifier.getReferenceByName(referenceName)
+                ?: throw IllegalArgumentException("The referrer has not containment named $referenceName")
+        if (reference.isMultiple) {
+            throw IllegalArgumentException("The indicated reference ${reference.name} is multiple")
+        }
+        referrer.setReferenceValues(reference, targetIDs.map { ReferenceValue(ProxyNode(it), null) })
+
+        // 3. Store the parent
+        storeTree(referrer)
+    }
+
     fun setSingleReference(
         target: Node,
         container: Node,
@@ -471,26 +473,7 @@ class LionWebClient(
         containerId: String,
         referenceName: String,
     ) {
-        // 1. Retrieve the referrer
-        val referrer = retrieve(containerId, withProxyParent = true, retrievalMode = RetrievalMode.SINGLE_NODE)
-
-        // 2. Add the reference to the referrer
-        val reference =
-            referrer.classifier.getReferenceByName(referenceName)
-                ?: throw IllegalArgumentException("The referrer has not containment named $referenceName")
-        if (reference.isMultiple) {
-            throw IllegalArgumentException("The indicated reference ${reference.name} is multiple")
-        }
-        val target =
-            if (targetId == null) {
-                null
-            } else {
-                ProxyNode(targetId)
-            }
-        referrer.setOnlyReferenceValue(reference, ReferenceValue(target, null))
-
-        // 3. Store the parent
-        storeTree(referrer)
+        setReferences(if (targetId == null) emptyList() else listOf(targetId), containerId, referenceName)
     }
 
     fun nodesByClassifier(limit: Int? = null): Map<ClassifierKey, ClassifierResult> {
@@ -517,6 +500,33 @@ class LionWebClient(
                 result[classifierKey] = ClassifierResult(ids, entry["size"].asInt)
             }
             return result
+        }
+    }
+
+    fun childrenInContainment(
+        containerId: String,
+        containmentName: String,
+    ): List<String> {
+        val lwNode = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE)
+        val containment = lwNode.classifier.getContainmentByName(containmentName) ?: throw java.lang.IllegalStateException()
+        return lwNode.getChildren(containment).map { it.id!! }
+    }
+
+    // Private methods
+
+    private var httpClient: OkHttpClient =
+        OkHttpClient.Builder()
+            .callTimeout(
+                callTimeoutInSeconds,
+                TimeUnit.SECONDS,
+            ).readTimeout(callTimeoutInSeconds, TimeUnit.SECONDS)
+            .writeTimeout(callTimeoutInSeconds, TimeUnit.SECONDS)
+            .connectTimeout(connectTimeOutInSeconds, TimeUnit.SECONDS).build()
+    private val languages = mutableListOf<Language>()
+
+    private fun log(message: String) {
+        if (debug) {
+            println(message)
         }
     }
 
@@ -588,45 +598,20 @@ class LionWebClient(
         debugFileHelper(debug, relativePath, text)
     }
 
-    fun childrenInContainment(
-        containerId: String,
-        containmentName: String,
-    ): List<String> {
-        val lwNode = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE)
-        val containment = lwNode.classifier.getContainmentByName(containmentName) ?: throw java.lang.IllegalStateException()
-        return lwNode.getChildren(containment).map { it.id!! }
-    }
-}
-
-data class RequestFailureException(
-    val url: String,
-    val uncompressedBody: String?,
-    val responseCode: Int,
-    val responseBody: String?,
-) : RuntimeException("Request to $url failed with code $responseCode: $responseBody")
-
-fun debugFileHelper(
-    debug: Boolean,
-    relativePath: String,
-    text: () -> String,
-) {
-    if (debug) {
-        val debugDir = File("debug")
-        if (!debugDir.exists()) {
-            debugDir.mkdir()
+    private fun <T> processChunkResponse(
+        data: String,
+        chunkProcessor: (JsonElement) -> T,
+    ): T {
+        val json = JsonParser.parseString(data).asJsonObject
+        val success = json.get("success").asBoolean
+        val messages = json.get("messages").asJsonArray
+        if (!messages.isEmpty) {
+            log("Messages received: $messages")
         }
-        val file = File(debugDir, relativePath)
-        println("SAVING FILE ${file.absolutePath}")
-        file.writeText(text.invoke())
+        if (!success) {
+            throw RuntimeException("Request failed. Messages: $messages")
+        }
+        val chunkJson = json.get("chunk")
+        return chunkProcessor.invoke(chunkJson)
     }
 }
-
-class UnexistingNodeException(val nodeID: String, message: String = "Unexisting node $nodeID", cause: Throwable? = null) :
-    RuntimeException(message, cause)
-
-enum class RetrievalMode {
-    ENTIRE_SUBTREE,
-    SINGLE_NODE,
-}
-
-data class ClassifierResult(val ids: Set<String>, val size: Int)
