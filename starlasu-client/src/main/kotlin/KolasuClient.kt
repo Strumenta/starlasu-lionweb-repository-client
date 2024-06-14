@@ -10,6 +10,7 @@ import com.strumenta.kolasu.lionweb.LWNode
 import com.strumenta.kolasu.lionweb.LionWebModelConverter
 import com.strumenta.kolasu.lionweb.LionWebSource
 import com.strumenta.kolasu.lionweb.PrimitiveValueSerialization
+import com.strumenta.kolasu.lionweb.ProxyBasedNodeResolver
 import com.strumenta.kolasu.model.ASTRoot
 import com.strumenta.kolasu.model.Node
 import com.strumenta.kolasu.model.assignParents
@@ -57,7 +58,10 @@ class KolasuClient(
     /**
      * Exposed for testing purposes
      */
-    val nodeConverter = LionWebModelConverter()
+    val nodeConverter =
+        LionWebModelConverter().apply {
+            externalNodeResolver = ProxyBasedNodeResolver
+        }
 
     /**
      * This is the logic we use to assign Node IDs. This can be customized, if needed.

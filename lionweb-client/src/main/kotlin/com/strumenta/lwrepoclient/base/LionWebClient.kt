@@ -44,6 +44,7 @@ class LionWebClient(
             enableDynamicNodes()
         }
 
+    // TODO avoid re-instantiating jsonSerialization a ton of times
     val jsonSerialization: JsonSerialization
         get() {
             val jsonSerialization = jsonSerializationProvider?.invoke() ?: defaultJsonSerialization
@@ -483,12 +484,21 @@ class LionWebClient(
         container: Node,
         reference: KProperty<*>,
     ) {
+        addReference(target, container, reference.name)
+    }
+
+    fun addReference(
+        target: Node,
+        container: Node,
+        referenceName: String,
+    ) {
         val updatedContainer = retrieve(container.id!!, withProxyParent = true, RetrievalMode.SINGLE_NODE)
-        val currentReferenceValues = updatedContainer.getReferenceValueByName(reference.name)
-        val updateReferenceValues = currentReferenceValues.toMutableList().apply {
-            add(ReferenceValue(target, null))
-        }
-        updatedContainer.setReferenceValuesByName(reference.name, updateReferenceValues)
+        val currentReferenceValues = updatedContainer.getReferenceValueByName(referenceName)
+        val updateReferenceValues =
+            currentReferenceValues.toMutableList().apply {
+                add(ReferenceValue(target, null))
+            }
+        updatedContainer.setReferenceValuesByName(referenceName, updateReferenceValues)
         storeTree(updatedContainer)
     }
 
