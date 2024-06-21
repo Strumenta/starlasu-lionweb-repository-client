@@ -1,5 +1,6 @@
 import com.strumenta.kolasu.lionweb.LWNode
 import com.strumenta.lwrepoclient.base.FunctionalTestBuildConfig
+import com.strumenta.lwrepoclient.base.LionWebClient
 import io.lionweb.lioncore.java.utils.ModelComparator
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
@@ -67,6 +68,13 @@ abstract class AbstractFunctionalTest {
                 }
         modelRepository!!.withCommand()
         modelRepository!!.start()
+
+        // Initialization may change in the future (see https://github.com/LionWeb-io/lionweb-repository/issues/61)
+        val client = LionWebClient(port = modelRepository!!.firstMappedPort)
+        // We need to create the database
+        client.createDatabase()
+        // We then need to create a default database
+        client.createRepository(history = false)
     }
 
     @AfterTest

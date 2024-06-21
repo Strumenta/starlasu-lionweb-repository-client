@@ -20,6 +20,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.internal.EMPTY_REQUEST
 import java.net.ConnectException
 import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
@@ -83,6 +84,36 @@ class LionWebClient(
         }
     }
 
+    fun createDatabase() {
+        val url = "http://$hostname:$port/createDatabase"
+        val request: Request =
+            Request.Builder()
+                .url(url)
+                .considerAuthenticationToken()
+                .post(EMPTY_REQUEST)
+                .build()
+        OkHttpClient().newCall(request).execute().use { response ->
+            if (response.code != HttpURLConnection.HTTP_OK) {
+                throw RuntimeException("DB initialization failed, HTTP ${response.code}: ${response.body?.string()}")
+            }
+        }
+    }
+
+    fun createRepository(history: Boolean = false) {
+        val url = "http://$hostname:$port/createRepository?history=$history"
+        val request: Request =
+            Request.Builder()
+                .url(url)
+                .considerAuthenticationToken()
+                .post(EMPTY_REQUEST)
+                .build()
+        OkHttpClient().newCall(request).execute().use { response ->
+            if (response.code != HttpURLConnection.HTTP_OK) {
+                throw RuntimeException("DB initialization failed, HTTP ${response.code}: ${response.body?.string()}")
+            }
+        }
+    }
+
     // Partitions
 
     fun createPartition(node: Node) {
@@ -131,7 +162,7 @@ class LionWebClient(
                 .url(url)
                 .considerAuthenticationToken()
                 .addHeader("Accept-Encoding", "gzip")
-                .get()
+                .post(EMPTY_REQUEST)
                 .build()
         httpClient.newCall(request).execute().use { response ->
             if (response.code == HttpURLConnection.HTTP_OK) {

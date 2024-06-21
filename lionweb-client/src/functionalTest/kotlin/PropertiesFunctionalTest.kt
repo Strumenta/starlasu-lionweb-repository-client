@@ -74,6 +74,13 @@ class PropertiesFunctionalTest {
                 }
         modelRepository!!.withCommand()
         modelRepository!!.start()
+
+        // Initialization may change in the future (see https://github.com/LionWeb-io/lionweb-repository/issues/61)
+        val client = LionWebClient(port = modelRepository!!.firstMappedPort)
+        // We need to create the database
+        client.createDatabase()
+        // We then need to create a default database
+        client.createRepository(history = false)
     }
 
     @AfterTest
