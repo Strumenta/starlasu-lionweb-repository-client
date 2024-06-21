@@ -54,6 +54,7 @@ class KolasuClient(
     val debug: Boolean = false,
     val connectTimeOutInSeconds: Long = 60,
     val callTimeoutInSeconds: Long = 60,
+    val authorizationToken: String? = null,
 ) {
     /**
      * Exposed for testing purposes
@@ -78,6 +79,7 @@ class KolasuClient(
             jsonSerializationProvider = { this.jsonSerialization },
             connectTimeOutInSeconds = connectTimeOutInSeconds,
             callTimeoutInSeconds = callTimeoutInSeconds,
+            authorizationToken = authorizationToken,
         )
 
     /**

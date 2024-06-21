@@ -33,6 +33,7 @@ class LionWebClient(
     val jsonSerializationProvider: (() -> JsonSerialization)? = null,
     val connectTimeOutInSeconds: Long = 60,
     val callTimeoutInSeconds: Long = 60,
+    val authorizationToken: String? = null,
 ) {
     // Fields
 
@@ -72,6 +73,7 @@ class LionWebClient(
         val request: Request =
             Request.Builder()
                 .url(url)
+                .considerAuthenticationToken()
                 .post("".toRequestBody())
                 .build()
         OkHttpClient().newCall(request).execute().use { response ->
@@ -99,6 +101,7 @@ class LionWebClient(
         val request: Request =
             Request.Builder()
                 .url("http://$hostname:$port/bulk/deletePartitions")
+                .considerAuthenticationToken()
                 .post(body)
                 .build()
         httpClient.newCall(request).execute().use { response ->
@@ -113,11 +116,20 @@ class LionWebClient(
         }
     }
 
+    private fun Request.Builder.considerAuthenticationToken(): Request.Builder {
+        return if (authorizationToken == null) {
+            this
+        } else {
+            this.addHeader("Authorization", authorizationToken)
+        }
+    }
+
     fun getPartitionIDs(): List<String> {
         val url = "http://$hostname:$port/bulk/listPartitions"
         val request: Request =
             Request.Builder()
                 .url(url)
+                .considerAuthenticationToken()
                 .addHeader("Accept-Encoding", "gzip")
                 .get()
                 .build()
@@ -155,6 +167,7 @@ class LionWebClient(
         val request: Request =
             Request.Builder()
                 .url(urlBuilder.build())
+                .considerAuthenticationToken()
                 .post(body)
                 .build()
         httpClient.newCall(request).execute().use { response ->
@@ -212,6 +225,7 @@ class LionWebClient(
         val request: Request =
             Request.Builder()
                 .url(urlBuilder.build())
+                .considerAuthenticationToken()
                 .post(body)
                 .build()
         httpClient.newCall(request).execute().use { response ->
@@ -299,6 +313,7 @@ class LionWebClient(
         val request: Request =
             Request.Builder()
                 .url(urlBuilder.build())
+                .considerAuthenticationToken()
                 .post(body)
                 .build()
         httpClient.newCall(request).execute().use { response ->
@@ -327,6 +342,7 @@ class LionWebClient(
         val request: Request =
             Request.Builder()
                 .url(urlBuilder.build())
+                .considerAuthenticationToken()
                 .post(body)
                 .build()
         httpClient.newCall(request).execute().use { response ->
@@ -511,6 +527,7 @@ class LionWebClient(
         val request: Request =
             Request.Builder()
                 .url(urlBuilder.build())
+                .considerAuthenticationToken()
                 .get()
                 .build()
         OkHttpClient().newCall(request).execute().use { response ->
@@ -592,6 +609,7 @@ class LionWebClient(
         val request: Request =
             Request.Builder()
                 .url(url)
+                .considerAuthenticationToken()
                 .addHeader("Content-Encoding", "gzip")
                 .post(body)
                 .build()
