@@ -154,12 +154,9 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
         val ast1ID = kolasuClient.attachAST(javaAst1, partitionID, SimplePartition::stuff, 0)
 
         // I can retrieve the entire partition
-        // javaAst1.assignParents()
-        // partition.stuff.add(kolasuClient.toLionWeb(javaAst1))
         val retrievedPartition = kolasuClient.getLionWebNode(partitionID)
         assertEquals(1, retrievedPartition.getChildrenByContainmentName("stuff").size)
         assertEquals(ast1ID, retrievedPartition.getChildrenByContainmentName("stuff")[0].id)
-//        assertLWTreesAreEqual(partition, retrievedPartition)
 
         // I can retrieve just a portion of that partition. In that case the parent of the root of the
         // subtree will appear null
@@ -202,12 +199,6 @@ class JavaFunctionalTest : AbstractFunctionalTest() {
         val javaAst3ID = kolasuClient.attachAST(javaAst3, partitionID, SimplePartition::stuff, 2)
 
         // I can retrieve the entire partition
-//        partition.stuff.add(kolasuClient.toLionWeb(javaAst1))
-//        partition.stuff.add(kolasuClient.toLionWeb(javaAst2))
-//        partition.stuff.add(kolasuClient.toLionWeb(javaAst3))
-//        javaAst1.assignParents()
-//        javaAst2.assignParents()
-//        javaAst3.assignParents()
         val retrievedPartition = kolasuClient.getLionWebNode(partitionID)
         // assertEquals(partition, retrievedPartition)
         assertEquals(3, retrievedPartition.getChildrenByContainmentName("stuff").size)

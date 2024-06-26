@@ -6,6 +6,7 @@ import com.strumenta.lionweb.kotlin.MetamodelRegistry
 import com.strumenta.lionweb.kotlin.children
 import com.strumenta.lionweb.kotlin.getChildrenByContainmentName
 import com.strumenta.lionweb.kotlin.getReferenceValueByName
+import com.strumenta.lionweb.kotlin.setPropertyValueByName
 import com.strumenta.lionweb.kotlin.setReferenceValuesByName
 import io.lionweb.lioncore.java.language.Language
 import io.lionweb.lioncore.java.model.Node
@@ -547,6 +548,32 @@ class LionWebClient(
             }
         updatedContainer.setReferenceValuesByName(referenceName, updateReferenceValues)
         storeTree(updatedContainer)
+    }
+
+    fun setProperty(
+        node: Node,
+        propertyName: String,
+        value: Any?,
+    ) {
+        setProperty(node.id!!, propertyName, value)
+    }
+
+    fun setProperty(
+        node: Node,
+        property: KProperty<*>,
+        value: Any?,
+    ) {
+        setProperty(node.id!!, property.name, value)
+    }
+
+    fun setProperty(
+        nodeId: String,
+        propertyName: String,
+        value: Any?,
+    ) {
+        val updatedNode = retrieve(nodeId, withProxyParent = true, RetrievalMode.SINGLE_NODE)
+        updatedNode.setPropertyValueByName(propertyName, value)
+        storeTree(updatedNode)
     }
 
     fun nodesByClassifier(limit: Int? = null): Map<ClassifierKey, ClassifierResult> {
