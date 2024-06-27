@@ -151,8 +151,8 @@ class KolasuClient(
      * Consider this will retrieve the partition and all the roots it contains.
      * This may mean a very large amount of data.
      */
-    fun retrievePartition(nodeID: String): LWNode {
-        val lwNode = lionWebClient.retrieve(nodeID)
+    fun retrievePartition(nodeID: String, retrievalMode: RetrievalMode = RetrievalMode.ENTIRE_SUBTREE): LWNode {
+        val lwNode = lionWebClient.retrieve(nodeID, retrievalMode = retrievalMode)
         return lwNode
     }
 
