@@ -24,6 +24,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.EMPTY_REQUEST
 import java.net.ConnectException
 import java.net.HttpURLConnection
+import java.util.LinkedList
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -611,6 +612,20 @@ class LionWebClient(
         val lwNode = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE)
         val containment = lwNode.classifier.getContainmentByName(containmentName) ?: throw java.lang.IllegalStateException()
         return lwNode.getChildren(containment).map { it.id!! }
+    }
+
+    fun clearContainment(
+        containerId: String,
+        containmentName: String,
+    ) {
+        val lwNode = retrieve(containerId, retrievalMode = RetrievalMode.SINGLE_NODE)
+        val containment = lwNode.classifier.getContainmentByName(containmentName) ?: throw java.lang.IllegalStateException()
+        // We make a copy to avoid concurrent modifications
+        val children = LinkedList(lwNode.getChildren(containment))
+        children.forEach {
+            lwNode.removeChild(it)
+        }
+        storeTree(lwNode)
     }
 
     // Private methods

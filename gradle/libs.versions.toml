@@ -1,7 +1,7 @@
 [versions]
-egl = "0.9.8"
-kolasu = "1.5.59"
-rpg = "2.1.52"
+egl = "0.9.9"
+kolasu = "1.5.61-SNAPSHOT"
+rpg = "2.1.55"
 javamodule = "0.9.19"
 
 [plugins]
