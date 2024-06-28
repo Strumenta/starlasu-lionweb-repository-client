@@ -1,8 +1,8 @@
 [versions]
 egl = "0.9.9"
-kolasu = "1.5.61-SNAPSHOT"
+kolasu = "1.5.61"
 rpg = "2.1.55"
-javamodule = "0.9.19"
+javamodule = "0.9.21"
 
 [plugins]
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "12.1.0" }
